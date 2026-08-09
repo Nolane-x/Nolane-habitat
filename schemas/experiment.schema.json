@@ -1,0 +1,23 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "nolane.habitat/experiment/v1alpha8",
+  "type": "object",
+  "required": ["id","description","status","base_revision","expected","result","current_revision","revision_drift"],
+  "properties": {
+    "id": {"type":"string","pattern":"^experiment:"},
+    "hypothesis_id": {"type":["string","null"]},
+    "episode_id": {"type":["string","null"]},
+    "description": {"type":"string","minLength":1},
+    "discriminator": {"type":["string","null"]},
+    "status": {"enum":["planned","completed","failed","inconclusive","cancelled"]},
+    "capability": {"type":["string","null"]},
+    "base_revision": {"type":"string"},
+    "created_at": {"type":"string"},
+    "completed_at": {"type":["string","null"]},
+    "expected": {"type":"object"},
+    "result": {"type":"object"},
+    "current_revision": {"type":"string"},
+    "revision_drift": {"type":"boolean"}
+  },
+  "additionalProperties": false
+}

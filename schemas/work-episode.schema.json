@@ -1,0 +1,12 @@
+{
+  "$schema":"https://json-schema.org/draft/2020-12/schema",
+  "$id":"nolane.habitat/work-episode/v1alpha6",
+  "type":"object","required":["id","task","base_revision","status","backend_binding","compiler_fingerprint","links","link_count","current_revision"],
+  "properties":{
+    "id":{"type":"string","pattern":"^episode:"},"task":{"type":"string"},"context_handle":{"type":["string","null"]},
+    "base_revision":{"type":"string"},"status":{"enum":["active","completed","failed","abandoned"]},"created_at":{"type":"string"},"closed_at":{"type":["string","null"]},
+    "outcome":{"type":"object"},"backend_binding":{"type":"string"},"current_backend_binding":{"type":"string"},"backend_identity_drift":{"type":"boolean"},
+    "compiler_fingerprint":{"type":"string"},"compiler_identity_drift":{"type":"boolean"},"links":{"type":"array","items":{"type":"object"}},
+    "link_count":{"type":"integer","minimum":0},"current_revision":{"type":"string"}
+  },"additionalProperties":false
+}

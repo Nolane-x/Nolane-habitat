@@ -1,0 +1,11 @@
+{
+  "$schema":"https://json-schema.org/draft/2020-12/schema",
+  "$id":"nolane.habitat/activity-event/v1alpha11",
+  "type":"object",
+  "required":["seq","kind","category","revision","status","summary","created_at"],
+  "properties":{
+    "seq":{"type":"integer","minimum":1},"kind":{"type":"string","minLength":1},"category":{"type":"string","minLength":1},
+    "agent_id":{"type":["string","null"]},"episode_id":{"type":["string","null"]},"ref_id":{"type":["string","null"]},"path":{"type":["string","null"]},
+    "revision":{"type":"string"},"status":{"type":"string"},"summary":{"type":"string"},"data":{"type":"object"},"created_at":{"type":"string"}
+  },"additionalProperties":true
+}

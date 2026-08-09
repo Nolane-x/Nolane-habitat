@@ -1,0 +1,29 @@
+{
+  "$schema":"https://json-schema.org/draft/2020-12/schema",
+  "$id":"nolane.habitat/project-memory/v1alpha11",
+  "type":"object",
+  "required":["id","kind","statement","status","scope","base_revision","provenance","evidence_ids","created_at","updated_at","claim_boundary"],
+  "properties":{
+    "id":{"type":"string"},
+    "kind":{"enum":["semantic","episodic","procedural","failure","decision","experiment"]},
+    "statement":{"type":"string","minLength":1},
+    "status":{"enum":["active","superseded","invalidated"]},
+    "scope":{"enum":["workspace","agent"]},
+    "agent_id":{"type":["string","null"]},
+    "episode_id":{"type":["string","null"]},
+    "base_revision":{"type":"string"},
+    "current_revision":{"type":"string"},
+    "revision_drift":{"type":"boolean"},
+    "valid_now":{"type":"boolean"},
+    "confidence_annotation":{"type":["number","null"],"minimum":0,"maximum":1},
+    "provenance":{"type":"object"},
+    "evidence_ids":{"type":"array","items":{"type":"string"}},
+    "valid_until_revision":{"type":["string","null"]},
+    "supersedes":{"type":["string","null"]},
+    "invalidated_by":{"type":["string","null"]},
+    "created_at":{"type":"string"},
+    "updated_at":{"type":"string"},
+    "claim_boundary":{"type":"string"}
+  },
+  "additionalProperties":true
+}

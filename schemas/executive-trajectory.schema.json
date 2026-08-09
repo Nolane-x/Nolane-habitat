@@ -1,0 +1,120 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "nolane.habitat/executive-trajectory/v1alpha14",
+  "type": "object",
+  "required": [
+    "id",
+    "goal",
+    "status",
+    "base_revision",
+    "current_strategy",
+    "strategy_generation",
+    "milestones",
+    "events",
+    "trajectory_chain",
+    "completion_gate",
+    "claim_boundary",
+    "phase_sequence",
+    "budget_state"
+  ],
+  "properties": {
+    "id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "goal": {
+      "type": "string",
+      "minLength": 1
+    },
+    "agent_id": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "episode_id": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "status": {
+      "enum": [
+        "active",
+        "completed",
+        "failed",
+        "abandoned"
+      ]
+    },
+    "base_revision": {
+      "type": "string"
+    },
+    "current_revision": {
+      "type": "string"
+    },
+    "current_strategy": {
+      "enum": [
+        "direct-analysis",
+        "reframe",
+        "causal-intervention",
+        "rival-hypothesis",
+        "external-oracle",
+        "dependency-replan",
+        "scope-reduction"
+      ]
+    },
+    "strategy_generation": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "budget": {
+      "type": "object"
+    },
+    "metrics": {
+      "type": "object"
+    },
+    "milestones": {
+      "type": "array"
+    },
+    "events": {
+      "type": "array"
+    },
+    "trajectory_chain": {
+      "type": "object",
+      "required": [
+        "valid",
+        "checked"
+      ]
+    },
+    "completion_gate": {
+      "type": "object",
+      "required": [
+        "ready",
+        "blockers",
+        "current_revision"
+      ]
+    },
+    "claim_boundary": {
+      "type": "string"
+    },
+    "phase_sequence": {
+      "type": "object",
+      "required": [
+        "valid",
+        "checked",
+        "state"
+      ]
+    },
+    "budget_state": {
+      "type": "object",
+      "required": [
+        "limits",
+        "consumed",
+        "exhausted",
+        "reasons",
+        "strategy_switch_exhausted"
+      ]
+    }
+  },
+  "additionalProperties": true
+}

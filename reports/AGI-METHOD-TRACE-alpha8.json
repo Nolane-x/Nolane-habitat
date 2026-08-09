@@ -1,0 +1,15 @@
+{
+  "release": "0.1.0-alpha.8",
+  "method": "belief -> rival -> adversarial probe -> correction -> regression -> bounded claim",
+  "belief_updates": [
+    {"belief":"size+mtime is enough for ordinary perception","result":"rejected","correction":"stronger OS fingerprint + targeted hash; Windows deep fallback","verifier":"same-size/restored-mtime regression"},
+    {"belief":"virtual context source_bytes approximates backend I/O","result":"rejected","correction":"sparse authority line reads + split accounting","verifier":">1MB sparse I/O demo"},
+    {"belief":"episode links are sufficient provenance enforcement","result":"rejected","correction":"validate active/revision state before side effects","verifier":"missing/stale/completed episode regressions"},
+    {"belief":"exception rollback is sufficient transactionality","result":"rejected","correction":"local WAL + startup recovery","verifier":"interrupted applying-state recovery"},
+    {"belief":"generic source rewrite is harmless","result":"rejected","correction":"newline + mode/metadata preservation","verifier":"CRLF + 0755 regression"},
+    {"belief":"high-level mutation error can be a normal exception after verification","result":"rejected","correction":"explicit committed/verification-error outcome","verifier":"MCP post-side-effect regression"},
+    {"belief":"retrieval confidence can be inferred from independent term existence","result":"bounded","correction":"coherent concept neighborhoods + abstention + Unicode/inverted index","verifier":"long-task, Unicode and no-gold tests"},
+    {"belief":"retrieval alone is enough cognitive state","result":"rejected as long-horizon design","correction":"explicit revision-bound hypothesis/evidence/experiment layer","verifier":"hypothesis/experiment regression and schemas"}
+  ],
+  "claim_boundary": "No AGI, hostile-code safety, calibrated probability, distributed ACID, universal language semantics, or coding-superiority claim."
+}

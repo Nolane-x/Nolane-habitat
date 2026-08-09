@@ -1,0 +1,219 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "nolane.habitat/context-slice/v1alpha2",
+  "type": "object",
+  "required": [
+    "task",
+    "revision",
+    "objects",
+    "unknowns",
+    "omitted_candidates",
+    "budget",
+    "task_class",
+    "handle",
+    "lane_counts",
+    "trust_counts",
+    "decision_packet"
+  ],
+  "properties": {
+    "task": {
+      "type": "string"
+    },
+    "revision": {
+      "type": "string"
+    },
+    "task_class": {
+      "type": "string"
+    },
+    "handle": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "lane_counts": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "integer"
+      }
+    },
+    "objects": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/object"
+      }
+    },
+    "unknowns": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "omitted_candidates": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "budget": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "trust_counts": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "integer",
+        "minimum": 0
+      }
+    },
+    "decision_packet": {
+      "type": "object",
+      "required": [
+        "objective",
+        "revision",
+        "inspect_first",
+        "exact_source_required_before_mutation",
+        "context_is_orientation_not_authority",
+        "omitted_candidates",
+        "retrieval_confidence",
+        "concept_coverage",
+        "abstention_recommended"
+      ],
+      "properties": {
+        "objective": {
+          "type": "string"
+        },
+        "revision": {
+          "type": "string"
+        },
+        "inspect_first": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "exact_source_required_before_mutation": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "context_is_orientation_not_authority": {
+          "const": true
+        },
+        "omitted_candidates": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "retrieval_confidence": {
+          "enum": [
+            "low",
+            "medium",
+            "high"
+          ]
+        },
+        "top_candidate_score": {
+          "type": "number"
+        },
+        "concept_coverage": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "supported_concepts": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "unsupported_concepts": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "abstention_recommended": {
+          "type": "boolean"
+        },
+        "top_evidence_lanes": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    }
+  },
+  "$defs": {
+    "object": {
+      "type": "object",
+      "required": [
+        "object_id",
+        "object_type",
+        "relevance",
+        "reason",
+        "lane"
+      ],
+      "properties": {
+        "object_id": {
+          "type": "string"
+        },
+        "object_type": {
+          "enum": [
+            "symbol",
+            "file",
+            "diagnostic",
+            "evidence"
+          ]
+        },
+        "relevance": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "reason": {
+          "type": "string"
+        },
+        "path": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "lane": {
+          "type": "string"
+        },
+        "trust": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "source_range": {
+          "anyOf": [
+            {
+              "type": "null"
+            },
+            {
+              "type": "array",
+              "prefixItems": [
+                {
+                  "type": [
+                    "integer",
+                    "null"
+                  ]
+                },
+                {
+                  "type": [
+                    "integer",
+                    "null"
+                  ]
+                }
+              ],
+              "minItems": 2,
+              "maxItems": 2
+            }
+          ]
+        }
+      }
+    }
+  }
+}

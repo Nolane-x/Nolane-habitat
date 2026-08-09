@@ -1,0 +1,13 @@
+{
+  "$schema":"https://json-schema.org/draft/2020-12/schema",
+  "$id":"nolane.habitat/project-world/v1alpha12",
+  "type":"object",
+  "required":["nodes","edges","sources","claim_boundary"],
+  "properties":{
+    "revision":{"type":"string"},
+    "nodes":{"type":"array","items":{"type":"object","required":["id","type","label"],"additionalProperties":true}},
+    "edges":{"type":"array","items":{"type":"object","required":["source","target","kind"],"additionalProperties":true}},
+    "sources":{"type":"array","items":{"type":"string"}},
+    "claim_boundary":{"type":"string"}
+  },"additionalProperties":true
+}

@@ -1,0 +1,3 @@
+python -m compileall -q habitat benchmarks tools tests : PASS
+node --check habitat/observatory_assets/app.js : PASS
+JSON parse of all schemas/*.json : PASS (53 files)

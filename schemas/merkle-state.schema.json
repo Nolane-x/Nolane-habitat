@@ -1,0 +1,38 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "nolane.habitat/merkle-state/v1alpha5",
+  "type": "object",
+  "required": [
+    "revision",
+    "project_root_hash",
+    "prefix",
+    "node",
+    "snapshot",
+    "source_bytes_read"
+  ],
+  "properties": {
+    "revision": {
+      "type": "string"
+    },
+    "project_root_hash": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "prefix": {
+      "type": "string"
+    },
+    "node": {
+      "type": "object"
+    },
+    "snapshot": {
+      "type": "object",
+      "required": [
+        "file_count",
+        "byte_size"
+      ]
+    },
+    "source_bytes_read": {
+      "const": 0
+    }
+  }
+}

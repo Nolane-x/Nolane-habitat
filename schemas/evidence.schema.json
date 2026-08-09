@@ -1,0 +1,61 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "nolane.habitat/evidence/v1alpha5",
+  "type": "object",
+  "required": [
+    "id",
+    "kind",
+    "revision",
+    "severity",
+    "summary",
+    "trust",
+    "source",
+    "created_at",
+    "active"
+  ],
+  "properties": {
+    "id": {
+      "type": "string",
+      "pattern": "^evidence:"
+    },
+    "kind": {
+      "type": "string"
+    },
+    "revision": {
+      "type": "string"
+    },
+    "path": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "object_id": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "severity": {
+      "type": "string"
+    },
+    "summary": {
+      "type": "string"
+    },
+    "trust": {
+      "type": "string"
+    },
+    "source": {
+      "type": "string"
+    },
+    "created_at": {
+      "type": "string"
+    },
+    "active": {
+      "type": "boolean"
+    },
+    "data": {
+      "type": "object"
+    }
+  }
+}

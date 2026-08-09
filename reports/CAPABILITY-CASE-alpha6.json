@@ -1,0 +1,33 @@
+{
+  "format": "nolane-habitat-capability-case/v1",
+  "release": "0.1.0-alpha.6",
+  "admitted": {
+    "project_backend_contract": "bounded",
+    "local_backend": "implemented",
+    "directory_mirror_backend": "contract-double",
+    "authority_safe_exact_source": "implemented",
+    "targeted_known_path_hydration": "implemented",
+    "execution_backend_provenance": "implemented",
+    "context_utility_prior": "bounded-non-authoritative",
+    "selective_page_planner": "bounded",
+    "work_episode_provenance": "bounded",
+    "backend_bound_checkpoint_resume": "implemented",
+    "semantic_equivalence_fixture": "passed"
+  },
+  "not_admitted": [
+    "Cloudflare Computer integration",
+    "production remote synchronization",
+    "universal token reduction",
+    "same-model coding superiority",
+    "complete program causality",
+    "AGI capability"
+  ],
+  "evidence": [
+    "reports/TEST-EVIDENCE-alpha6.txt",
+    "reports/DEMO-EVIDENCE-alpha6.json",
+    "reports/BACKEND-EQUIVALENCE-alpha6.json",
+    "reports/CONTEXT-PRECISION-alpha6.json",
+    "reports/AGI-ZIP-STRESS-alpha6.json",
+    "reports/QUICKSTART-EVIDENCE-alpha6.txt"
+  ]
+}

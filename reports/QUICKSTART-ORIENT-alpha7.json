@@ -1,0 +1,54 @@
+{
+  "task": "credential validation",
+  "revision": "rev:bf67d3810bd83b6b432d",
+  "objects": [
+    {
+      "object_id": "sym:b3f6914c8c2f3e63e3a2",
+      "object_type": "symbol",
+      "relevance": 1.0,
+      "reason": "task-to-symbol structural match",
+      "path": "auth.py",
+      "source_range": [
+        1,
+        2
+      ],
+      "lane": "symbol",
+      "trust": "exact"
+    }
+  ],
+  "unknowns": [],
+  "omitted_candidates": 0,
+  "budget": 18,
+  "task_class": "implementation",
+  "handle": "ctx:2f8bfbcca01b3ed0b686",
+  "lane_counts": {
+    "symbol": 1
+  },
+  "trust_counts": {
+    "exact": 1
+  },
+  "decision_packet": {
+    "objective": "credential validation",
+    "revision": "rev:bf67d3810bd83b6b432d",
+    "retrieval_confidence": "high",
+    "top_candidate_score": 1.0,
+    "concept_coverage": 1.0,
+    "supported_concepts": [
+      "credential",
+      "validation"
+    ],
+    "unsupported_concepts": [],
+    "abstention_recommended": false,
+    "top_evidence_lanes": [
+      "symbol"
+    ],
+    "context_utility_priors_applied": 0,
+    "context_utility_is_non_authoritative": true,
+    "inspect_first": [
+      "sym:b3f6914c8c2f3e63e3a2"
+    ],
+    "exact_source_required_before_mutation": [],
+    "context_is_orientation_not_authority": true,
+    "omitted_candidates": 0
+  }
+}

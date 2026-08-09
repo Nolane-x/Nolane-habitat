@@ -1,0 +1,51 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "nolane.habitat/runtime-ui-assertion/v1alpha5",
+  "type": "object",
+  "required": [
+    "session_id",
+    "mode",
+    "passed",
+    "assertion_count",
+    "failure_count",
+    "results",
+    "failures",
+    "oracle",
+    "screenshot_used",
+    "revision"
+  ],
+  "properties": {
+    "session_id": {
+      "type": "string"
+    },
+    "mode": {
+      "const": "runtime-semantic-assertion"
+    },
+    "passed": {
+      "type": "boolean"
+    },
+    "assertion_count": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "failure_count": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "results": {
+      "type": "array"
+    },
+    "failures": {
+      "type": "array"
+    },
+    "oracle": {
+      "type": "string"
+    },
+    "screenshot_used": {
+      "const": false
+    },
+    "revision": {
+      "type": "string"
+    }
+  }
+}

@@ -1,0 +1,86 @@
+{
+  "release": "0.1.0-alpha.5",
+  "method": "Nolane AGI cognitive-method discipline applied to engineering; not an AGI capability claim",
+  "belief_updates": [
+    {
+      "id": "B1",
+      "belief": "Higher repository value comes from precision and selective source paging, not from indexing more text.",
+      "rival": "Broad retrieval may be safer because narrow retrieval can miss dependencies.",
+      "probe": "200-distractor gold/no-gold harness plus graph expansion.",
+      "observation": {
+        "credential_source_bytes": 127,
+        "billing_source_bytes": 92,
+        "no_gold_source_bytes": 0,
+        "no_gold_abstain": true
+      },
+      "status": "retained within fixture boundary"
+    },
+    {
+      "id": "B2",
+      "belief": "Static semantic precision can supersede weak call edges.",
+      "rival": "A precise result at one call-site may not justify removing all weak facts from the caller.",
+      "probe": "mixed resolved/unresolved calls in the same function.",
+      "observation": "Initial whole-caller supersession deleted unresolved call evidence.",
+      "status": "rejected coarse variant; corrected to exact call-site supersession"
+    },
+    {
+      "id": "B3",
+      "belief": "Provider partitions can avoid whole-domain semantic traversal on body-only changes.",
+      "rival": "Cross-file resolution may require broad invalidation whenever any source byte changes.",
+      "probe": "warm/body-only/public-surface Python and TypeScript edits.",
+      "observation": {
+        "jedi_warm_reused": 78,
+        "jedi_warm_recomputed": 0,
+        "jedi_edit_reused": 77,
+        "jedi_edit_recomputed": 1
+      },
+      "status": "retained with conservative public-surface invalidation"
+    },
+    {
+      "id": "B4",
+      "belief": "Top retrieval score alone can calibrate confidence.",
+      "rival": "A common single term can dominate a multi-concept no-gold task.",
+      "probe": "quantum banana teleportation matrix against AGI corpus.",
+      "observation": "Initial query became high-confidence because matrix was common.",
+      "status": "rejected; concept coverage added"
+    },
+    {
+      "id": "B5",
+      "belief": "Exact lexical concept coverage is sufficient.",
+      "rival": "Source identifiers encode morphological variants and exact lexical coverage underestimates real support.",
+      "probe": "credential validation login against validate_credentials/login.",
+      "observation": "Exact coverage was 2/3 despite correct semantic target.",
+      "status": "rejected; indexed identifier morphology added with no source reads"
+    },
+    {
+      "id": "B6",
+      "belief": "Context memory should expose bounded exact source only on demand.",
+      "rival": "Materializing full selected files is simpler and may avoid page faults.",
+      "probe": "virtual address-space + digest-bound prefetch in end-to-end demo.",
+      "observation": {
+        "demo_prefetch_source_bytes": 187,
+        "demo_context_confidence": "high"
+      },
+      "status": "retained for bounded source paging"
+    },
+    {
+      "id": "B7",
+      "belief": "Interoperability should not force core protocol dependency.",
+      "rival": "Making MCP the core protocol would simplify one integration path.",
+      "probe": "optional adapter contract + missing-SDK behavior.",
+      "observation": "Core works without MCP; adapter registers a compact high-level surface under SDK contract double and fails clearly if SDK is absent.",
+      "status": "retained; real SDK runtime not admitted on this host"
+    }
+  ],
+  "negative_results_preserved": [
+    "inactive evidence leaked through FTS before active-state gate",
+    "Jedi overlay initially superseded unresolved same-caller calls",
+    "provider API-surface fingerprint initially invalidated on body-only text",
+    "AGI no-gold query initially false-high due common term matrix",
+    "identifier morphology initially caused false-low demo confidence",
+    "combined admission command stopped after pytest before creating later reports",
+    "report-summary tooling referenced outdated keys",
+    "real MCP SDK unavailable on the build host"
+  ],
+  "claim_boundary": "Evidence establishes bounded mechanisms on included fixtures/corpus. It does not establish universal token reduction, coding-success uplift, production isolation, universal semantic precision, or AGI capability."
+}

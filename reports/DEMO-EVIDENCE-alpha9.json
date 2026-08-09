@@ -1,0 +1,112 @@
+{
+  "agent_A": {
+    "created_at": "2026-08-07T12:33:39.535227+00:00",
+    "id": "agent:a6b5bdad37cf5c09b974",
+    "leases": [],
+    "metadata": {},
+    "name": "agent-A",
+    "status": "active",
+    "updated_at": "2026-08-07T12:33:39.535227+00:00"
+  },
+  "agent_B": {
+    "created_at": "2026-08-07T12:33:39.536150+00:00",
+    "id": "agent:cab12fc1d963c52648d6",
+    "leases": [],
+    "metadata": {},
+    "name": "agent-B",
+    "status": "active",
+    "updated_at": "2026-08-07T12:33:39.536150+00:00"
+  },
+  "commit_status": "committed",
+  "context": {
+    "agent_id": "agent:a6b5bdad37cf5c09b974",
+    "confidence": "high",
+    "top_object": "sym:b3f6914c8c2f3e63e3a2"
+  },
+  "dependencies": {
+    "claim_boundary": "Direct manifest cognition only. Transitive resolution, vulnerability status, external API compatibility and lockfile semantic resolution are not inferred.",
+    "count": 1,
+    "direct_dependencies": [
+      {
+        "ecosystem": "python",
+        "name": "requests",
+        "resolved": false,
+        "scope": "runtime",
+        "source": "pyproject.toml",
+        "specifier": ">=2"
+      }
+    ],
+    "lockfiles": [],
+    "manifests": [
+      "pyproject.toml"
+    ],
+    "parse_errors": []
+  },
+  "execution_security": {
+    "claim_boundary": "Habitat alpha.9 can optionally isolate network/user namespace and apply resource limits; local provider still lacks filesystem confinement.",
+    "containment_profile": "trusted-local",
+    "full_sandbox": false,
+    "host_probe": {
+      "claim_boundary": "Network/user namespace availability is partial containment; filesystem isolation is not provided by this provider.",
+      "filesystem_confinement_available": false,
+      "full_sandbox_available": false,
+      "network_namespace_available": true,
+      "reason": "user+network namespace available",
+      "unshare": "/usr/bin/unshare"
+    },
+    "provider": {
+      "capabilities": [
+        "discover",
+        "execute",
+        "trusted-local"
+      ],
+      "execution_root": "/tmp/habitat-a9-demo-t_sqqbia/repo",
+      "kind": "local-process",
+      "provider_id": "executor:ad07a32fe206778cd575"
+    },
+    "revision": "rev:fcb272a7e4d30b36fe35"
+  },
+  "git": {
+    "dirty": true,
+    "history_count": 1
+  },
+  "hypothesis": {
+    "base_revision": "rev:fcb272a7e4d30b36fe35",
+    "confidence_semantics": "agent belief annotation; not calibrated probability",
+    "created_at": "2026-08-07T12:33:41.670843+00:00",
+    "current_confidence": 0.45,
+    "current_revision": "rev:fcb272a7e4d30b36fe35",
+    "episode_id": null,
+    "evidence": [],
+    "evidence_assessment": {
+      "assessment": "insufficient",
+      "calibrated_probability": false,
+      "claim_boundary": "Heuristic evidence fusion with diminishing returns per source group; not a calibrated probability and not causal proof.",
+      "contradiction_strength": 0,
+      "inactive_evidence_ids": [],
+      "independent_source_groups": 0,
+      "signed_balance": 0.0,
+      "source_groups": {},
+      "support_strength": 0
+    },
+    "evidence_balance": {
+      "against_weight": 0.0,
+      "for_weight": 0.0,
+      "net": 0.0
+    },
+    "experiments": [],
+    "id": "hypothesis:8a16c5c6e977ddec4207",
+    "prior_confidence": 0.45,
+    "revision_drift": false,
+    "statement": "credential validation rejected falsey-but-present users",
+    "status": "active",
+    "task": "credential validation rejected falsey-but-present users",
+    "updated_at": "2026-08-07T12:33:41.670843+00:00"
+  },
+  "lease_conflict": {
+    "message": "path is leased by another agent: auth.py",
+    "type": "TransactionConflict"
+  },
+  "verification_status": "passed",
+  "version": "0.1.0-alpha.9"
+}

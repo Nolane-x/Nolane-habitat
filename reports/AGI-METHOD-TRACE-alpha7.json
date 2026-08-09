@@ -1,0 +1,50 @@
+{
+  "format": "nolane-habitat-agi-method-trace/v1",
+  "release": "0.1.0-alpha.7",
+  "method": "charter -> rival hypotheses -> discriminating probes -> correction -> verifier -> bounded admission",
+  "belief_updates": [
+    {
+      "belief": "Source authority and execution placement should be independently composable.",
+      "rival": "A single ProjectBackend identity is simpler and sufficient.",
+      "probe": "local/mirror equivalence plus detached-executor mutation probe",
+      "observation": "cognition remains equivalent, while detached mutation needs a separate fail-closed policy",
+      "decision": "retain split SourceAuthority + ExecutionProvider beneath compatibility facade"
+    },
+    {
+      "belief": "Every language provider should keep workspace-lifetime project state.",
+      "rival": "provider-specific persistence should be admitted only when lifecycle is explicit and measurable",
+      "probe": "long full-suite lifecycle run",
+      "observation": "unbounded Jedi Project retention created hidden lifecycle/performance pressure",
+      "decision": "reject unbounded Jedi persistence; use bounded LRU + durable semantic partitions; retain persistent TS LanguageService"
+    },
+    {
+      "belief": "File-level localization is sufficient for an agent-native explorer.",
+      "rival": "solver context cost remains high unless exploration is region/line bounded",
+      "probe": "202-file distractor fixture under hard line budget",
+      "observation": "semantic regions select gold auth/billing lines with zero exact-source reads and no noise regions",
+      "decision": "admit line-budget workspace.explore; exact source remains a Context VM fault"
+    },
+    {
+      "belief": "Low-confidence retrieval should still return the best available source.",
+      "rival": "least-bad source causes avoidable context pollution",
+      "probe": "quantum banana teleportation matrix no-gold case",
+      "observation": "calibrated retrieval is low confidence with no supported region",
+      "decision": "abstain and fault zero source bytes"
+    },
+    {
+      "belief": "Execution receipts need only backend identity.",
+      "rival": "source authority and execution evidence are distinct provenance questions",
+      "probe": "composed authority/executor verification receipt",
+      "observation": "same cognition can execute under distinct placement",
+      "decision": "bind source_authority_id + execution_provider_id + execution_backend"
+    },
+    {
+      "belief": "Green tests imply runtime lifecycle health.",
+      "rival": "process-shared services can survive after result emission",
+      "probe": "full suite + process exit observation",
+      "observation": "shared services required deterministic host drain",
+      "decision": "add idempotent shutdown_runtime_services and lifecycle verifier"
+    }
+  ],
+  "claim_boundary": "Method trace records engineering belief updates and verifiers; it is not evidence of AGI capability."
+}

@@ -1,0 +1,5542 @@
+{
+  "revision": "rev:d059aa55a83060740306",
+  "generated_at": 1786119359.553051,
+  "read_only": true,
+  "backend": {
+    "backend_id": "backend:aa79ab888acaf26070ed",
+    "kind": "local-filesystem",
+    "authority": "source-files",
+    "authoritative_root": "/tmp/tmp27tve_hg/project",
+    "materialized_root": "/tmp/tmp27tve_hg/project",
+    "execution_kind": "local-process",
+    "supports_native_watch": true,
+    "capabilities": [
+      "discover",
+      "execute",
+      "read",
+      "reconcile",
+      "trusted-local",
+      "watch",
+      "write"
+    ],
+    "source_authority_id": "authority:53e7c938398bf6a20a18",
+    "execution_provider_id": "executor:d68d8651cf34f1238822",
+    "source_authority": {
+      "authority_id": "authority:53e7c938398bf6a20a18",
+      "kind": "local-filesystem",
+      "authority": "source-files",
+      "authoritative_root": "/tmp/tmp27tve_hg/project",
+      "materialized_root": "/tmp/tmp27tve_hg/project",
+      "supports_native_watch": true,
+      "capabilities": [
+        "read",
+        "write",
+        "reconcile",
+        "watch"
+      ]
+    },
+    "execution_provider": {
+      "provider_id": "executor:d68d8651cf34f1238822",
+      "kind": "local-process",
+      "execution_root": "/tmp/tmp27tve_hg/project",
+      "capabilities": [
+        "discover",
+        "execute",
+        "trusted-local"
+      ]
+    },
+    "semantic_twin_authority": false,
+    "semantic_materialization_role": "shared-source-view",
+    "substrate_composable": true
+  },
+  "execution_security": {
+    "revision": "rev:d059aa55a83060740306",
+    "provider": {
+      "provider_id": "executor:d68d8651cf34f1238822",
+      "kind": "local-process",
+      "execution_root": "/tmp/tmp27tve_hg/project",
+      "capabilities": [
+        "discover",
+        "execute",
+        "trusted-local"
+      ]
+    },
+    "containment_profile": "trusted-local",
+    "host_probe": {
+      "network_namespace_available": true,
+      "filesystem_confinement_available": false,
+      "full_sandbox_available": false,
+      "unshare": "/usr/bin/unshare",
+      "reason": "user+network namespace available",
+      "claim_boundary": "Network/user namespace availability is partial containment; filesystem isolation is not provided by this provider."
+    },
+    "bubblewrap_probe": {
+      "available": false,
+      "executable": null,
+      "filesystem_confinement": false,
+      "network_confinement": false,
+      "reason": "bubblewrap executable not found"
+    },
+    "full_sandbox": false,
+    "filesystem_restricted": false,
+    "network_restricted": false,
+    "claim_boundary": "full_sandbox is true only for a provider that advertises filesystem + network confinement after host probing; it is not a proof against kernel/runtime vulnerabilities."
+  },
+  "project": {
+    "files": 11,
+    "symbols": 9,
+    "files_view": [
+      {
+        "path": ".github/workflows/ci.yml",
+        "language": "yaml",
+        "size": 116
+      },
+      {
+        "path": "AGENTS.md",
+        "language": "markdown",
+        "size": 96
+      },
+      {
+        "path": "auth/claims.py",
+        "language": "python",
+        "size": 528
+      },
+      {
+        "path": "auth/subscription.py",
+        "language": "python",
+        "size": 84
+      },
+      {
+        "path": "billing/invoice.py",
+        "language": "python",
+        "size": 37
+      },
+      {
+        "path": "docker-compose.yml",
+        "language": "yaml",
+        "size": 171
+      },
+      {
+        "path": "migrations/001_users.sql",
+        "language": "binary",
+        "size": 89
+      },
+      {
+        "path": "openapi.json",
+        "language": "json",
+        "size": 207
+      },
+      {
+        "path": "package.json",
+        "language": "json",
+        "size": 171
+      },
+      {
+        "path": "tests/test_auth.py",
+        "language": "python",
+        "size": 344
+      },
+      {
+        "path": "ui/index.html",
+        "language": "html",
+        "size": 240
+      }
+    ]
+  },
+  "agents": [
+    {
+      "id": "agent:cb335013d409a0a0dd2f",
+      "name": "Verifier Agent",
+      "status": "active",
+      "created_at": "2026-08-07T16:15:56.274901+00:00",
+      "updated_at": "2026-08-07T16:15:56.274901+00:00",
+      "metadata": {
+        "role": "verifier",
+        "surface": "direct",
+        "task": "Prove the selected world"
+      },
+      "task": "Prove the selected world"
+    },
+    {
+      "id": "agent:9e64220982f129a88ba4",
+      "name": "Claude Code",
+      "status": "active",
+      "created_at": "2026-08-07T16:15:56.273666+00:00",
+      "updated_at": "2026-08-07T16:15:56.273666+00:00",
+      "metadata": {
+        "role": "skeptic",
+        "surface": "mcp",
+        "task": "Challenge the auth hypothesis"
+      },
+      "task": "Challenge the auth hypothesis"
+    },
+    {
+      "id": "agent:789369c93d2add87bfcc",
+      "name": "Codex",
+      "status": "active",
+      "created_at": "2026-08-07T16:15:56.272274+00:00",
+      "updated_at": "2026-08-07T16:15:56.272274+00:00",
+      "metadata": {
+        "role": "implementer",
+        "surface": "mcp",
+        "task": "Fix expired subscription permissions"
+      },
+      "task": "Fix expired subscription permissions"
+    }
+  ],
+  "episodes": [
+    {
+      "id": "episode:4e03ea04f8b6ca4e964f",
+      "task": "Fix expired subscription permissions during token refresh",
+      "context_handle": "ctx:bfe64102b0961ecf9f8c",
+      "base_revision": "rev:02a7c0bd5a806b88f0b9",
+      "backend_binding": "backend-binding:f5f69caa0787572c3615",
+      "compiler_fingerprint": "compiler-state:9b20cd7a27614792bc21",
+      "status": "active",
+      "created_at": "2026-08-07T16:15:56.283169+00:00",
+      "closed_at": null,
+      "outcome": {}
+    }
+  ],
+  "hypotheses": [
+    {
+      "id": "hypothesis:093ca25cd4f746c4f52b",
+      "episode_id": "episode:4e03ea04f8b6ca4e964f",
+      "task": "Fix expired subscription permissions during token refresh",
+      "statement": "claim builder elevates admin users even when the subscription is expired",
+      "status": "active",
+      "prior_confidence": 0.55,
+      "current_confidence": 0.55,
+      "base_revision": "rev:02a7c0bd5a806b88f0b9",
+      "created_at": "2026-08-07T16:15:56.308953+00:00",
+      "updated_at": "2026-08-07T16:15:56.308953+00:00"
+    },
+    {
+      "id": "hypothesis:636dcd88aa378ef0f7c9",
+      "episode_id": "episode:4e03ea04f8b6ca4e964f",
+      "task": "Fix expired subscription permissions during token refresh",
+      "statement": "subscription freshness is lost before refresh-token claim construction",
+      "status": "active",
+      "prior_confidence": 0.7,
+      "current_confidence": 0.7,
+      "base_revision": "rev:02a7c0bd5a806b88f0b9",
+      "created_at": "2026-08-07T16:15:56.304217+00:00",
+      "updated_at": "2026-08-07T16:15:56.304217+00:00"
+    }
+  ],
+  "epistemic": [
+    {
+      "id": "epistemic:3ef30bc17a738d84ad4e",
+      "kind": "unknown",
+      "statement": "whether the refresh path receives subscription state after revalidation",
+      "status": "open",
+      "confidence": null,
+      "scope": "workspace",
+      "agent_id": "agent:789369c93d2add87bfcc",
+      "episode_id": "episode:4e03ea04f8b6ca4e964f",
+      "base_revision": "rev:02a7c0bd5a806b88f0b9",
+      "created_at": "2026-08-07T16:15:56.313456+00:00",
+      "updated_at": "2026-08-07T16:15:56.313456+00:00",
+      "provenance": {},
+      "invalidation_conditions": []
+    }
+  ],
+  "evidence": [],
+  "runtime": [
+    {
+      "id": "rt_0fbc5946d7027f152b1b9d86",
+      "trace_id": null,
+      "span_id": null,
+      "parent_span_id": null,
+      "kind": "metric",
+      "name": "habitat.world.promoted",
+      "status": "observed",
+      "path": null,
+      "symbol_id": null,
+      "agent_id": "agent:cb335013d409a0a0dd2f",
+      "episode_id": "episode:4e03ea04f8b6ca4e964f",
+      "revision": "rev:d059aa55a83060740306",
+      "started_at": "2026-08-07T16:15:59.319007+00:00",
+      "duration_ms": null,
+      "source": "opentelemetry",
+      "attributes": {
+        "otel.metric.unit": "1",
+        "otel.metric.value": 1,
+        "service.name": "habitat"
+      }
+    },
+    {
+      "id": "rt_3899ea879f2f29e1dcbb05cc",
+      "trace_id": null,
+      "span_id": null,
+      "parent_span_id": null,
+      "kind": "log",
+      "name": "counterfactual WORLD B verifier passed",
+      "status": "INFO",
+      "path": "tests/test_auth.py",
+      "symbol_id": "sym:46f68082cc98b9ba70b6",
+      "agent_id": "agent:cb335013d409a0a0dd2f",
+      "episode_id": "episode:4e03ea04f8b6ca4e964f",
+      "revision": "rev:d059aa55a83060740306",
+      "started_at": "2026-08-07T16:15:59.317871+00:00",
+      "duration_ms": null,
+      "source": "opentelemetry",
+      "attributes": {
+        "code.file.path": "/tmp/tmp27tve_hg/project/tests/test_auth.py",
+        "code.line.number": 6,
+        "otel.body": "counterfactual WORLD B verifier passed",
+        "otel.severity": "INFO",
+        "service.name": "verifier"
+      }
+    },
+    {
+      "id": "rt_eb434609bb9c6b4ab089320b",
+      "trace_id": "trace-refresh",
+      "span_id": "cache",
+      "parent_span_id": "api",
+      "kind": "span",
+      "name": "GET entitlement cache",
+      "status": "observed",
+      "path": null,
+      "symbol_id": null,
+      "agent_id": "agent:789369c93d2add87bfcc",
+      "episode_id": "episode:4e03ea04f8b6ca4e964f",
+      "revision": "rev:02a7c0bd5a806b88f0b9",
+      "started_at": "2026-08-07T16:15:56.337049+00:00",
+      "duration_ms": 0.6,
+      "source": "opentelemetry",
+      "attributes": {
+        "db.name": "entitlements",
+        "db.system": "redis",
+        "service.name": "api"
+      }
+    },
+    {
+      "id": "rt_52d32b2bb33db9985070d3e6",
+      "trace_id": "trace-refresh",
+      "span_id": "db",
+      "parent_span_id": "api",
+      "kind": "span",
+      "name": "SELECT subscription",
+      "status": "observed",
+      "path": null,
+      "symbol_id": null,
+      "agent_id": "agent:789369c93d2add87bfcc",
+      "episode_id": "episode:4e03ea04f8b6ca4e964f",
+      "revision": "rev:02a7c0bd5a806b88f0b9",
+      "started_at": "2026-08-07T16:15:56.335761+00:00",
+      "duration_ms": 1.3,
+      "source": "opentelemetry",
+      "attributes": {
+        "db.name": "users",
+        "db.system": "postgresql",
+        "service.name": "api"
+      }
+    },
+    {
+      "id": "rt_9f36d9ef9667961588037572",
+      "trace_id": "trace-refresh",
+      "span_id": "api",
+      "parent_span_id": "web",
+      "kind": "span",
+      "name": "POST /token/refresh",
+      "status": "observed",
+      "path": "auth/claims.py",
+      "symbol_id": "sym:940853360262fd4fb4f7",
+      "agent_id": "agent:789369c93d2add87bfcc",
+      "episode_id": "episode:4e03ea04f8b6ca4e964f",
+      "revision": "rev:02a7c0bd5a806b88f0b9",
+      "started_at": "2026-08-07T16:15:56.327174+00:00",
+      "duration_ms": 5.8,
+      "source": "opentelemetry",
+      "attributes": {
+        "code.file.path": "/tmp/tmp27tve_hg/project/auth/claims.py",
+        "code.line.number": 12,
+        "http.route": "/token/refresh",
+        "service.name": "api"
+      }
+    },
+    {
+      "id": "rt_44e1935f28ea8df120948514",
+      "trace_id": "trace-refresh",
+      "span_id": "web",
+      "parent_span_id": null,
+      "kind": "span",
+      "name": "click refresh token",
+      "status": "observed",
+      "path": null,
+      "symbol_id": null,
+      "agent_id": "agent:789369c93d2add87bfcc",
+      "episode_id": "episode:4e03ea04f8b6ca4e964f",
+      "revision": "rev:02a7c0bd5a806b88f0b9",
+      "started_at": "2026-08-07T16:15:56.325689+00:00",
+      "duration_ms": 0.4,
+      "source": "opentelemetry",
+      "attributes": {
+        "http.route": "ui:/refresh",
+        "service.name": "web"
+      }
+    }
+  ],
+  "project_memory": [
+    {
+      "id": "memory:bedd1fa6ea412d282154",
+      "kind": "experiment",
+      "statement": "WORLD B promoted and targeted auth verifier passed",
+      "status": "active",
+      "scope": "agent",
+      "agent_id": "agent:cb335013d409a0a0dd2f",
+      "episode_id": "episode:4e03ea04f8b6ca4e964f",
+      "base_revision": "rev:d059aa55a83060740306",
+      "valid_until_revision": null,
+      "supersedes": null,
+      "invalidated_by": null,
+      "created_at": "2026-08-07T16:15:58.555740+00:00",
+      "updated_at": "2026-08-07T16:15:58.555740+00:00",
+      "provenance": {
+        "source": "counterfactual-verification"
+      },
+      "evidence_ids": [],
+      "confidence_annotation": 0.93,
+      "revision_drift": false
+    },
+    {
+      "id": "memory:3a7c973531065e5de0f0",
+      "kind": "decision",
+      "statement": "Prefer evidence-bearing counterfactual worlds before canonical auth mutation",
+      "status": "active",
+      "scope": "workspace",
+      "agent_id": null,
+      "episode_id": null,
+      "base_revision": "rev:02a7c0bd5a806b88f0b9",
+      "valid_until_revision": null,
+      "supersedes": null,
+      "invalidated_by": null,
+      "created_at": "2026-08-07T16:15:56.317343+00:00",
+      "updated_at": "2026-08-07T16:15:56.317343+00:00",
+      "provenance": {
+        "source": "alpha12-demo"
+      },
+      "evidence_ids": [],
+      "confidence_annotation": null,
+      "revision_drift": true
+    }
+  ],
+  "effects": [
+    {
+      "id": "eff:36e53416b37b8d01d866",
+      "path": "auth/claims.py",
+      "symbol_id": "sym:940853360262fd4fb4f7",
+      "kind": "reads",
+      "target": "user",
+      "line": 15,
+      "trust": "parser",
+      "evidence": "python-ast line 15",
+      "revision": "rev:d059aa55a83060740306",
+      "created_at": "2026-08-07T16:15:56.395774+00:00",
+      "metadata": {}
+    },
+    {
+      "id": "eff:b30e410238a0f07f9e02",
+      "path": "auth/claims.py",
+      "symbol_id": "sym:940853360262fd4fb4f7",
+      "kind": "reads",
+      "target": "build_claims",
+      "line": 15,
+      "trust": "parser",
+      "evidence": "python-ast line 15",
+      "revision": "rev:d059aa55a83060740306",
+      "created_at": "2026-08-07T16:15:56.395766+00:00",
+      "metadata": {}
+    },
+    {
+      "id": "eff:89ece9b34b0a21938ea5",
+      "path": "auth/claims.py",
+      "symbol_id": "sym:940853360262fd4fb4f7",
+      "kind": "returns",
+      "target": "build_claims(True, user)",
+      "line": 15,
+      "trust": "parser",
+      "evidence": "python-ast line 15",
+      "revision": "rev:d059aa55a83060740306",
+      "created_at": "2026-08-07T16:15:56.395757+00:00",
+      "metadata": {}
+    },
+    {
+      "id": "eff:5a235bec511aeb42b49f",
+      "path": "auth/claims.py",
+      "symbol_id": "sym:940853360262fd4fb4f7",
+      "kind": "reads",
+      "target": "user",
+      "line": 14,
+      "trust": "parser",
+      "evidence": "python-ast line 14",
+      "revision": "rev:d059aa55a83060740306",
+      "created_at": "2026-08-07T16:15:56.395746+00:00",
+      "metadata": {}
+    },
+    {
+      "id": "eff:d161d0564d0d2c2da547",
+      "path": "auth/claims.py",
+      "symbol_id": "sym:940853360262fd4fb4f7",
+      "kind": "reads",
+      "target": "build_claims",
+      "line": 14,
+      "trust": "parser",
+      "evidence": "python-ast line 14",
+      "revision": "rev:d059aa55a83060740306",
+      "created_at": "2026-08-07T16:15:56.395738+00:00",
+      "metadata": {}
+    },
+    {
+      "id": "eff:b47eba4c730dca34791e",
+      "path": "auth/claims.py",
+      "symbol_id": "sym:940853360262fd4fb4f7",
+      "kind": "returns",
+      "target": "build_claims(False, user)",
+      "line": 14,
+      "trust": "parser",
+      "evidence": "python-ast line 14",
+      "revision": "rev:d059aa55a83060740306",
+      "created_at": "2026-08-07T16:15:56.395728+00:00",
+      "metadata": {}
+    },
+    {
+      "id": "eff:38d8bd8d0beb5d2ae3a6",
+      "path": "auth/claims.py",
+      "symbol_id": "sym:940853360262fd4fb4f7",
+      "kind": "reads",
+      "target": "subscription_active",
+      "line": 13,
+      "trust": "parser",
+      "evidence": "python-ast line 13",
+      "revision": "rev:d059aa55a83060740306",
+      "created_at": "2026-08-07T16:15:56.395713+00:00",
+      "metadata": {}
+    },
+    {
+      "id": "eff:4c46606620cb85473139",
+      "path": "auth/claims.py",
+      "symbol_id": "sym:940853360262fd4fb4f7",
+      "kind": "reads",
+      "target": "bool",
+      "line": 12,
+      "trust": "parser",
+      "evidence": "python-ast line 12",
+      "revision": "rev:d059aa55a83060740306",
+      "created_at": "2026-08-07T16:15:56.395702+00:00",
+      "metadata": {}
+    },
+    {
+      "id": "eff:a493d6910ed6c2ef77fd",
+      "path": "auth/claims.py",
+      "symbol_id": "sym:a43b1f1f80fa06904c04",
+      "kind": "reads",
+      "target": "os",
+      "line": 10,
+      "trust": "parser",
+      "evidence": "python-ast line 10",
+      "revision": "rev:d059aa55a83060740306",
+      "created_at": "2026-08-07T16:15:56.395690+00:00",
+      "metadata": {}
+    },
+    {
+      "id": "eff:46cf8558152ac7480280",
+      "path": "auth/claims.py",
+      "symbol_id": "sym:a43b1f1f80fa06904c04",
+      "kind": "reads",
+      "target": "os.getenv",
+      "line": 10,
+      "trust": "parser",
+      "evidence": "python-ast line 10",
+      "revision": "rev:d059aa55a83060740306",
+      "created_at": "2026-08-07T16:15:56.395684+00:00",
+      "metadata": {}
+    },
+    {
+      "id": "eff:aca066372e413093214f",
+      "path": "auth/claims.py",
+      "symbol_id": "sym:a43b1f1f80fa06904c04",
+      "kind": "env-read",
+      "target": "os.getenv",
+      "line": 10,
+      "trust": "parser",
+      "evidence": "python-ast line 10",
+      "revision": "rev:d059aa55a83060740306",
+      "created_at": "2026-08-07T16:15:56.395676+00:00",
+      "metadata": {}
+    },
+    {
+      "id": "eff:fdf0c698e56808e25073",
+      "path": "auth/claims.py",
+      "symbol_id": "sym:a43b1f1f80fa06904c04",
+      "kind": "reads",
+      "target": "elevated",
+      "line": 10,
+      "trust": "parser",
+      "evidence": "python-ast line 10",
+      "revision": "rev:d059aa55a83060740306",
+      "created_at": "2026-08-07T16:15:56.395665+00:00",
+      "metadata": {}
+    },
+    {
+      "id": "eff:5f39452e3f17dd1fca8e",
+      "path": "auth/claims.py",
+      "symbol_id": "sym:a43b1f1f80fa06904c04",
+      "kind": "reads",
+      "target": "role",
+      "line": 10,
+      "trust": "parser",
+      "evidence": "python-ast line 10",
+      "revision": "rev:d059aa55a83060740306",
+      "created_at": "2026-08-07T16:15:56.395660+00:00",
+      "metadata": {}
+    },
+    {
+      "id": "eff:4a2aea59e8a8a6f06c07",
+      "path": "auth/claims.py",
+      "symbol_id": "sym:a43b1f1f80fa06904c04",
+      "kind": "reads",
+      "target": "email",
+      "line": 10,
+      "trust": "parser",
+      "evidence": "python-ast line 10",
+      "revision": "rev:d059aa55a83060740306",
+      "created_at": "2026-08-07T16:15:56.395654+00:00",
+      "metadata": {}
+    },
+    {
+      "id": "eff:35c37c964b32c2cda3ba",
+      "path": "auth/claims.py",
+      "symbol_id": "sym:a43b1f1f80fa06904c04",
+      "kind": "returns",
+      "target": "{'email': email, 'role': role, 'elevated': elevated, 'env': os.getenv('APP_ENV')}",
+      "line": 10,
+      "trust": "parser",
+      "evidence": "python-ast line 10",
+      "revision": "rev:d059aa55a83060740306",
+      "created_at": "2026-08-07T16:15:56.395639+00:00",
+      "metadata": {}
+    },
+    {
+      "id": "eff:2e6ddf22685c2b802e07",
+      "path": "auth/claims.py",
+      "symbol_id": "sym:a43b1f1f80fa06904c04",
+      "kind": "reads",
+      "target": "role",
+      "line": 9,
+      "trust": "parser",
+      "evidence": "python-ast line 9",
+      "revision": "rev:d059aa55a83060740306",
+      "created_at": "2026-08-07T16:15:56.395598+00:00",
+      "metadata": {}
+    },
+    {
+      "id": "eff:d68e7f27094b81aa043f",
+      "path": "auth/claims.py",
+      "symbol_id": "sym:a43b1f1f80fa06904c04",
+      "kind": "reads",
+      "target": "subscription_active",
+      "line": 9,
+      "trust": "parser",
+      "evidence": "python-ast line 9",
+      "revision": "rev:d059aa55a83060740306",
+      "created_at": "2026-08-07T16:15:56.395591+00:00",
+      "metadata": {}
+    },
+    {
+      "id": "eff:83dacb614f3a08ef22d9",
+      "path": "auth/claims.py",
+      "symbol_id": "sym:a43b1f1f80fa06904c04",
+      "kind": "reads",
+      "target": "bool",
+      "line": 9,
+      "trust": "parser",
+      "evidence": "python-ast line 9",
+      "revision": "rev:d059aa55a83060740306",
+      "created_at": "2026-08-07T16:15:56.395583+00:00",
+      "metadata": {}
+    },
+    {
+      "id": "eff:3e5e054801630e87110d",
+      "path": "auth/claims.py",
+      "symbol_id": "sym:a43b1f1f80fa06904c04",
+      "kind": "writes",
+      "target": "elevated",
+      "line": 9,
+      "trust": "parser",
+      "evidence": "python-ast line 9",
+      "revision": "rev:d059aa55a83060740306",
+      "created_at": "2026-08-07T16:15:56.395571+00:00",
+      "metadata": {}
+    },
+    {
+      "id": "eff:fbd53aed12e229b55cd3",
+      "path": "auth/claims.py",
+      "symbol_id": "sym:a43b1f1f80fa06904c04",
+      "kind": "reads",
+      "target": "user",
+      "line": 8,
+      "trust": "parser",
+      "evidence": "python-ast line 8",
+      "revision": "rev:d059aa55a83060740306",
+      "created_at": "2026-08-07T16:15:56.395556+00:00",
+      "metadata": {}
+    },
+    {
+      "id": "eff:f10a5a1f78613e3bc99a",
+      "path": "auth/claims.py",
+      "symbol_id": "sym:a43b1f1f80fa06904c04",
+      "kind": "reads",
+      "target": "user.is_admin",
+      "line": 8,
+      "trust": "parser",
+      "evidence": "python-ast line 8",
+      "revision": "rev:d059aa55a83060740306",
+      "created_at": "2026-08-07T16:15:56.395550+00:00",
+      "metadata": {}
+    },
+    {
+      "id": "eff:058787e7ff4a4e4b618d",
+      "path": "auth/claims.py",
+      "symbol_id": "sym:a43b1f1f80fa06904c04",
+      "kind": "writes",
+      "target": "role",
+      "line": 8,
+      "trust": "parser",
+      "evidence": "python-ast line 8",
+      "revision": "rev:d059aa55a83060740306",
+      "created_at": "2026-08-07T16:15:56.395541+00:00",
+      "metadata": {}
+    },
+    {
+      "id": "eff:b77a21f3ecc1b3b0a23e",
+      "path": "auth/claims.py",
+      "symbol_id": "sym:a43b1f1f80fa06904c04",
+      "kind": "reads",
+      "target": "user",
+      "line": 7,
+      "trust": "parser",
+      "evidence": "python-ast line 7",
+      "revision": "rev:d059aa55a83060740306",
+      "created_at": "2026-08-07T16:15:56.395532+00:00",
+      "metadata": {}
+    },
+    {
+      "id": "eff:3aeb6f5df0d78364c966",
+      "path": "auth/claims.py",
+      "symbol_id": "sym:a43b1f1f80fa06904c04",
+      "kind": "reads",
+      "target": "user.email",
+      "line": 7,
+      "trust": "parser",
+      "evidence": "python-ast line 7",
+      "revision": "rev:d059aa55a83060740306",
+      "created_at": "2026-08-07T16:15:56.395526+00:00",
+      "metadata": {}
+    },
+    {
+      "id": "eff:ff3c5d497742c3ef3283",
+      "path": "auth/claims.py",
+      "symbol_id": "sym:a43b1f1f80fa06904c04",
+      "kind": "reads",
+      "target": "normalize_email",
+      "line": 7,
+      "trust": "parser",
+      "evidence": "python-ast line 7",
+      "revision": "rev:d059aa55a83060740306",
+      "created_at": "2026-08-07T16:15:56.395519+00:00",
+      "metadata": {}
+    },
+    {
+      "id": "eff:7dc10e6a48a77a29f057",
+      "path": "auth/claims.py",
+      "symbol_id": "sym:a43b1f1f80fa06904c04",
+      "kind": "sanitizes",
+      "target": "normalize_email",
+      "line": 7,
+      "trust": "parser",
+      "evidence": "python-ast line 7",
+      "revision": "rev:d059aa55a83060740306",
+      "created_at": "2026-08-07T16:15:56.395513+00:00",
+      "metadata": {}
+    },
+    {
+      "id": "eff:df1ba5ff1a137204a5d2",
+      "path": "auth/claims.py",
+      "symbol_id": "sym:a43b1f1f80fa06904c04",
+      "kind": "writes",
+      "target": "email",
+      "line": 7,
+      "trust": "parser",
+      "evidence": "python-ast line 7",
+      "revision": "rev:d059aa55a83060740306",
+      "created_at": "2026-08-07T16:15:56.395499+00:00",
+      "metadata": {}
+    },
+    {
+      "id": "eff:e50ee02f1316a7c33969",
+      "path": "auth/claims.py",
+      "symbol_id": "sym:a43b1f1f80fa06904c04",
+      "kind": "reads",
+      "target": "bool",
+      "line": 6,
+      "trust": "parser",
+      "evidence": "python-ast line 6",
+      "revision": "rev:d059aa55a83060740306",
+      "created_at": "2026-08-07T16:15:56.395489+00:00",
+      "metadata": {}
+    },
+    {
+      "id": "eff:5095cc607c3b7b1e5997",
+      "path": "auth/claims.py",
+      "symbol_id": "sym:4936bd99141b04e64a8f",
+      "kind": "reads",
+      "target": "email",
+      "line": 4,
+      "trust": "parser",
+      "evidence": "python-ast line 4",
+      "revision": "rev:d059aa55a83060740306",
+      "created_at": "2026-08-07T16:15:56.395475+00:00",
+      "metadata": {}
+    },
+    {
+      "id": "eff:9d7d207f8e6596de33ad",
+      "path": "auth/claims.py",
+      "symbol_id": "sym:4936bd99141b04e64a8f",
+      "kind": "reads",
+      "target": "email.strip",
+      "line": 4,
+      "trust": "parser",
+      "evidence": "python-ast line 4",
+      "revision": "rev:d059aa55a83060740306",
+      "created_at": "2026-08-07T16:15:56.395468+00:00",
+      "metadata": {}
+    },
+    {
+      "id": "eff:3f5e6b512f07c794ce1e",
+      "path": "auth/claims.py",
+      "symbol_id": "sym:4936bd99141b04e64a8f",
+      "kind": "reads",
+      "target": "email.strip.lower",
+      "line": 4,
+      "trust": "parser",
+      "evidence": "python-ast line 4",
+      "revision": "rev:d059aa55a83060740306",
+      "created_at": "2026-08-07T16:15:56.395451+00:00",
+      "metadata": {}
+    },
+    {
+      "id": "eff:ccc20e0581f0729da19b",
+      "path": "auth/claims.py",
+      "symbol_id": "sym:4936bd99141b04e64a8f",
+      "kind": "returns",
+      "target": "email.strip().lower()",
+      "line": 4,
+      "trust": "parser",
+      "evidence": "python-ast line 4",
+      "revision": "rev:d059aa55a83060740306",
+      "created_at": "2026-08-07T16:15:56.395375+00:00",
+      "metadata": {}
+    },
+    {
+      "id": "eff:42697c7db3ac4f528f06",
+      "path": "tests/test_auth.py",
+      "symbol_id": null,
+      "kind": "reads",
+      "target": "unittest",
+      "line": 10,
+      "trust": "parser",
+      "evidence": "python-ast line 10",
+      "revision": "rev:02a7c0bd5a806b88f0b9",
+      "created_at": "2026-08-07T16:15:56.251622+00:00",
+      "metadata": {}
+    },
+    {
+      "id": "eff:ccfa57c8204c601af05e",
+      "path": "tests/test_auth.py",
+      "symbol_id": null,
+      "kind": "reads",
+      "target": "unittest.main",
+      "line": 10,
+      "trust": "parser",
+      "evidence": "python-ast line 10",
+      "revision": "rev:02a7c0bd5a806b88f0b9",
+      "created_at": "2026-08-07T16:15:56.251617+00:00",
+      "metadata": {}
+    },
+    {
+      "id": "eff:3e2aafcc51e57470f1f2",
+      "path": "tests/test_auth.py",
+      "symbol_id": null,
+      "kind": "reads",
+      "target": "__name__",
+      "line": 10,
+      "trust": "parser",
+      "evidence": "python-ast line 10",
+      "revision": "rev:02a7c0bd5a806b88f0b9",
+      "created_at": "2026-08-07T16:15:56.251603+00:00",
+      "metadata": {}
+    },
+    {
+      "id": "eff:60769726b76df31fbe59",
+      "path": "tests/test_auth.py",
+      "symbol_id": "sym:46f68082cc98b9ba70b6",
+      "kind": "reads",
+      "target": "user",
+      "line": 8,
+      "trust": "parser",
+      "evidence": "python-ast line 8",
+      "revision": "rev:02a7c0bd5a806b88f0b9",
+      "created_at": "2026-08-07T16:15:56.251588+00:00",
+      "metadata": {}
+    },
+    {
+      "id": "eff:d065f7a0eeddd973d005",
+      "path": "tests/test_auth.py",
+      "symbol_id": "sym:46f68082cc98b9ba70b6",
+      "kind": "reads",
+      "target": "refresh_token",
+      "line": 8,
+      "trust": "parser",
+      "evidence": "python-ast line 8",
+      "revision": "rev:02a7c0bd5a806b88f0b9",
+      "created_at": "2026-08-07T16:15:56.251579+00:00",
+      "metadata": {}
+    },
+    {
+      "id": "eff:5e88aa62f24ec951c140",
+      "path": "tests/test_auth.py",
+      "symbol_id": "sym:46f68082cc98b9ba70b6",
+      "kind": "reads",
+      "target": "self",
+      "line": 8,
+      "trust": "parser",
+      "evidence": "python-ast line 8",
+      "revision": "rev:02a7c0bd5a806b88f0b9",
+      "created_at": "2026-08-07T16:15:56.251566+00:00",
+      "metadata": {}
+    },
+    {
+      "id": "eff:e265de16f2692d0c1778",
+      "path": "tests/test_auth.py",
+      "symbol_id": "sym:46f68082cc98b9ba70b6",
+      "kind": "reads",
+      "target": "self.assertFalse",
+      "line": 8,
+      "trust": "parser",
+      "evidence": "python-ast line 8",
+      "revision": "rev:02a7c0bd5a806b88f0b9",
+      "created_at": "2026-08-07T16:15:56.251559+00:00",
+      "metadata": {}
+    },
+    {
+      "id": "eff:578ebe462cbc37f25858",
+      "path": "tests/test_auth.py",
+      "symbol_id": "sym:46f68082cc98b9ba70b6",
+      "kind": "reads",
+      "target": "SimpleNamespace",
+      "line": 7,
+      "trust": "parser",
+      "evidence": "python-ast line 7",
+      "revision": "rev:02a7c0bd5a806b88f0b9",
+      "created_at": "2026-08-07T16:15:56.251533+00:00",
+      "metadata": {}
+    },
+    {
+      "id": "eff:1b2907c529557d5f3032",
+      "path": "tests/test_auth.py",
+      "symbol_id": "sym:46f68082cc98b9ba70b6",
+      "kind": "writes",
+      "target": "user",
+      "line": 7,
+      "trust": "parser",
+      "evidence": "python-ast line 7",
+      "revision": "rev:02a7c0bd5a806b88f0b9",
+      "created_at": "2026-08-07T16:15:56.251517+00:00",
+      "metadata": {}
+    },
+    {
+      "id": "eff:b5e5bbf53453b3a4d61a",
+      "path": "tests/test_auth.py",
+      "symbol_id": "sym:aaf6c4558a5935cb1f4e",
+      "kind": "reads",
+      "target": "unittest",
+      "line": 5,
+      "trust": "parser",
+      "evidence": "python-ast line 5",
+      "revision": "rev:02a7c0bd5a806b88f0b9",
+      "created_at": "2026-08-07T16:15:56.251502+00:00",
+      "metadata": {}
+    },
+    {
+      "id": "eff:ca88ab27eaf2e14f8a6b",
+      "path": "tests/test_auth.py",
+      "symbol_id": "sym:aaf6c4558a5935cb1f4e",
+      "kind": "reads",
+      "target": "unittest.TestCase",
+      "line": 5,
+      "trust": "parser",
+      "evidence": "python-ast line 5",
+      "revision": "rev:02a7c0bd5a806b88f0b9",
+      "created_at": "2026-08-07T16:15:56.251490+00:00",
+      "metadata": {}
+    },
+    {
+      "id": "eff:c03548d1371246664fde",
+      "path": "billing/invoice.py",
+      "symbol_id": "sym:6db568769628b4eee33f",
+      "kind": "reads",
+      "target": "amount",
+      "line": 2,
+      "trust": "parser",
+      "evidence": "python-ast line 2",
+      "revision": "rev:02a7c0bd5a806b88f0b9",
+      "created_at": "2026-08-07T16:15:56.250359+00:00",
+      "metadata": {}
+    },
+    {
+      "id": "eff:d3e96d67d551c4607fb2",
+      "path": "billing/invoice.py",
+      "symbol_id": "sym:6db568769628b4eee33f",
+      "kind": "returns",
+      "target": "amount",
+      "line": 2,
+      "trust": "parser",
+      "evidence": "python-ast line 2",
+      "revision": "rev:02a7c0bd5a806b88f0b9",
+      "created_at": "2026-08-07T16:15:56.250346+00:00",
+      "metadata": {}
+    },
+    {
+      "id": "eff:d970802c19907068f745",
+      "path": "auth/subscription.py",
+      "symbol_id": "sym:a83a606d6585c90c599a",
+      "kind": "reads",
+      "target": "bool",
+      "line": 1,
+      "trust": "parser",
+      "evidence": "python-ast line 1",
+      "revision": "rev:02a7c0bd5a806b88f0b9",
+      "created_at": "2026-08-07T16:15:56.249378+00:00",
+      "metadata": {}
+    },
+    {
+      "id": "eff:7af938d54cf156fa8ffb",
+      "path": "auth/subscription.py",
+      "symbol_id": "sym:a83a606d6585c90c599a",
+      "kind": "reads",
+      "target": "state",
+      "line": 2,
+      "trust": "parser",
+      "evidence": "python-ast line 2",
+      "revision": "rev:02a7c0bd5a806b88f0b9",
+      "created_at": "2026-08-07T16:15:56.249364+00:00",
+      "metadata": {}
+    },
+    {
+      "id": "eff:3e9954427552c4f3f1f1",
+      "path": "auth/subscription.py",
+      "symbol_id": "sym:a83a606d6585c90c599a",
+      "kind": "returns",
+      "target": "state not in {'expired', 'cancelled'}",
+      "line": 2,
+      "trust": "parser",
+      "evidence": "python-ast line 2",
+      "revision": "rev:02a7c0bd5a806b88f0b9",
+      "created_at": "2026-08-07T16:15:56.249355+00:00",
+      "metadata": {}
+    },
+    {
+      "id": "eff:96b8b697ab27087d17ad",
+      "path": "auth/subscription.py",
+      "symbol_id": "sym:a83a606d6585c90c599a",
+      "kind": "reads",
+      "target": "str",
+      "line": 1,
+      "trust": "parser",
+      "evidence": "python-ast line 1",
+      "revision": "rev:02a7c0bd5a806b88f0b9",
+      "created_at": "2026-08-07T16:15:56.249299+00:00",
+      "metadata": {}
+    }
+  ],
+  "dataflows": [
+    {
+      "id": "flow:32be8f6786119b79cbf6",
+      "path": "auth/claims.py",
+      "symbol_id": "sym:940853360262fd4fb4f7",
+      "kind": "argument-to-call",
+      "source": "user",
+      "target": "build_claims",
+      "line": 15,
+      "trust": "parser",
+      "evidence": "python-ast flow line 15",
+      "revision": "rev:d059aa55a83060740306",
+      "created_at": "2026-08-07T16:15:56.397264+00:00",
+      "metadata": {
+        "call": "build_claims"
+      }
+    },
+    {
+      "id": "flow:f49ee1a7be9e00b7753e",
+      "path": "auth/claims.py",
+      "symbol_id": "sym:940853360262fd4fb4f7",
+      "kind": "argument-to-call",
+      "source": "True",
+      "target": "build_claims",
+      "line": 15,
+      "trust": "parser",
+      "evidence": "python-ast flow line 15",
+      "revision": "rev:d059aa55a83060740306",
+      "created_at": "2026-08-07T16:15:56.397253+00:00",
+      "metadata": {
+        "call": "build_claims"
+      }
+    },
+    {
+      "id": "flow:278674dfc04f7d5f9d52",
+      "path": "auth/claims.py",
+      "symbol_id": "sym:940853360262fd4fb4f7",
+      "kind": "return-flow",
+      "source": "user",
+      "target": "<return>",
+      "line": 15,
+      "trust": "parser",
+      "evidence": "python-ast flow line 15",
+      "revision": "rev:d059aa55a83060740306",
+      "created_at": "2026-08-07T16:15:56.397240+00:00",
+      "metadata": {}
+    },
+    {
+      "id": "flow:d3ac4764397f4b5b32f5",
+      "path": "auth/claims.py",
+      "symbol_id": "sym:940853360262fd4fb4f7",
+      "kind": "return-flow",
+      "source": "True",
+      "target": "<return>",
+      "line": 15,
+      "trust": "parser",
+      "evidence": "python-ast flow line 15",
+      "revision": "rev:d059aa55a83060740306",
+      "created_at": "2026-08-07T16:15:56.397235+00:00",
+      "metadata": {}
+    },
+    {
+      "id": "flow:be4f3dcd1069b5d262f4",
+      "path": "auth/claims.py",
+      "symbol_id": "sym:940853360262fd4fb4f7",
+      "kind": "return-flow",
+      "source": "build_claims",
+      "target": "<return>",
+      "line": 15,
+      "trust": "parser",
+      "evidence": "python-ast flow line 15",
+      "revision": "rev:d059aa55a83060740306",
+      "created_at": "2026-08-07T16:15:56.397231+00:00",
+      "metadata": {}
+    },
+    {
+      "id": "flow:818faf512aaeffde911d",
+      "path": "auth/claims.py",
+      "symbol_id": "sym:940853360262fd4fb4f7",
+      "kind": "argument-to-call",
+      "source": "user",
+      "target": "build_claims",
+      "line": 14,
+      "trust": "parser",
+      "evidence": "python-ast flow line 14",
+      "revision": "rev:d059aa55a83060740306",
+      "created_at": "2026-08-07T16:15:56.397211+00:00",
+      "metadata": {
+        "call": "build_claims"
+      }
+    },
+    {
+      "id": "flow:0efb047d0f28c31fc883",
+      "path": "auth/claims.py",
+      "symbol_id": "sym:940853360262fd4fb4f7",
+      "kind": "argument-to-call",
+      "source": "False",
+      "target": "build_claims",
+      "line": 14,
+      "trust": "parser",
+      "evidence": "python-ast flow line 14",
+      "revision": "rev:d059aa55a83060740306",
+      "created_at": "2026-08-07T16:15:56.397200+00:00",
+      "metadata": {
+        "call": "build_claims"
+      }
+    },
+    {
+      "id": "flow:6c658e0721d4704e2c07",
+      "path": "auth/claims.py",
+      "symbol_id": "sym:940853360262fd4fb4f7",
+      "kind": "return-flow",
+      "source": "user",
+      "target": "<return>",
+      "line": 14,
+      "trust": "parser",
+      "evidence": "python-ast flow line 14",
+      "revision": "rev:d059aa55a83060740306",
+      "created_at": "2026-08-07T16:15:56.397186+00:00",
+      "metadata": {}
+    },
+    {
+      "id": "flow:e2e4d61dcabe9fd7f3b9",
+      "path": "auth/claims.py",
+      "symbol_id": "sym:940853360262fd4fb4f7",
+      "kind": "return-flow",
+      "source": "False",
+      "target": "<return>",
+      "line": 14,
+      "trust": "parser",
+      "evidence": "python-ast flow line 14",
+      "revision": "rev:d059aa55a83060740306",
+      "created_at": "2026-08-07T16:15:56.397182+00:00",
+      "metadata": {}
+    },
+    {
+      "id": "flow:963f5a905d4d7c502da3",
+      "path": "auth/claims.py",
+      "symbol_id": "sym:940853360262fd4fb4f7",
+      "kind": "return-flow",
+      "source": "build_claims",
+      "target": "<return>",
+      "line": 14,
+      "trust": "parser",
+      "evidence": "python-ast flow line 14",
+      "revision": "rev:d059aa55a83060740306",
+      "created_at": "2026-08-07T16:15:56.397178+00:00",
+      "metadata": {}
+    },
+    {
+      "id": "flow:8319c38d26e109ba18a3",
+      "path": "auth/claims.py",
+      "symbol_id": "sym:940853360262fd4fb4f7",
+      "kind": "condition-flow",
+      "source": "subscription_active",
+      "target": "<branch>",
+      "line": 13,
+      "trust": "parser",
+      "evidence": "python-ast flow line 13",
+      "revision": "rev:d059aa55a83060740306",
+      "created_at": "2026-08-07T16:15:56.397162+00:00",
+      "metadata": {}
+    },
+    {
+      "id": "flow:ca1871dcf79929d7334f",
+      "path": "auth/claims.py",
+      "symbol_id": "sym:a43b1f1f80fa06904c04",
+      "kind": "argument-to-call",
+      "source": "'APP_ENV'",
+      "target": "os.getenv",
+      "line": 10,
+      "trust": "parser",
+      "evidence": "python-ast flow line 10",
+      "revision": "rev:d059aa55a83060740306",
+      "created_at": "2026-08-07T16:15:56.397136+00:00",
+      "metadata": {
+        "call": "os.getenv"
+      }
+    },
+    {
+      "id": "flow:207332179ec43f240293",
+      "path": "auth/claims.py",
+      "symbol_id": "sym:a43b1f1f80fa06904c04",
+      "kind": "return-flow",
+      "source": "'APP_ENV'",
+      "target": "<return>",
+      "line": 10,
+      "trust": "parser",
+      "evidence": "python-ast flow line 10",
+      "revision": "rev:d059aa55a83060740306",
+      "created_at": "2026-08-07T16:15:56.397113+00:00",
+      "metadata": {}
+    },
+    {
+      "id": "flow:833dd26cc7ef45882b15",
+      "path": "auth/claims.py",
+      "symbol_id": "sym:a43b1f1f80fa06904c04",
+      "kind": "return-flow",
+      "source": "os.getenv",
+      "target": "<return>",
+      "line": 10,
+      "trust": "parser",
+      "evidence": "python-ast flow line 10",
+      "revision": "rev:d059aa55a83060740306",
+      "created_at": "2026-08-07T16:15:56.397109+00:00",
+      "metadata": {}
+    },
+    {
+      "id": "flow:7bad2d0fde3816169163",
+      "path": "auth/claims.py",
+      "symbol_id": "sym:a43b1f1f80fa06904c04",
+      "kind": "return-flow",
+      "source": "elevated",
+      "target": "<return>",
+      "line": 10,
+      "trust": "parser",
+      "evidence": "python-ast flow line 10",
+      "revision": "rev:d059aa55a83060740306",
+      "created_at": "2026-08-07T16:15:56.397106+00:00",
+      "metadata": {}
+    },
+    {
+      "id": "flow:c2df4c955fcbf27e4d43",
+      "path": "auth/claims.py",
+      "symbol_id": "sym:a43b1f1f80fa06904c04",
+      "kind": "return-flow",
+      "source": "role",
+      "target": "<return>",
+      "line": 10,
+      "trust": "parser",
+      "evidence": "python-ast flow line 10",
+      "revision": "rev:d059aa55a83060740306",
+      "created_at": "2026-08-07T16:15:56.397102+00:00",
+      "metadata": {}
+    },
+    {
+      "id": "flow:61285adb2468bdf5f4f1",
+      "path": "auth/claims.py",
+      "symbol_id": "sym:a43b1f1f80fa06904c04",
+      "kind": "return-flow",
+      "source": "email",
+      "target": "<return>",
+      "line": 10,
+      "trust": "parser",
+      "evidence": "python-ast flow line 10",
+      "revision": "rev:d059aa55a83060740306",
+      "created_at": "2026-08-07T16:15:56.397098+00:00",
+      "metadata": {}
+    },
+    {
+      "id": "flow:e880b3c942db80e1f2cc",
+      "path": "auth/claims.py",
+      "symbol_id": "sym:a43b1f1f80fa06904c04",
+      "kind": "return-flow",
+      "source": "'env'",
+      "target": "<return>",
+      "line": 10,
+      "trust": "parser",
+      "evidence": "python-ast flow line 10",
+      "revision": "rev:d059aa55a83060740306",
+      "created_at": "2026-08-07T16:15:56.397093+00:00",
+      "metadata": {}
+    },
+    {
+      "id": "flow:00e55dd59ac11f2ba4bb",
+      "path": "auth/claims.py",
+      "symbol_id": "sym:a43b1f1f80fa06904c04",
+      "kind": "return-flow",
+      "source": "'elevated'",
+      "target": "<return>",
+      "line": 10,
+      "trust": "parser",
+      "evidence": "python-ast flow line 10",
+      "revision": "rev:d059aa55a83060740306",
+      "created_at": "2026-08-07T16:15:56.397088+00:00",
+      "metadata": {}
+    },
+    {
+      "id": "flow:ee0a4a7f79a134c8d0d7",
+      "path": "auth/claims.py",
+      "symbol_id": "sym:a43b1f1f80fa06904c04",
+      "kind": "return-flow",
+      "source": "'role'",
+      "target": "<return>",
+      "line": 10,
+      "trust": "parser",
+      "evidence": "python-ast flow line 10",
+      "revision": "rev:d059aa55a83060740306",
+      "created_at": "2026-08-07T16:15:56.397084+00:00",
+      "metadata": {}
+    },
+    {
+      "id": "flow:c06d0a37c69c90d33cad",
+      "path": "auth/claims.py",
+      "symbol_id": "sym:a43b1f1f80fa06904c04",
+      "kind": "return-flow",
+      "source": "'email'",
+      "target": "<return>",
+      "line": 10,
+      "trust": "parser",
+      "evidence": "python-ast flow line 10",
+      "revision": "rev:d059aa55a83060740306",
+      "created_at": "2026-08-07T16:15:56.397080+00:00",
+      "metadata": {}
+    },
+    {
+      "id": "flow:42266af3c54006a137ca",
+      "path": "auth/claims.py",
+      "symbol_id": "sym:a43b1f1f80fa06904c04",
+      "kind": "assigns",
+      "source": "'admin'",
+      "target": "elevated",
+      "line": 9,
+      "trust": "parser",
+      "evidence": "python-ast flow line 9",
+      "revision": "rev:d059aa55a83060740306",
+      "created_at": "2026-08-07T16:15:56.397027+00:00",
+      "metadata": {}
+    },
+    {
+      "id": "flow:39700471400db8ff93cf",
+      "path": "auth/claims.py",
+      "symbol_id": "sym:a43b1f1f80fa06904c04",
+      "kind": "assigns",
+      "source": "role",
+      "target": "elevated",
+      "line": 9,
+      "trust": "parser",
+      "evidence": "python-ast flow line 9",
+      "revision": "rev:d059aa55a83060740306",
+      "created_at": "2026-08-07T16:15:56.397022+00:00",
+      "metadata": {}
+    },
+    {
+      "id": "flow:f7ecb68a21073d670ea2",
+      "path": "auth/claims.py",
+      "symbol_id": "sym:a43b1f1f80fa06904c04",
+      "kind": "assigns",
+      "source": "subscription_active",
+      "target": "elevated",
+      "line": 9,
+      "trust": "parser",
+      "evidence": "python-ast flow line 9",
+      "revision": "rev:d059aa55a83060740306",
+      "created_at": "2026-08-07T16:15:56.397018+00:00",
+      "metadata": {}
+    },
+    {
+      "id": "flow:85243e40e472db8ad0fb",
+      "path": "auth/claims.py",
+      "symbol_id": "sym:a43b1f1f80fa06904c04",
+      "kind": "assigns",
+      "source": "bool",
+      "target": "elevated",
+      "line": 9,
+      "trust": "parser",
+      "evidence": "python-ast flow line 9",
+      "revision": "rev:d059aa55a83060740306",
+      "created_at": "2026-08-07T16:15:56.397013+00:00",
+      "metadata": {}
+    },
+    {
+      "id": "flow:dd99e5628333036b6197",
+      "path": "auth/claims.py",
+      "symbol_id": "sym:a43b1f1f80fa06904c04",
+      "kind": "call-result",
+      "source": "bool",
+      "target": "elevated",
+      "line": 9,
+      "trust": "parser",
+      "evidence": "python-ast flow line 9",
+      "revision": "rev:d059aa55a83060740306",
+      "created_at": "2026-08-07T16:15:56.396987+00:00",
+      "metadata": {
+        "call": "bool"
+      }
+    },
+    {
+      "id": "flow:b9b7da87eb5addda6578",
+      "path": "auth/claims.py",
+      "symbol_id": "sym:a43b1f1f80fa06904c04",
+      "kind": "argument-to-call",
+      "source": "'admin'",
+      "target": "bool",
+      "line": 9,
+      "trust": "parser",
+      "evidence": "python-ast flow line 9",
+      "revision": "rev:d059aa55a83060740306",
+      "created_at": "2026-08-07T16:15:56.396983+00:00",
+      "metadata": {
+        "call": "bool"
+      }
+    },
+    {
+      "id": "flow:00af5dfb156a6f65d2b7",
+      "path": "auth/claims.py",
+      "symbol_id": "sym:a43b1f1f80fa06904c04",
+      "kind": "argument-to-call",
+      "source": "role",
+      "target": "bool",
+      "line": 9,
+      "trust": "parser",
+      "evidence": "python-ast flow line 9",
+      "revision": "rev:d059aa55a83060740306",
+      "created_at": "2026-08-07T16:15:56.396978+00:00",
+      "metadata": {
+        "call": "bool"
+      }
+    },
+    {
+      "id": "flow:1b2be0ffccc1384d012a",
+      "path": "auth/claims.py",
+      "symbol_id": "sym:a43b1f1f80fa06904c04",
+      "kind": "argument-to-call",
+      "source": "subscription_active",
+      "target": "bool",
+      "line": 9,
+      "trust": "parser",
+      "evidence": "python-ast flow line 9",
+      "revision": "rev:d059aa55a83060740306",
+      "created_at": "2026-08-07T16:15:56.396974+00:00",
+      "metadata": {
+        "call": "bool"
+      }
+    },
+    {
+      "id": "flow:d996348dac0c5a9c857a",
+      "path": "auth/claims.py",
+      "symbol_id": "sym:a43b1f1f80fa06904c04",
+      "kind": "assigns",
+      "source": "'user'",
+      "target": "role",
+      "line": 8,
+      "trust": "parser",
+      "evidence": "python-ast flow line 8",
+      "revision": "rev:d059aa55a83060740306",
+      "created_at": "2026-08-07T16:15:56.396942+00:00",
+      "metadata": {}
+    },
+    {
+      "id": "flow:c1625e408a29c6d63a65",
+      "path": "auth/claims.py",
+      "symbol_id": "sym:a43b1f1f80fa06904c04",
+      "kind": "assigns",
+      "source": "'admin'",
+      "target": "role",
+      "line": 8,
+      "trust": "parser",
+      "evidence": "python-ast flow line 8",
+      "revision": "rev:d059aa55a83060740306",
+      "created_at": "2026-08-07T16:15:56.396938+00:00",
+      "metadata": {}
+    },
+    {
+      "id": "flow:a3005e30004fea4b7d32",
+      "path": "auth/claims.py",
+      "symbol_id": "sym:a43b1f1f80fa06904c04",
+      "kind": "assigns",
+      "source": "user.is_admin",
+      "target": "role",
+      "line": 8,
+      "trust": "parser",
+      "evidence": "python-ast flow line 8",
+      "revision": "rev:d059aa55a83060740306",
+      "created_at": "2026-08-07T16:15:56.396934+00:00",
+      "metadata": {}
+    },
+    {
+      "id": "flow:9813aff527300bd2fccb",
+      "path": "auth/claims.py",
+      "symbol_id": "sym:a43b1f1f80fa06904c04",
+      "kind": "assigns",
+      "source": "user.email",
+      "target": "email",
+      "line": 7,
+      "trust": "parser",
+      "evidence": "python-ast flow line 7",
+      "revision": "rev:d059aa55a83060740306",
+      "created_at": "2026-08-07T16:15:56.396894+00:00",
+      "metadata": {}
+    },
+    {
+      "id": "flow:d0a4269891ffc238154d",
+      "path": "auth/claims.py",
+      "symbol_id": "sym:a43b1f1f80fa06904c04",
+      "kind": "assigns",
+      "source": "normalize_email",
+      "target": "email",
+      "line": 7,
+      "trust": "parser",
+      "evidence": "python-ast flow line 7",
+      "revision": "rev:d059aa55a83060740306",
+      "created_at": "2026-08-07T16:15:56.396888+00:00",
+      "metadata": {}
+    },
+    {
+      "id": "flow:ac9563b2629ab686a56b",
+      "path": "auth/claims.py",
+      "symbol_id": "sym:a43b1f1f80fa06904c04",
+      "kind": "call-result",
+      "source": "normalize_email",
+      "target": "email",
+      "line": 7,
+      "trust": "parser",
+      "evidence": "python-ast flow line 7",
+      "revision": "rev:d059aa55a83060740306",
+      "created_at": "2026-08-07T16:15:56.396867+00:00",
+      "metadata": {
+        "call": "normalize_email"
+      }
+    },
+    {
+      "id": "flow:76b7fb1643170cac2835",
+      "path": "auth/claims.py",
+      "symbol_id": "sym:a43b1f1f80fa06904c04",
+      "kind": "argument-to-call",
+      "source": "user.email",
+      "target": "normalize_email",
+      "line": 7,
+      "trust": "parser",
+      "evidence": "python-ast flow line 7",
+      "revision": "rev:d059aa55a83060740306",
+      "created_at": "2026-08-07T16:15:56.396861+00:00",
+      "metadata": {
+        "call": "normalize_email"
+      }
+    },
+    {
+      "id": "flow:4b7229127542005c141f",
+      "path": "auth/claims.py",
+      "symbol_id": "sym:4936bd99141b04e64a8f",
+      "kind": "return-flow",
+      "source": "email.strip().lower",
+      "target": "<return>",
+      "line": 4,
+      "trust": "parser",
+      "evidence": "python-ast flow line 4",
+      "revision": "rev:d059aa55a83060740306",
+      "created_at": "2026-08-07T16:15:56.396796+00:00",
+      "metadata": {}
+    },
+    {
+      "id": "flow:fac1afa3535802e2e1d9",
+      "path": "tests/test_auth.py",
+      "symbol_id": null,
+      "kind": "condition-flow",
+      "source": "'__main__'",
+      "target": "<branch>",
+      "line": 10,
+      "trust": "parser",
+      "evidence": "python-ast flow line 10",
+      "revision": "rev:02a7c0bd5a806b88f0b9",
+      "created_at": "2026-08-07T16:15:56.257452+00:00",
+      "metadata": {}
+    },
+    {
+      "id": "flow:25d4d0ae50a9693cf89e",
+      "path": "tests/test_auth.py",
+      "symbol_id": null,
+      "kind": "condition-flow",
+      "source": "__name__",
+      "target": "<branch>",
+      "line": 10,
+      "trust": "parser",
+      "evidence": "python-ast flow line 10",
+      "revision": "rev:02a7c0bd5a806b88f0b9",
+      "created_at": "2026-08-07T16:15:56.257447+00:00",
+      "metadata": {}
+    },
+    {
+      "id": "flow:b513e7bf022951f14017",
+      "path": "tests/test_auth.py",
+      "symbol_id": "sym:46f68082cc98b9ba70b6",
+      "kind": "argument-to-call",
+      "source": "user",
+      "target": "refresh_token",
+      "line": 8,
+      "trust": "parser",
+      "evidence": "python-ast flow line 8",
+      "revision": "rev:02a7c0bd5a806b88f0b9",
+      "created_at": "2026-08-07T16:15:56.257422+00:00",
+      "metadata": {
+        "call": "refresh_token"
+      }
+    },
+    {
+      "id": "flow:b1a6a3de9e1ab151794f",
+      "path": "tests/test_auth.py",
+      "symbol_id": "sym:46f68082cc98b9ba70b6",
+      "kind": "argument-to-call",
+      "source": "False",
+      "target": "refresh_token",
+      "line": 8,
+      "trust": "parser",
+      "evidence": "python-ast flow line 8",
+      "revision": "rev:02a7c0bd5a806b88f0b9",
+      "created_at": "2026-08-07T16:15:56.257412+00:00",
+      "metadata": {
+        "call": "refresh_token"
+      }
+    },
+    {
+      "id": "flow:b160cfc7a89078c414e3",
+      "path": "tests/test_auth.py",
+      "symbol_id": "sym:46f68082cc98b9ba70b6",
+      "kind": "argument-to-call",
+      "source": "'elevated'",
+      "target": "self.assertFalse",
+      "line": 8,
+      "trust": "parser",
+      "evidence": "python-ast flow line 8",
+      "revision": "rev:02a7c0bd5a806b88f0b9",
+      "created_at": "2026-08-07T16:15:56.257396+00:00",
+      "metadata": {
+        "call": "self.assertFalse"
+      }
+    },
+    {
+      "id": "flow:2acdcf95c615dd7e541a",
+      "path": "tests/test_auth.py",
+      "symbol_id": "sym:46f68082cc98b9ba70b6",
+      "kind": "argument-to-call",
+      "source": "user",
+      "target": "self.assertFalse",
+      "line": 8,
+      "trust": "parser",
+      "evidence": "python-ast flow line 8",
+      "revision": "rev:02a7c0bd5a806b88f0b9",
+      "created_at": "2026-08-07T16:15:56.257392+00:00",
+      "metadata": {
+        "call": "self.assertFalse"
+      }
+    },
+    {
+      "id": "flow:3c889c8fe7082e1589e5",
+      "path": "tests/test_auth.py",
+      "symbol_id": "sym:46f68082cc98b9ba70b6",
+      "kind": "argument-to-call",
+      "source": "False",
+      "target": "self.assertFalse",
+      "line": 8,
+      "trust": "parser",
+      "evidence": "python-ast flow line 8",
+      "revision": "rev:02a7c0bd5a806b88f0b9",
+      "created_at": "2026-08-07T16:15:56.257388+00:00",
+      "metadata": {
+        "call": "self.assertFalse"
+      }
+    },
+    {
+      "id": "flow:be1c895b27e4ac9c2e18",
+      "path": "tests/test_auth.py",
+      "symbol_id": "sym:46f68082cc98b9ba70b6",
+      "kind": "argument-to-call",
+      "source": "refresh_token",
+      "target": "self.assertFalse",
+      "line": 8,
+      "trust": "parser",
+      "evidence": "python-ast flow line 8",
+      "revision": "rev:02a7c0bd5a806b88f0b9",
+      "created_at": "2026-08-07T16:15:56.257383+00:00",
+      "metadata": {
+        "call": "self.assertFalse"
+      }
+    },
+    {
+      "id": "flow:5eafccfcd748b5f1dfe6",
+      "path": "tests/test_auth.py",
+      "symbol_id": "sym:46f68082cc98b9ba70b6",
+      "kind": "assigns",
+      "source": "True",
+      "target": "user",
+      "line": 7,
+      "trust": "parser",
+      "evidence": "python-ast flow line 7",
+      "revision": "rev:02a7c0bd5a806b88f0b9",
+      "created_at": "2026-08-07T16:15:56.257329+00:00",
+      "metadata": {}
+    },
+    {
+      "id": "flow:b4aa49ecee16c137cc35",
+      "path": "tests/test_auth.py",
+      "symbol_id": "sym:46f68082cc98b9ba70b6",
+      "kind": "assigns",
+      "source": "'Admin@Example.com'",
+      "target": "user",
+      "line": 7,
+      "trust": "parser",
+      "evidence": "python-ast flow line 7",
+      "revision": "rev:02a7c0bd5a806b88f0b9",
+      "created_at": "2026-08-07T16:15:56.257324+00:00",
+      "metadata": {}
+    },
+    {
+      "id": "flow:9e9d8d7cd673b8e3caab",
+      "path": "tests/test_auth.py",
+      "symbol_id": "sym:46f68082cc98b9ba70b6",
+      "kind": "assigns",
+      "source": "SimpleNamespace",
+      "target": "user",
+      "line": 7,
+      "trust": "parser",
+      "evidence": "python-ast flow line 7",
+      "revision": "rev:02a7c0bd5a806b88f0b9",
+      "created_at": "2026-08-07T16:15:56.257319+00:00",
+      "metadata": {}
+    },
+    {
+      "id": "flow:f9cc5d9ff4fbd052f108",
+      "path": "tests/test_auth.py",
+      "symbol_id": "sym:46f68082cc98b9ba70b6",
+      "kind": "call-result",
+      "source": "SimpleNamespace",
+      "target": "user",
+      "line": 7,
+      "trust": "parser",
+      "evidence": "python-ast flow line 7",
+      "revision": "rev:02a7c0bd5a806b88f0b9",
+      "created_at": "2026-08-07T16:15:56.257299+00:00",
+      "metadata": {
+        "call": "SimpleNamespace"
+      }
+    },
+    {
+      "id": "flow:6c77259957479926abba",
+      "path": "tests/test_auth.py",
+      "symbol_id": "sym:46f68082cc98b9ba70b6",
+      "kind": "argument-to-call",
+      "source": "True",
+      "target": "SimpleNamespace",
+      "line": 7,
+      "trust": "parser",
+      "evidence": "python-ast flow line 7",
+      "revision": "rev:02a7c0bd5a806b88f0b9",
+      "created_at": "2026-08-07T16:15:56.257293+00:00",
+      "metadata": {
+        "call": "SimpleNamespace"
+      }
+    },
+    {
+      "id": "flow:ddeebaf024bc73094194",
+      "path": "tests/test_auth.py",
+      "symbol_id": "sym:46f68082cc98b9ba70b6",
+      "kind": "argument-to-call",
+      "source": "'Admin@Example.com'",
+      "target": "SimpleNamespace",
+      "line": 7,
+      "trust": "parser",
+      "evidence": "python-ast flow line 7",
+      "revision": "rev:02a7c0bd5a806b88f0b9",
+      "created_at": "2026-08-07T16:15:56.257270+00:00",
+      "metadata": {
+        "call": "SimpleNamespace"
+      }
+    },
+    {
+      "id": "flow:ae1d72cfc37f8d820dc9",
+      "path": "billing/invoice.py",
+      "symbol_id": "sym:6db568769628b4eee33f",
+      "kind": "return-flow",
+      "source": "amount",
+      "target": "<return>",
+      "line": 2,
+      "trust": "parser",
+      "evidence": "python-ast flow line 2",
+      "revision": "rev:02a7c0bd5a806b88f0b9",
+      "created_at": "2026-08-07T16:15:56.256025+00:00",
+      "metadata": {}
+    },
+    {
+      "id": "flow:956b4f02711b5d651378",
+      "path": "auth/subscription.py",
+      "symbol_id": "sym:a83a606d6585c90c599a",
+      "kind": "return-flow",
+      "source": "'cancelled'",
+      "target": "<return>",
+      "line": 2,
+      "trust": "parser",
+      "evidence": "python-ast flow line 2",
+      "revision": "rev:02a7c0bd5a806b88f0b9",
+      "created_at": "2026-08-07T16:15:56.255024+00:00",
+      "metadata": {}
+    },
+    {
+      "id": "flow:9a8221cd0a1934dd64d1",
+      "path": "auth/subscription.py",
+      "symbol_id": "sym:a83a606d6585c90c599a",
+      "kind": "return-flow",
+      "source": "'expired'",
+      "target": "<return>",
+      "line": 2,
+      "trust": "parser",
+      "evidence": "python-ast flow line 2",
+      "revision": "rev:02a7c0bd5a806b88f0b9",
+      "created_at": "2026-08-07T16:15:56.255019+00:00",
+      "metadata": {}
+    },
+    {
+      "id": "flow:be728348856150ebdf0f",
+      "path": "auth/subscription.py",
+      "symbol_id": "sym:a83a606d6585c90c599a",
+      "kind": "return-flow",
+      "source": "state",
+      "target": "<return>",
+      "line": 2,
+      "trust": "parser",
+      "evidence": "python-ast flow line 2",
+      "revision": "rev:02a7c0bd5a806b88f0b9",
+      "created_at": "2026-08-07T16:15:56.255008+00:00",
+      "metadata": {}
+    }
+  ],
+  "counterfactual_worlds": [
+    {
+      "id": "world:ce313526f8ec43ae879a",
+      "label": "WORLD B · explicit refresh gate",
+      "owner_agent_id": "agent:9e64220982f129a88ba4",
+      "base_revision": "rev:02a7c0bd5a806b88f0b9",
+      "status": "promoted",
+      "overlay_root": "/tmp/tmp27tve_hg/habitat/counterfactuals/world_ce313526f8ec43ae879a",
+      "created_at": "2026-08-07T16:15:56.346104+00:00",
+      "updated_at": "2026-08-07T16:15:56.403232+00:00",
+      "change_count": 1,
+      "metadata": {
+        "promoted_revision": "rev:d059aa55a83060740306",
+        "transaction_id": "tx:5a313e4e6da2beb284fe"
+      }
+    },
+    {
+      "id": "world:64e3589c9195e7eb80da",
+      "label": "WORLD A · harden claim elevation",
+      "owner_agent_id": "agent:789369c93d2add87bfcc",
+      "base_revision": "rev:02a7c0bd5a806b88f0b9",
+      "status": "open",
+      "overlay_root": "/tmp/tmp27tve_hg/habitat/counterfactuals/world_64e3589c9195e7eb80da",
+      "created_at": "2026-08-07T16:15:56.339358+00:00",
+      "updated_at": "2026-08-07T16:15:56.344479+00:00",
+      "change_count": 1,
+      "metadata": {}
+    }
+  ],
+  "invariants": [
+    {
+      "id": "invariant:6e1a315368b65a0135f0",
+      "statement": "expired subscription must never produce elevated refreshed claims",
+      "severity": "error",
+      "status": "unverified",
+      "base_revision": "rev:02a7c0bd5a806b88f0b9",
+      "created_at": "2026-08-07T16:15:56.316020+00:00",
+      "updated_at": "2026-08-07T16:15:56.316020+00:00",
+      "metadata": {
+        "scope": "auth"
+      }
+    }
+  ],
+  "coordination": {
+    "pending": [
+      {
+        "id": "notify:eb1f5aa969b4ea89a971",
+        "agent_id": "agent:789369c93d2add87bfcc",
+        "kind": "source-invalidated",
+        "resource_kind": "path",
+        "resource_id": "auth/claims.py",
+        "revision": "rev:d059aa55a83060740306",
+        "caused_by_transaction": "tx:5a313e4e6da2beb284fe",
+        "data_json": "{\"action\": \"selective-revalidate\", \"claim_boundary\": \"advisory invalidation; the agent must re-judge plan dependencies\", \"current_digest\": \"9680f05dd09dc15bb6a1faa0386e36838daeca0e108b0a40b1eff4c801f83fa4\", \"observed_digest\": \"f9e1a2083c262bb038004bb30641a2c55ea5d9a271c839d51ae204088bb9c290\", \"observed_revision\": \"rev:02a7c0bd5a806b88f0b9\"}",
+        "status": "pending",
+        "created_at": "2026-08-07T16:15:56.402168+00:00",
+        "acked_at": null
+      }
+    ],
+    "leases": []
+  },
+  "project_world": {
+    "nodes": [
+      {
+        "id": "world:cb0cb5bce2bb222aac90",
+        "type": "ci-workflow",
+        "label": "ci.yml",
+        "path": ".github/workflows/ci.yml",
+        "trust": "heuristic",
+        "metadata": {}
+      },
+      {
+        "id": "world:8af15a047727e4ffe2e2",
+        "type": "ci-job",
+        "label": "test",
+        "path": ".github/workflows/ci.yml",
+        "trust": "heuristic",
+        "metadata": {}
+      },
+      {
+        "id": "world:c413cc7a2de516a5a875",
+        "type": "ci-job",
+        "label": "build",
+        "path": ".github/workflows/ci.yml",
+        "trust": "heuristic",
+        "metadata": {}
+      },
+      {
+        "id": "world:7cb3ad9a8cebac0bb4c6",
+        "type": "ci-job",
+        "label": "security",
+        "path": ".github/workflows/ci.yml",
+        "trust": "heuristic",
+        "metadata": {}
+      },
+      {
+        "id": "world:c3ffe74b441e1c5e8f8c",
+        "type": "service",
+        "label": "web",
+        "path": "docker-compose.yml",
+        "trust": "heuristic",
+        "metadata": {
+          "source": "compose"
+        }
+      },
+      {
+        "id": "world:5e33129d2987148d2ef1",
+        "type": "service",
+        "label": "api",
+        "path": "docker-compose.yml",
+        "trust": "heuristic",
+        "metadata": {
+          "source": "compose"
+        }
+      },
+      {
+        "id": "world:e89b6331fb9575a91b14",
+        "type": "service",
+        "label": "db",
+        "path": "docker-compose.yml",
+        "trust": "heuristic",
+        "metadata": {
+          "source": "compose"
+        }
+      },
+      {
+        "id": "world:897718ece366147eace7",
+        "type": "service",
+        "label": "redis",
+        "path": "docker-compose.yml",
+        "trust": "heuristic",
+        "metadata": {
+          "source": "compose"
+        }
+      },
+      {
+        "id": "world:2340c1a3c47675aeedfb",
+        "type": "db-migration",
+        "label": "001_users.sql",
+        "path": "migrations/001_users.sql",
+        "trust": "heuristic",
+        "metadata": {}
+      },
+      {
+        "id": "world:1d08a1f99a21d2bd8b3b",
+        "type": "db-table",
+        "label": "users",
+        "path": "migrations/001_users.sql",
+        "trust": "heuristic",
+        "metadata": {}
+      },
+      {
+        "id": "world:4020260ce0f73f80fb7c",
+        "type": "api-spec",
+        "label": "openapi.json",
+        "path": "openapi.json",
+        "trust": "parser",
+        "metadata": {}
+      },
+      {
+        "id": "world:2adde08048b056d49292",
+        "type": "api-route",
+        "label": "/token/refresh",
+        "path": "openapi.json",
+        "trust": "parser",
+        "metadata": {}
+      },
+      {
+        "id": "world:88d1d55ce1762f60c255",
+        "type": "api-operation",
+        "label": "POST /token/refresh",
+        "path": "openapi.json",
+        "trust": "parser",
+        "metadata": {}
+      },
+      {
+        "id": "world:be6819d81224ce73dce8",
+        "type": "api-route",
+        "label": "/subscriptions/{id}",
+        "path": "openapi.json",
+        "trust": "parser",
+        "metadata": {}
+      },
+      {
+        "id": "world:ba0932f37896cba8077d",
+        "type": "api-operation",
+        "label": "GET /subscriptions/{id}",
+        "path": "openapi.json",
+        "trust": "parser",
+        "metadata": {}
+      },
+      {
+        "id": "world:43684451e9579b6c6583",
+        "type": "package",
+        "label": "nolane-demo",
+        "path": "package.json",
+        "trust": "parser",
+        "metadata": {}
+      },
+      {
+        "id": "world:891debd8f52703b44b29",
+        "type": "build-task",
+        "label": "test",
+        "path": "package.json",
+        "trust": "parser",
+        "metadata": {
+          "command": "python -m unittest"
+        }
+      },
+      {
+        "id": "world:7973e1551ba92f35ac1e",
+        "type": "build-task",
+        "label": "build",
+        "path": "package.json",
+        "trust": "parser",
+        "metadata": {
+          "command": "vite"
+        }
+      }
+    ],
+    "edges": [
+      {
+        "source": "world:cb0cb5bce2bb222aac90",
+        "target": "world:8af15a047727e4ffe2e2",
+        "kind": "contains",
+        "trust": "heuristic",
+        "evidence": "workflow line 2"
+      },
+      {
+        "source": "world:cb0cb5bce2bb222aac90",
+        "target": "world:c413cc7a2de516a5a875",
+        "kind": "contains",
+        "trust": "heuristic",
+        "evidence": "workflow line 4"
+      },
+      {
+        "source": "world:cb0cb5bce2bb222aac90",
+        "target": "world:7cb3ad9a8cebac0bb4c6",
+        "kind": "contains",
+        "trust": "heuristic",
+        "evidence": "workflow line 6"
+      },
+      {
+        "source": "world:2340c1a3c47675aeedfb",
+        "target": "world:1d08a1f99a21d2bd8b3b",
+        "kind": "creates",
+        "trust": "heuristic",
+        "evidence": "SQL CREATE TABLE"
+      },
+      {
+        "source": "world:4020260ce0f73f80fb7c",
+        "target": "world:2adde08048b056d49292",
+        "kind": "declares",
+        "trust": "parser",
+        "evidence": "OpenAPI paths"
+      },
+      {
+        "source": "world:2adde08048b056d49292",
+        "target": "world:88d1d55ce1762f60c255",
+        "kind": "operation",
+        "trust": "parser",
+        "evidence": "OpenAPI operation"
+      },
+      {
+        "source": "world:4020260ce0f73f80fb7c",
+        "target": "world:be6819d81224ce73dce8",
+        "kind": "declares",
+        "trust": "parser",
+        "evidence": "OpenAPI paths"
+      },
+      {
+        "source": "world:be6819d81224ce73dce8",
+        "target": "world:ba0932f37896cba8077d",
+        "kind": "operation",
+        "trust": "parser",
+        "evidence": "OpenAPI operation"
+      },
+      {
+        "source": "world:43684451e9579b6c6583",
+        "target": "world:891debd8f52703b44b29",
+        "kind": "exposes-task",
+        "trust": "parser",
+        "evidence": "package.json scripts"
+      },
+      {
+        "source": "world:43684451e9579b6c6583",
+        "target": "world:7973e1551ba92f35ac1e",
+        "kind": "exposes-task",
+        "trust": "parser",
+        "evidence": "package.json scripts"
+      }
+    ],
+    "providers": {
+      "github-workflow-heuristic": 1,
+      "compose-heuristic": 1,
+      "sql-heuristic": 1,
+      "openapi": 1,
+      "package-json": 1
+    },
+    "files_examined": 5,
+    "claim_boundary": "Project World parses selected repository manifests/configuration into bounded typed entities. Heuristic YAML/SQL relations are orientation evidence, not complete deployment/runtime truth."
+  },
+  "runtime_topology": {
+    "nodes": [
+      {
+        "id": "rt_9d1c1d514edb7452a0c594cc",
+        "type": "runtime-metric",
+        "label": "habitat.world.promoted",
+        "status": "observed",
+        "observations": 1,
+        "metadata": {
+          "trace_id": null,
+          "span_id": null,
+          "path": null,
+          "duration_ms": null
+        }
+      },
+      {
+        "id": "rt_21591ff7b3f805d9034c2396",
+        "type": "service",
+        "label": "habitat",
+        "status": "observed",
+        "observations": 1,
+        "metadata": {}
+      },
+      {
+        "id": "rt_40be4a706dca3592a4b98f4f",
+        "type": "runtime-log",
+        "label": "counterfactual WORLD B verifier passed",
+        "status": "INFO",
+        "observations": 1,
+        "metadata": {
+          "trace_id": null,
+          "span_id": null,
+          "path": "tests/test_auth.py",
+          "duration_ms": null
+        }
+      },
+      {
+        "id": "rt_1ca216c54fd406d8da0ab3e0",
+        "type": "service",
+        "label": "verifier",
+        "status": "INFO",
+        "observations": 1,
+        "metadata": {}
+      },
+      {
+        "id": "rt_dbab6515cf463007c9c07519",
+        "type": "runtime-source",
+        "label": "tests/test_auth.py",
+        "status": "INFO",
+        "observations": 1,
+        "metadata": {}
+      },
+      {
+        "id": "rt_4bdd4e04ccbefbb3dfaae152",
+        "type": "runtime-span",
+        "label": "GET entitlement cache",
+        "status": "observed",
+        "observations": 1,
+        "metadata": {
+          "trace_id": "trace-refresh",
+          "span_id": "cache",
+          "path": null,
+          "duration_ms": 0.6
+        }
+      },
+      {
+        "id": "rt_15a4c8a40cc417c4d4861a71",
+        "type": "service",
+        "label": "api",
+        "status": "observed",
+        "observations": 3,
+        "metadata": {}
+      },
+      {
+        "id": "rt_1eed1eb1f24e670303f9d648",
+        "type": "database",
+        "label": "redis/entitlements",
+        "status": "observed",
+        "observations": 1,
+        "metadata": {
+          "system": "redis",
+          "namespace": "entitlements"
+        }
+      },
+      {
+        "id": "rt_501f7277a1dde1e6b9c6bbed",
+        "type": "runtime-span",
+        "label": "SELECT subscription",
+        "status": "observed",
+        "observations": 1,
+        "metadata": {
+          "trace_id": "trace-refresh",
+          "span_id": "db",
+          "path": null,
+          "duration_ms": 1.3
+        }
+      },
+      {
+        "id": "rt_6c793691fc5ddd5d88ee03c6",
+        "type": "database",
+        "label": "postgresql/users",
+        "status": "observed",
+        "observations": 1,
+        "metadata": {
+          "system": "postgresql",
+          "namespace": "users"
+        }
+      },
+      {
+        "id": "rt_3443277282ecf9c8a75c9b00",
+        "type": "runtime-span",
+        "label": "POST /token/refresh",
+        "status": "observed",
+        "observations": 1,
+        "metadata": {
+          "trace_id": "trace-refresh",
+          "span_id": "api",
+          "path": "auth/claims.py",
+          "duration_ms": 5.8
+        }
+      },
+      {
+        "id": "rt_dbf1e71282fc7c1d6ae48bba",
+        "type": "runtime-route",
+        "label": "/token/refresh",
+        "status": "observed",
+        "observations": 1,
+        "metadata": {}
+      },
+      {
+        "id": "rt_af5052229ed13759286a7851",
+        "type": "runtime-source",
+        "label": "auth/claims.py",
+        "status": "observed",
+        "observations": 1,
+        "metadata": {}
+      },
+      {
+        "id": "rt_f34da70e24b20235d68c3af2",
+        "type": "runtime-span",
+        "label": "click refresh token",
+        "status": "observed",
+        "observations": 1,
+        "metadata": {
+          "trace_id": "trace-refresh",
+          "span_id": "web",
+          "path": null,
+          "duration_ms": 0.4
+        }
+      },
+      {
+        "id": "rt_6a05ed9b3e81bebfe318e9c2",
+        "type": "service",
+        "label": "web",
+        "status": "observed",
+        "observations": 1,
+        "metadata": {}
+      },
+      {
+        "id": "rt_78c28e34923a9d3ae7ef42fd",
+        "type": "runtime-route",
+        "label": "ui:/refresh",
+        "status": "observed",
+        "observations": 1,
+        "metadata": {}
+      }
+    ],
+    "edges": [
+      {
+        "source": "rt_21591ff7b3f805d9034c2396",
+        "target": "rt_9d1c1d514edb7452a0c594cc",
+        "kind": "observed-operation",
+        "count": 1,
+        "error_count": 0,
+        "duration_ms_total": 0.0,
+        "duration_ms_max": null,
+        "duration_ms_avg": 0.0
+      },
+      {
+        "source": "rt_1ca216c54fd406d8da0ab3e0",
+        "target": "rt_40be4a706dca3592a4b98f4f",
+        "kind": "observed-operation",
+        "count": 1,
+        "error_count": 0,
+        "duration_ms_total": 0.0,
+        "duration_ms_max": null,
+        "duration_ms_avg": 0.0
+      },
+      {
+        "source": "rt_40be4a706dca3592a4b98f4f",
+        "target": "rt_dbab6515cf463007c9c07519",
+        "kind": "observed-at",
+        "count": 1,
+        "error_count": 0,
+        "duration_ms_total": 0.0,
+        "duration_ms_max": null,
+        "duration_ms_avg": 0.0
+      },
+      {
+        "source": "rt_15a4c8a40cc417c4d4861a71",
+        "target": "rt_4bdd4e04ccbefbb3dfaae152",
+        "kind": "observed-operation",
+        "count": 1,
+        "error_count": 0,
+        "duration_ms_total": 0.6,
+        "duration_ms_max": 0.6,
+        "duration_ms_avg": 0.6
+      },
+      {
+        "source": "rt_4bdd4e04ccbefbb3dfaae152",
+        "target": "rt_1eed1eb1f24e670303f9d648",
+        "kind": "db-access",
+        "count": 1,
+        "error_count": 0,
+        "duration_ms_total": 0.6,
+        "duration_ms_max": 0.6,
+        "duration_ms_avg": 0.6
+      },
+      {
+        "source": "rt_15a4c8a40cc417c4d4861a71",
+        "target": "rt_501f7277a1dde1e6b9c6bbed",
+        "kind": "observed-operation",
+        "count": 1,
+        "error_count": 0,
+        "duration_ms_total": 1.3,
+        "duration_ms_max": 1.3,
+        "duration_ms_avg": 1.3
+      },
+      {
+        "source": "rt_501f7277a1dde1e6b9c6bbed",
+        "target": "rt_6c793691fc5ddd5d88ee03c6",
+        "kind": "db-access",
+        "count": 1,
+        "error_count": 0,
+        "duration_ms_total": 1.3,
+        "duration_ms_max": 1.3,
+        "duration_ms_avg": 1.3
+      },
+      {
+        "source": "rt_15a4c8a40cc417c4d4861a71",
+        "target": "rt_3443277282ecf9c8a75c9b00",
+        "kind": "observed-operation",
+        "count": 1,
+        "error_count": 0,
+        "duration_ms_total": 5.8,
+        "duration_ms_max": 5.8,
+        "duration_ms_avg": 5.8
+      },
+      {
+        "source": "rt_15a4c8a40cc417c4d4861a71",
+        "target": "rt_dbf1e71282fc7c1d6ae48bba",
+        "kind": "serves",
+        "count": 1,
+        "error_count": 0,
+        "duration_ms_total": 5.8,
+        "duration_ms_max": 5.8,
+        "duration_ms_avg": 5.8
+      },
+      {
+        "source": "rt_3443277282ecf9c8a75c9b00",
+        "target": "rt_af5052229ed13759286a7851",
+        "kind": "observed-at",
+        "count": 1,
+        "error_count": 0,
+        "duration_ms_total": 0.0,
+        "duration_ms_max": null,
+        "duration_ms_avg": 0.0
+      },
+      {
+        "source": "rt_6a05ed9b3e81bebfe318e9c2",
+        "target": "rt_f34da70e24b20235d68c3af2",
+        "kind": "observed-operation",
+        "count": 1,
+        "error_count": 0,
+        "duration_ms_total": 0.4,
+        "duration_ms_max": 0.4,
+        "duration_ms_avg": 0.4
+      },
+      {
+        "source": "rt_6a05ed9b3e81bebfe318e9c2",
+        "target": "rt_78c28e34923a9d3ae7ef42fd",
+        "kind": "serves",
+        "count": 1,
+        "error_count": 0,
+        "duration_ms_total": 0.4,
+        "duration_ms_max": 0.4,
+        "duration_ms_avg": 0.4
+      },
+      {
+        "source": "rt_3443277282ecf9c8a75c9b00",
+        "target": "rt_4bdd4e04ccbefbb3dfaae152",
+        "kind": "span-child",
+        "count": 1,
+        "error_count": 0,
+        "duration_ms_total": 0.6,
+        "duration_ms_max": 0.6,
+        "duration_ms_avg": 0.6
+      },
+      {
+        "source": "rt_3443277282ecf9c8a75c9b00",
+        "target": "rt_501f7277a1dde1e6b9c6bbed",
+        "kind": "span-child",
+        "count": 1,
+        "error_count": 0,
+        "duration_ms_total": 1.3,
+        "duration_ms_max": 1.3,
+        "duration_ms_avg": 1.3
+      },
+      {
+        "source": "rt_f34da70e24b20235d68c3af2",
+        "target": "rt_3443277282ecf9c8a75c9b00",
+        "kind": "span-child",
+        "count": 1,
+        "error_count": 0,
+        "duration_ms_total": 5.8,
+        "duration_ms_max": 5.8,
+        "duration_ms_avg": 5.8
+      }
+    ],
+    "observations": 6,
+    "claim_boundary": "Observed telemetry topology. Parent-child spans and explicit attributes are evidence of observed execution, not complete causal inference or proof of unobserved dependencies."
+  },
+  "cognitive_director": {
+    "next": {
+      "operation": "selective-revalidate",
+      "reason": "agent cognition invalidated by a changed observed resource",
+      "information_gain": "high",
+      "cost": "low"
+    },
+    "epistemic_debt": 5,
+    "contradictions": 0,
+    "unknowns": 1,
+    "assumptions": 0
+  },
+  "context_memory": {
+    "residents": [
+      {
+        "agent_id": "agent:789369c93d2add87bfcc",
+        "object_id": "sym:940853360262fd4fb4f7",
+        "kind": "symbol",
+        "path": "auth/claims.py",
+        "admitted_revision": "rev:02a7c0bd5a806b88f0b9",
+        "source_digest": "f9e1a2083c262bb038004bb30641a2c55ea5d9a271c839d51ae204088bb9c290",
+        "relevance": 0.8832453333333333,
+        "pinned": 1,
+        "access_count": 1,
+        "last_access_seq": 12,
+        "admitted_at": "2026-08-07T16:15:56.286134+00:00",
+        "last_touched_at": "2026-08-07T16:15:56.286140+00:00"
+      },
+      {
+        "agent_id": "agent:789369c93d2add87bfcc",
+        "object_id": "sym:46f68082cc98b9ba70b6",
+        "kind": "symbol",
+        "path": "tests/test_auth.py",
+        "admitted_revision": "rev:02a7c0bd5a806b88f0b9",
+        "source_digest": "d6d0e2d8a284c83e7372f68c1d1fdd782dbccb18baef85cfd5771bd4dfc1cfa6",
+        "relevance": 0.8806685866666666,
+        "pinned": 1,
+        "access_count": 1,
+        "last_access_seq": 12,
+        "admitted_at": "2026-08-07T16:15:56.286768+00:00",
+        "last_touched_at": "2026-08-07T16:15:56.286774+00:00"
+      },
+      {
+        "agent_id": "agent:789369c93d2add87bfcc",
+        "object_id": "file:a99307c61c3c55875b5b",
+        "kind": "file",
+        "path": "tests/test_auth.py",
+        "admitted_revision": "rev:02a7c0bd5a806b88f0b9",
+        "source_digest": "d6d0e2d8a284c83e7372f68c1d1fdd782dbccb18baef85cfd5771bd4dfc1cfa6",
+        "relevance": 0.7281271822222223,
+        "pinned": 0,
+        "access_count": 1,
+        "last_access_seq": 12,
+        "admitted_at": "2026-08-07T16:15:56.287437+00:00",
+        "last_touched_at": "2026-08-07T16:15:56.287443+00:00"
+      },
+      {
+        "agent_id": "agent:789369c93d2add87bfcc",
+        "object_id": "sym:a43b1f1f80fa06904c04",
+        "kind": "symbol",
+        "path": "auth/claims.py",
+        "admitted_revision": "rev:02a7c0bd5a806b88f0b9",
+        "source_digest": "f9e1a2083c262bb038004bb30641a2c55ea5d9a271c839d51ae204088bb9c290",
+        "relevance": 0.6442826666666667,
+        "pinned": 0,
+        "access_count": 1,
+        "last_access_seq": 12,
+        "admitted_at": "2026-08-07T16:15:56.287950+00:00",
+        "last_touched_at": "2026-08-07T16:15:56.287955+00:00"
+      },
+      {
+        "agent_id": "agent:789369c93d2add87bfcc",
+        "object_id": "file:794b0fd272c6d7c46087",
+        "kind": "file",
+        "path": "auth/subscription.py",
+        "admitted_revision": "rev:02a7c0bd5a806b88f0b9",
+        "source_digest": "f1028b047454eef88e304121b73574676b811ca2aee9fcc4bbd9344de0b88d2f",
+        "relevance": 0.6133333333333333,
+        "pinned": 0,
+        "access_count": 1,
+        "last_access_seq": 12,
+        "admitted_at": "2026-08-07T16:15:56.288460+00:00",
+        "last_touched_at": "2026-08-07T16:15:56.288466+00:00"
+      },
+      {
+        "agent_id": "agent:789369c93d2add87bfcc",
+        "object_id": "file:025c1bd1e8e3d3b2e92b",
+        "kind": "file",
+        "path": "auth/claims.py",
+        "admitted_revision": "rev:02a7c0bd5a806b88f0b9",
+        "source_digest": "f9e1a2083c262bb038004bb30641a2c55ea5d9a271c839d51ae204088bb9c290",
+        "relevance": 0.5831582459875555,
+        "pinned": 0,
+        "access_count": 1,
+        "last_access_seq": 12,
+        "admitted_at": "2026-08-07T16:15:56.289062+00:00",
+        "last_touched_at": "2026-08-07T16:15:56.289067+00:00"
+      }
+    ],
+    "agent_visible_source_bytes": 927,
+    "authority_bytes_read": 1592
+  },
+  "graph": {
+    "nodes": [
+      {
+        "id": "file:b803fcb7f17ed9235f1e",
+        "type": "file",
+        "label": ".github/workflows/ci.yml",
+        "path": ".github/workflows/ci.yml"
+      },
+      {
+        "id": "file:a54ff182c7e8acf56acf",
+        "type": "file",
+        "label": "AGENTS.md",
+        "path": "AGENTS.md"
+      },
+      {
+        "id": "file:025c1bd1e8e3d3b2e92b",
+        "type": "file",
+        "label": "auth/claims.py",
+        "path": "auth/claims.py"
+      },
+      {
+        "id": "file:794b0fd272c6d7c46087",
+        "type": "file",
+        "label": "auth/subscription.py",
+        "path": "auth/subscription.py"
+      },
+      {
+        "id": "file:366983f5d8ff9740d0bf",
+        "type": "file",
+        "label": "billing/invoice.py",
+        "path": "billing/invoice.py"
+      },
+      {
+        "id": "file:e45e45baeda1c1e73482",
+        "type": "file",
+        "label": "docker-compose.yml",
+        "path": "docker-compose.yml"
+      },
+      {
+        "id": "file:3508902bba61fe194a86",
+        "type": "file",
+        "label": "migrations/001_users.sql",
+        "path": "migrations/001_users.sql"
+      },
+      {
+        "id": "file:a9865368a7fc7fa33065",
+        "type": "file",
+        "label": "openapi.json",
+        "path": "openapi.json"
+      },
+      {
+        "id": "file:7ae45ad102eab3b6d7e7",
+        "type": "file",
+        "label": "package.json",
+        "path": "package.json"
+      },
+      {
+        "id": "file:a99307c61c3c55875b5b",
+        "type": "file",
+        "label": "tests/test_auth.py",
+        "path": "tests/test_auth.py"
+      },
+      {
+        "id": "file:88636d2769930e3e701c",
+        "type": "file",
+        "label": "ui/index.html",
+        "path": "ui/index.html"
+      },
+      {
+        "id": "sym:4936bd99141b04e64a8f",
+        "type": "symbol",
+        "label": "normalize_email",
+        "path": "auth/claims.py"
+      },
+      {
+        "id": "sym:a43b1f1f80fa06904c04",
+        "type": "symbol",
+        "label": "build_claims",
+        "path": "auth/claims.py"
+      },
+      {
+        "id": "sym:940853360262fd4fb4f7",
+        "type": "symbol",
+        "label": "refresh_token",
+        "path": "auth/claims.py"
+      },
+      {
+        "id": "sym:a83a606d6585c90c599a",
+        "type": "symbol",
+        "label": "is_active",
+        "path": "auth/subscription.py"
+      },
+      {
+        "id": "sym:6db568769628b4eee33f",
+        "type": "symbol",
+        "label": "total",
+        "path": "billing/invoice.py"
+      },
+      {
+        "id": "sym:aaf6c4558a5935cb1f4e",
+        "type": "symbol",
+        "label": "AuthTests",
+        "path": "tests/test_auth.py"
+      },
+      {
+        "id": "sym:46f68082cc98b9ba70b6",
+        "type": "symbol",
+        "label": "AuthTests.test_expired_subscription",
+        "path": "tests/test_auth.py"
+      },
+      {
+        "id": "ui:cf146293cbdc43f3147d",
+        "type": "symbol",
+        "label": "refreshBtn",
+        "path": "ui/index.html"
+      },
+      {
+        "id": "ui:c6b20ab8d61f797dd1cb",
+        "type": "symbol",
+        "label": "status",
+        "path": "ui/index.html"
+      },
+      {
+        "id": "agent:cb335013d409a0a0dd2f",
+        "type": "agent",
+        "label": "Verifier Agent",
+        "agent_id": "agent:cb335013d409a0a0dd2f"
+      },
+      {
+        "id": "agent:9e64220982f129a88ba4",
+        "type": "agent",
+        "label": "Claude Code",
+        "agent_id": "agent:9e64220982f129a88ba4"
+      },
+      {
+        "id": "agent:789369c93d2add87bfcc",
+        "type": "agent",
+        "label": "Codex",
+        "agent_id": "agent:789369c93d2add87bfcc"
+      },
+      {
+        "id": "episode:4e03ea04f8b6ca4e964f",
+        "type": "episode",
+        "label": "Fix expired subscription permissions during token refresh"
+      },
+      {
+        "id": "hypothesis:093ca25cd4f746c4f52b",
+        "type": "hypothesis",
+        "label": "claim builder elevates admin users even when the subscription is expired"
+      },
+      {
+        "id": "hypothesis:636dcd88aa378ef0f7c9",
+        "type": "hypothesis",
+        "label": "subscription freshness is lost before refresh-token claim construction"
+      },
+      {
+        "id": "epistemic:3ef30bc17a738d84ad4e",
+        "type": "epistemic",
+        "label": "whether the refresh path receives subscription state after revalidation",
+        "agent_id": "agent:789369c93d2add87bfcc"
+      },
+      {
+        "id": "memory:bedd1fa6ea412d282154",
+        "type": "memory",
+        "label": "WORLD B promoted and targeted auth verifier passed",
+        "agent_id": "agent:cb335013d409a0a0dd2f"
+      },
+      {
+        "id": "memory:3a7c973531065e5de0f0",
+        "type": "memory",
+        "label": "Prefer evidence-bearing counterfactual worlds before canonical auth mutation",
+        "agent_id": null
+      },
+      {
+        "id": "rt_0fbc5946d7027f152b1b9d86",
+        "type": "runtime",
+        "label": "habitat.world.promoted",
+        "path": null
+      },
+      {
+        "id": "rt_3899ea879f2f29e1dcbb05cc",
+        "type": "runtime",
+        "label": "counterfactual WORLD B verifier passed",
+        "path": "tests/test_auth.py"
+      },
+      {
+        "id": "rt_eb434609bb9c6b4ab089320b",
+        "type": "runtime",
+        "label": "GET entitlement cache",
+        "path": null
+      },
+      {
+        "id": "rt_52d32b2bb33db9985070d3e6",
+        "type": "runtime",
+        "label": "SELECT subscription",
+        "path": null
+      },
+      {
+        "id": "rt_9f36d9ef9667961588037572",
+        "type": "runtime",
+        "label": "POST /token/refresh",
+        "path": "auth/claims.py"
+      },
+      {
+        "id": "rt_44e1935f28ea8df120948514",
+        "type": "runtime",
+        "label": "click refresh token",
+        "path": null
+      },
+      {
+        "id": "effect:eff:36e53416b37b8d01d866",
+        "type": "effect",
+        "label": "reads → user",
+        "path": "auth/claims.py",
+        "effect_kind": "reads"
+      },
+      {
+        "id": "effect:eff:b30e410238a0f07f9e02",
+        "type": "effect",
+        "label": "reads → build_claims",
+        "path": "auth/claims.py",
+        "effect_kind": "reads"
+      },
+      {
+        "id": "effect:eff:89ece9b34b0a21938ea5",
+        "type": "effect",
+        "label": "returns → build_claims(True, user)",
+        "path": "auth/claims.py",
+        "effect_kind": "returns"
+      },
+      {
+        "id": "effect:eff:5a235bec511aeb42b49f",
+        "type": "effect",
+        "label": "reads → user",
+        "path": "auth/claims.py",
+        "effect_kind": "reads"
+      },
+      {
+        "id": "effect:eff:d161d0564d0d2c2da547",
+        "type": "effect",
+        "label": "reads → build_claims",
+        "path": "auth/claims.py",
+        "effect_kind": "reads"
+      },
+      {
+        "id": "effect:eff:b47eba4c730dca34791e",
+        "type": "effect",
+        "label": "returns → build_claims(False, user)",
+        "path": "auth/claims.py",
+        "effect_kind": "returns"
+      },
+      {
+        "id": "effect:eff:38d8bd8d0beb5d2ae3a6",
+        "type": "effect",
+        "label": "reads → subscription_active",
+        "path": "auth/claims.py",
+        "effect_kind": "reads"
+      },
+      {
+        "id": "effect:eff:4c46606620cb85473139",
+        "type": "effect",
+        "label": "reads → bool",
+        "path": "auth/claims.py",
+        "effect_kind": "reads"
+      },
+      {
+        "id": "effect:eff:a493d6910ed6c2ef77fd",
+        "type": "effect",
+        "label": "reads → os",
+        "path": "auth/claims.py",
+        "effect_kind": "reads"
+      },
+      {
+        "id": "effect:eff:46cf8558152ac7480280",
+        "type": "effect",
+        "label": "reads → os.getenv",
+        "path": "auth/claims.py",
+        "effect_kind": "reads"
+      },
+      {
+        "id": "effect:eff:aca066372e413093214f",
+        "type": "effect",
+        "label": "env-read → os.getenv",
+        "path": "auth/claims.py",
+        "effect_kind": "env-read"
+      },
+      {
+        "id": "effect:eff:fdf0c698e56808e25073",
+        "type": "effect",
+        "label": "reads → elevated",
+        "path": "auth/claims.py",
+        "effect_kind": "reads"
+      },
+      {
+        "id": "effect:eff:5f39452e3f17dd1fca8e",
+        "type": "effect",
+        "label": "reads → role",
+        "path": "auth/claims.py",
+        "effect_kind": "reads"
+      },
+      {
+        "id": "effect:eff:4a2aea59e8a8a6f06c07",
+        "type": "effect",
+        "label": "reads → email",
+        "path": "auth/claims.py",
+        "effect_kind": "reads"
+      },
+      {
+        "id": "effect:eff:35c37c964b32c2cda3ba",
+        "type": "effect",
+        "label": "returns → {'email': email, 'role': role, 'elevated': elevated, 'env': os.getenv('APP_ENV')",
+        "path": "auth/claims.py",
+        "effect_kind": "returns"
+      },
+      {
+        "id": "effect:eff:2e6ddf22685c2b802e07",
+        "type": "effect",
+        "label": "reads → role",
+        "path": "auth/claims.py",
+        "effect_kind": "reads"
+      },
+      {
+        "id": "effect:eff:d68e7f27094b81aa043f",
+        "type": "effect",
+        "label": "reads → subscription_active",
+        "path": "auth/claims.py",
+        "effect_kind": "reads"
+      },
+      {
+        "id": "effect:eff:83dacb614f3a08ef22d9",
+        "type": "effect",
+        "label": "reads → bool",
+        "path": "auth/claims.py",
+        "effect_kind": "reads"
+      },
+      {
+        "id": "effect:eff:3e5e054801630e87110d",
+        "type": "effect",
+        "label": "writes → elevated",
+        "path": "auth/claims.py",
+        "effect_kind": "writes"
+      },
+      {
+        "id": "effect:eff:fbd53aed12e229b55cd3",
+        "type": "effect",
+        "label": "reads → user",
+        "path": "auth/claims.py",
+        "effect_kind": "reads"
+      },
+      {
+        "id": "effect:eff:f10a5a1f78613e3bc99a",
+        "type": "effect",
+        "label": "reads → user.is_admin",
+        "path": "auth/claims.py",
+        "effect_kind": "reads"
+      },
+      {
+        "id": "effect:eff:058787e7ff4a4e4b618d",
+        "type": "effect",
+        "label": "writes → role",
+        "path": "auth/claims.py",
+        "effect_kind": "writes"
+      },
+      {
+        "id": "effect:eff:b77a21f3ecc1b3b0a23e",
+        "type": "effect",
+        "label": "reads → user",
+        "path": "auth/claims.py",
+        "effect_kind": "reads"
+      },
+      {
+        "id": "effect:eff:3aeb6f5df0d78364c966",
+        "type": "effect",
+        "label": "reads → user.email",
+        "path": "auth/claims.py",
+        "effect_kind": "reads"
+      },
+      {
+        "id": "effect:eff:ff3c5d497742c3ef3283",
+        "type": "effect",
+        "label": "reads → normalize_email",
+        "path": "auth/claims.py",
+        "effect_kind": "reads"
+      },
+      {
+        "id": "effect:eff:7dc10e6a48a77a29f057",
+        "type": "effect",
+        "label": "sanitizes → normalize_email",
+        "path": "auth/claims.py",
+        "effect_kind": "sanitizes"
+      },
+      {
+        "id": "effect:eff:df1ba5ff1a137204a5d2",
+        "type": "effect",
+        "label": "writes → email",
+        "path": "auth/claims.py",
+        "effect_kind": "writes"
+      },
+      {
+        "id": "effect:eff:e50ee02f1316a7c33969",
+        "type": "effect",
+        "label": "reads → bool",
+        "path": "auth/claims.py",
+        "effect_kind": "reads"
+      },
+      {
+        "id": "effect:eff:5095cc607c3b7b1e5997",
+        "type": "effect",
+        "label": "reads → email",
+        "path": "auth/claims.py",
+        "effect_kind": "reads"
+      },
+      {
+        "id": "effect:eff:9d7d207f8e6596de33ad",
+        "type": "effect",
+        "label": "reads → email.strip",
+        "path": "auth/claims.py",
+        "effect_kind": "reads"
+      },
+      {
+        "id": "effect:eff:3f5e6b512f07c794ce1e",
+        "type": "effect",
+        "label": "reads → email.strip.lower",
+        "path": "auth/claims.py",
+        "effect_kind": "reads"
+      },
+      {
+        "id": "effect:eff:ccc20e0581f0729da19b",
+        "type": "effect",
+        "label": "returns → email.strip().lower()",
+        "path": "auth/claims.py",
+        "effect_kind": "returns"
+      },
+      {
+        "id": "effect:eff:42697c7db3ac4f528f06",
+        "type": "effect",
+        "label": "reads → unittest",
+        "path": "tests/test_auth.py",
+        "effect_kind": "reads"
+      },
+      {
+        "id": "effect:eff:ccfa57c8204c601af05e",
+        "type": "effect",
+        "label": "reads → unittest.main",
+        "path": "tests/test_auth.py",
+        "effect_kind": "reads"
+      },
+      {
+        "id": "effect:eff:3e2aafcc51e57470f1f2",
+        "type": "effect",
+        "label": "reads → __name__",
+        "path": "tests/test_auth.py",
+        "effect_kind": "reads"
+      },
+      {
+        "id": "effect:eff:60769726b76df31fbe59",
+        "type": "effect",
+        "label": "reads → user",
+        "path": "tests/test_auth.py",
+        "effect_kind": "reads"
+      },
+      {
+        "id": "flow:flow:32be8f6786119b79cbf6",
+        "type": "dataflow",
+        "label": "user → build_claims",
+        "path": "auth/claims.py",
+        "flow_kind": "argument-to-call"
+      },
+      {
+        "id": "flow:flow:f49ee1a7be9e00b7753e",
+        "type": "dataflow",
+        "label": "True → build_claims",
+        "path": "auth/claims.py",
+        "flow_kind": "argument-to-call"
+      },
+      {
+        "id": "flow:flow:278674dfc04f7d5f9d52",
+        "type": "dataflow",
+        "label": "user → <return>",
+        "path": "auth/claims.py",
+        "flow_kind": "return-flow"
+      },
+      {
+        "id": "flow:flow:d3ac4764397f4b5b32f5",
+        "type": "dataflow",
+        "label": "True → <return>",
+        "path": "auth/claims.py",
+        "flow_kind": "return-flow"
+      },
+      {
+        "id": "flow:flow:be4f3dcd1069b5d262f4",
+        "type": "dataflow",
+        "label": "build_claims → <return>",
+        "path": "auth/claims.py",
+        "flow_kind": "return-flow"
+      },
+      {
+        "id": "flow:flow:818faf512aaeffde911d",
+        "type": "dataflow",
+        "label": "user → build_claims",
+        "path": "auth/claims.py",
+        "flow_kind": "argument-to-call"
+      },
+      {
+        "id": "flow:flow:0efb047d0f28c31fc883",
+        "type": "dataflow",
+        "label": "False → build_claims",
+        "path": "auth/claims.py",
+        "flow_kind": "argument-to-call"
+      },
+      {
+        "id": "flow:flow:6c658e0721d4704e2c07",
+        "type": "dataflow",
+        "label": "user → <return>",
+        "path": "auth/claims.py",
+        "flow_kind": "return-flow"
+      },
+      {
+        "id": "flow:flow:e2e4d61dcabe9fd7f3b9",
+        "type": "dataflow",
+        "label": "False → <return>",
+        "path": "auth/claims.py",
+        "flow_kind": "return-flow"
+      },
+      {
+        "id": "flow:flow:963f5a905d4d7c502da3",
+        "type": "dataflow",
+        "label": "build_claims → <return>",
+        "path": "auth/claims.py",
+        "flow_kind": "return-flow"
+      },
+      {
+        "id": "flow:flow:8319c38d26e109ba18a3",
+        "type": "dataflow",
+        "label": "subscription_active → <branch>",
+        "path": "auth/claims.py",
+        "flow_kind": "condition-flow"
+      },
+      {
+        "id": "flow:flow:ca1871dcf79929d7334f",
+        "type": "dataflow",
+        "label": "'APP_ENV' → os.getenv",
+        "path": "auth/claims.py",
+        "flow_kind": "argument-to-call"
+      },
+      {
+        "id": "flow:flow:207332179ec43f240293",
+        "type": "dataflow",
+        "label": "'APP_ENV' → <return>",
+        "path": "auth/claims.py",
+        "flow_kind": "return-flow"
+      },
+      {
+        "id": "flow:flow:833dd26cc7ef45882b15",
+        "type": "dataflow",
+        "label": "os.getenv → <return>",
+        "path": "auth/claims.py",
+        "flow_kind": "return-flow"
+      },
+      {
+        "id": "flow:flow:7bad2d0fde3816169163",
+        "type": "dataflow",
+        "label": "elevated → <return>",
+        "path": "auth/claims.py",
+        "flow_kind": "return-flow"
+      },
+      {
+        "id": "flow:flow:c2df4c955fcbf27e4d43",
+        "type": "dataflow",
+        "label": "role → <return>",
+        "path": "auth/claims.py",
+        "flow_kind": "return-flow"
+      },
+      {
+        "id": "flow:flow:61285adb2468bdf5f4f1",
+        "type": "dataflow",
+        "label": "email → <return>",
+        "path": "auth/claims.py",
+        "flow_kind": "return-flow"
+      },
+      {
+        "id": "flow:flow:e880b3c942db80e1f2cc",
+        "type": "dataflow",
+        "label": "'env' → <return>",
+        "path": "auth/claims.py",
+        "flow_kind": "return-flow"
+      },
+      {
+        "id": "flow:flow:00e55dd59ac11f2ba4bb",
+        "type": "dataflow",
+        "label": "'elevated' → <return>",
+        "path": "auth/claims.py",
+        "flow_kind": "return-flow"
+      },
+      {
+        "id": "flow:flow:ee0a4a7f79a134c8d0d7",
+        "type": "dataflow",
+        "label": "'role' → <return>",
+        "path": "auth/claims.py",
+        "flow_kind": "return-flow"
+      },
+      {
+        "id": "flow:flow:c06d0a37c69c90d33cad",
+        "type": "dataflow",
+        "label": "'email' → <return>",
+        "path": "auth/claims.py",
+        "flow_kind": "return-flow"
+      },
+      {
+        "id": "flow:flow:42266af3c54006a137ca",
+        "type": "dataflow",
+        "label": "'admin' → elevated",
+        "path": "auth/claims.py",
+        "flow_kind": "assigns"
+      },
+      {
+        "id": "flow:flow:39700471400db8ff93cf",
+        "type": "dataflow",
+        "label": "role → elevated",
+        "path": "auth/claims.py",
+        "flow_kind": "assigns"
+      },
+      {
+        "id": "flow:flow:f7ecb68a21073d670ea2",
+        "type": "dataflow",
+        "label": "subscription_active → elevated",
+        "path": "auth/claims.py",
+        "flow_kind": "assigns"
+      },
+      {
+        "id": "flow:flow:85243e40e472db8ad0fb",
+        "type": "dataflow",
+        "label": "bool → elevated",
+        "path": "auth/claims.py",
+        "flow_kind": "assigns"
+      },
+      {
+        "id": "flow:flow:dd99e5628333036b6197",
+        "type": "dataflow",
+        "label": "bool → elevated",
+        "path": "auth/claims.py",
+        "flow_kind": "call-result"
+      },
+      {
+        "id": "flow:flow:b9b7da87eb5addda6578",
+        "type": "dataflow",
+        "label": "'admin' → bool",
+        "path": "auth/claims.py",
+        "flow_kind": "argument-to-call"
+      },
+      {
+        "id": "flow:flow:00af5dfb156a6f65d2b7",
+        "type": "dataflow",
+        "label": "role → bool",
+        "path": "auth/claims.py",
+        "flow_kind": "argument-to-call"
+      },
+      {
+        "id": "flow:flow:1b2be0ffccc1384d012a",
+        "type": "dataflow",
+        "label": "subscription_active → bool",
+        "path": "auth/claims.py",
+        "flow_kind": "argument-to-call"
+      },
+      {
+        "id": "flow:flow:d996348dac0c5a9c857a",
+        "type": "dataflow",
+        "label": "'user' → role",
+        "path": "auth/claims.py",
+        "flow_kind": "assigns"
+      },
+      {
+        "id": "flow:flow:c1625e408a29c6d63a65",
+        "type": "dataflow",
+        "label": "'admin' → role",
+        "path": "auth/claims.py",
+        "flow_kind": "assigns"
+      },
+      {
+        "id": "flow:flow:a3005e30004fea4b7d32",
+        "type": "dataflow",
+        "label": "user.is_admin → role",
+        "path": "auth/claims.py",
+        "flow_kind": "assigns"
+      },
+      {
+        "id": "flow:flow:9813aff527300bd2fccb",
+        "type": "dataflow",
+        "label": "user.email → email",
+        "path": "auth/claims.py",
+        "flow_kind": "assigns"
+      },
+      {
+        "id": "flow:flow:d0a4269891ffc238154d",
+        "type": "dataflow",
+        "label": "normalize_email → email",
+        "path": "auth/claims.py",
+        "flow_kind": "assigns"
+      },
+      {
+        "id": "flow:flow:ac9563b2629ab686a56b",
+        "type": "dataflow",
+        "label": "normalize_email → email",
+        "path": "auth/claims.py",
+        "flow_kind": "call-result"
+      },
+      {
+        "id": "flow:flow:76b7fb1643170cac2835",
+        "type": "dataflow",
+        "label": "user.email → normalize_email",
+        "path": "auth/claims.py",
+        "flow_kind": "argument-to-call"
+      },
+      {
+        "id": "flow:flow:4b7229127542005c141f",
+        "type": "dataflow",
+        "label": "email.strip().lower → <return>",
+        "path": "auth/claims.py",
+        "flow_kind": "return-flow"
+      },
+      {
+        "id": "flow:flow:fac1afa3535802e2e1d9",
+        "type": "dataflow",
+        "label": "'__main__' → <branch>",
+        "path": "tests/test_auth.py",
+        "flow_kind": "condition-flow"
+      },
+      {
+        "id": "flow:flow:25d4d0ae50a9693cf89e",
+        "type": "dataflow",
+        "label": "__name__ → <branch>",
+        "path": "tests/test_auth.py",
+        "flow_kind": "condition-flow"
+      },
+      {
+        "id": "flow:flow:b513e7bf022951f14017",
+        "type": "dataflow",
+        "label": "user → refresh_token",
+        "path": "tests/test_auth.py",
+        "flow_kind": "argument-to-call"
+      },
+      {
+        "id": "flow:flow:b1a6a3de9e1ab151794f",
+        "type": "dataflow",
+        "label": "False → refresh_token",
+        "path": "tests/test_auth.py",
+        "flow_kind": "argument-to-call"
+      },
+      {
+        "id": "flow:flow:b160cfc7a89078c414e3",
+        "type": "dataflow",
+        "label": "'elevated' → self.assertFalse",
+        "path": "tests/test_auth.py",
+        "flow_kind": "argument-to-call"
+      },
+      {
+        "id": "world:ce313526f8ec43ae879a",
+        "type": "counterfactual",
+        "label": "WORLD B · explicit refresh gate",
+        "agent_id": "agent:9e64220982f129a88ba4",
+        "status": "promoted"
+      },
+      {
+        "id": "world:64e3589c9195e7eb80da",
+        "type": "counterfactual",
+        "label": "WORLD A · harden claim elevation",
+        "agent_id": "agent:789369c93d2add87bfcc",
+        "status": "open"
+      },
+      {
+        "id": "invariant:6e1a315368b65a0135f0",
+        "type": "invariant",
+        "label": "expired subscription must never produce elevated refreshed claims",
+        "status": "unverified"
+      },
+      {
+        "id": "world:cb0cb5bce2bb222aac90",
+        "type": "ci-workflow",
+        "label": "ci.yml",
+        "path": ".github/workflows/ci.yml",
+        "trust": "heuristic",
+        "metadata": {}
+      },
+      {
+        "id": "world:8af15a047727e4ffe2e2",
+        "type": "ci-job",
+        "label": "test",
+        "path": ".github/workflows/ci.yml",
+        "trust": "heuristic",
+        "metadata": {}
+      },
+      {
+        "id": "world:c413cc7a2de516a5a875",
+        "type": "ci-job",
+        "label": "build",
+        "path": ".github/workflows/ci.yml",
+        "trust": "heuristic",
+        "metadata": {}
+      },
+      {
+        "id": "world:7cb3ad9a8cebac0bb4c6",
+        "type": "ci-job",
+        "label": "security",
+        "path": ".github/workflows/ci.yml",
+        "trust": "heuristic",
+        "metadata": {}
+      },
+      {
+        "id": "world:c3ffe74b441e1c5e8f8c",
+        "type": "service",
+        "label": "web",
+        "path": "docker-compose.yml",
+        "trust": "heuristic",
+        "metadata": {
+          "source": "compose"
+        }
+      },
+      {
+        "id": "world:5e33129d2987148d2ef1",
+        "type": "service",
+        "label": "api",
+        "path": "docker-compose.yml",
+        "trust": "heuristic",
+        "metadata": {
+          "source": "compose"
+        }
+      },
+      {
+        "id": "world:e89b6331fb9575a91b14",
+        "type": "service",
+        "label": "db",
+        "path": "docker-compose.yml",
+        "trust": "heuristic",
+        "metadata": {
+          "source": "compose"
+        }
+      },
+      {
+        "id": "world:897718ece366147eace7",
+        "type": "service",
+        "label": "redis",
+        "path": "docker-compose.yml",
+        "trust": "heuristic",
+        "metadata": {
+          "source": "compose"
+        }
+      },
+      {
+        "id": "world:2340c1a3c47675aeedfb",
+        "type": "db-migration",
+        "label": "001_users.sql",
+        "path": "migrations/001_users.sql",
+        "trust": "heuristic",
+        "metadata": {}
+      },
+      {
+        "id": "world:1d08a1f99a21d2bd8b3b",
+        "type": "db-table",
+        "label": "users",
+        "path": "migrations/001_users.sql",
+        "trust": "heuristic",
+        "metadata": {}
+      },
+      {
+        "id": "world:4020260ce0f73f80fb7c",
+        "type": "api-spec",
+        "label": "openapi.json",
+        "path": "openapi.json",
+        "trust": "parser",
+        "metadata": {}
+      },
+      {
+        "id": "world:2adde08048b056d49292",
+        "type": "api-route",
+        "label": "/token/refresh",
+        "path": "openapi.json",
+        "trust": "parser",
+        "metadata": {}
+      },
+      {
+        "id": "world:88d1d55ce1762f60c255",
+        "type": "api-operation",
+        "label": "POST /token/refresh",
+        "path": "openapi.json",
+        "trust": "parser",
+        "metadata": {}
+      },
+      {
+        "id": "world:be6819d81224ce73dce8",
+        "type": "api-route",
+        "label": "/subscriptions/{id}",
+        "path": "openapi.json",
+        "trust": "parser",
+        "metadata": {}
+      },
+      {
+        "id": "world:ba0932f37896cba8077d",
+        "type": "api-operation",
+        "label": "GET /subscriptions/{id}",
+        "path": "openapi.json",
+        "trust": "parser",
+        "metadata": {}
+      },
+      {
+        "id": "world:43684451e9579b6c6583",
+        "type": "package",
+        "label": "nolane-demo",
+        "path": "package.json",
+        "trust": "parser",
+        "metadata": {}
+      },
+      {
+        "id": "world:891debd8f52703b44b29",
+        "type": "build-task",
+        "label": "test",
+        "path": "package.json",
+        "trust": "parser",
+        "metadata": {
+          "command": "python -m unittest"
+        }
+      },
+      {
+        "id": "world:7973e1551ba92f35ac1e",
+        "type": "build-task",
+        "label": "build",
+        "path": "package.json",
+        "trust": "parser",
+        "metadata": {
+          "command": "vite"
+        }
+      },
+      {
+        "id": "rt_9d1c1d514edb7452a0c594cc",
+        "type": "runtime-metric",
+        "label": "habitat.world.promoted",
+        "status": "observed",
+        "observations": 1,
+        "metadata": {
+          "trace_id": null,
+          "span_id": null,
+          "path": null,
+          "duration_ms": null
+        }
+      },
+      {
+        "id": "rt_21591ff7b3f805d9034c2396",
+        "type": "service",
+        "label": "habitat",
+        "status": "observed",
+        "observations": 1,
+        "metadata": {}
+      },
+      {
+        "id": "rt_40be4a706dca3592a4b98f4f",
+        "type": "runtime-log",
+        "label": "counterfactual WORLD B verifier passed",
+        "status": "INFO",
+        "observations": 1,
+        "metadata": {
+          "trace_id": null,
+          "span_id": null,
+          "path": "tests/test_auth.py",
+          "duration_ms": null
+        }
+      },
+      {
+        "id": "rt_1ca216c54fd406d8da0ab3e0",
+        "type": "service",
+        "label": "verifier",
+        "status": "INFO",
+        "observations": 1,
+        "metadata": {}
+      },
+      {
+        "id": "rt_dbab6515cf463007c9c07519",
+        "type": "runtime-source",
+        "label": "tests/test_auth.py",
+        "status": "INFO",
+        "observations": 1,
+        "metadata": {}
+      },
+      {
+        "id": "rt_4bdd4e04ccbefbb3dfaae152",
+        "type": "runtime-span",
+        "label": "GET entitlement cache",
+        "status": "observed",
+        "observations": 1,
+        "metadata": {
+          "trace_id": "trace-refresh",
+          "span_id": "cache",
+          "path": null,
+          "duration_ms": 0.6
+        }
+      },
+      {
+        "id": "rt_15a4c8a40cc417c4d4861a71",
+        "type": "service",
+        "label": "api",
+        "status": "observed",
+        "observations": 3,
+        "metadata": {}
+      },
+      {
+        "id": "rt_1eed1eb1f24e670303f9d648",
+        "type": "database",
+        "label": "redis/entitlements",
+        "status": "observed",
+        "observations": 1,
+        "metadata": {
+          "system": "redis",
+          "namespace": "entitlements"
+        }
+      },
+      {
+        "id": "rt_501f7277a1dde1e6b9c6bbed",
+        "type": "runtime-span",
+        "label": "SELECT subscription",
+        "status": "observed",
+        "observations": 1,
+        "metadata": {
+          "trace_id": "trace-refresh",
+          "span_id": "db",
+          "path": null,
+          "duration_ms": 1.3
+        }
+      },
+      {
+        "id": "rt_6c793691fc5ddd5d88ee03c6",
+        "type": "database",
+        "label": "postgresql/users",
+        "status": "observed",
+        "observations": 1,
+        "metadata": {
+          "system": "postgresql",
+          "namespace": "users"
+        }
+      },
+      {
+        "id": "rt_3443277282ecf9c8a75c9b00",
+        "type": "runtime-span",
+        "label": "POST /token/refresh",
+        "status": "observed",
+        "observations": 1,
+        "metadata": {
+          "trace_id": "trace-refresh",
+          "span_id": "api",
+          "path": "auth/claims.py",
+          "duration_ms": 5.8
+        }
+      },
+      {
+        "id": "rt_dbf1e71282fc7c1d6ae48bba",
+        "type": "runtime-route",
+        "label": "/token/refresh",
+        "status": "observed",
+        "observations": 1,
+        "metadata": {}
+      },
+      {
+        "id": "rt_af5052229ed13759286a7851",
+        "type": "runtime-source",
+        "label": "auth/claims.py",
+        "status": "observed",
+        "observations": 1,
+        "metadata": {}
+      },
+      {
+        "id": "rt_f34da70e24b20235d68c3af2",
+        "type": "runtime-span",
+        "label": "click refresh token",
+        "status": "observed",
+        "observations": 1,
+        "metadata": {
+          "trace_id": "trace-refresh",
+          "span_id": "web",
+          "path": null,
+          "duration_ms": 0.4
+        }
+      },
+      {
+        "id": "rt_6a05ed9b3e81bebfe318e9c2",
+        "type": "service",
+        "label": "web",
+        "status": "observed",
+        "observations": 1,
+        "metadata": {}
+      },
+      {
+        "id": "rt_78c28e34923a9d3ae7ef42fd",
+        "type": "runtime-route",
+        "label": "ui:/refresh",
+        "status": "observed",
+        "observations": 1,
+        "metadata": {}
+      }
+    ],
+    "edges": [
+      {
+        "source": "file:a99307c61c3c55875b5b",
+        "target": "file:025c1bd1e8e3d3b2e92b",
+        "kind": "imports",
+        "trust": "semantic"
+      },
+      {
+        "source": "file:a99307c61c3c55875b5b",
+        "target": "file:025c1bd1e8e3d3b2e92b",
+        "kind": "tests",
+        "trust": "derived"
+      },
+      {
+        "source": "sym:aaf6c4558a5935cb1f4e",
+        "target": "sym:46f68082cc98b9ba70b6",
+        "kind": "contains",
+        "trust": "exact"
+      },
+      {
+        "source": "file:a99307c61c3c55875b5b",
+        "target": "sym:940853360262fd4fb4f7",
+        "kind": "imports_symbol",
+        "trust": "semantic"
+      },
+      {
+        "source": "sym:46f68082cc98b9ba70b6",
+        "target": "sym:940853360262fd4fb4f7",
+        "kind": "calls",
+        "trust": "semantic"
+      },
+      {
+        "source": "sym:a43b1f1f80fa06904c04",
+        "target": "sym:4936bd99141b04e64a8f",
+        "kind": "calls",
+        "trust": "semantic"
+      },
+      {
+        "source": "sym:940853360262fd4fb4f7",
+        "target": "sym:a43b1f1f80fa06904c04",
+        "kind": "calls",
+        "trust": "semantic"
+      },
+      {
+        "source": "episode:4e03ea04f8b6ca4e964f",
+        "target": "hypothesis:093ca25cd4f746c4f52b",
+        "kind": "hypothesis",
+        "trust": "derived"
+      },
+      {
+        "source": "episode:4e03ea04f8b6ca4e964f",
+        "target": "hypothesis:636dcd88aa378ef0f7c9",
+        "kind": "hypothesis",
+        "trust": "derived"
+      },
+      {
+        "source": "episode:4e03ea04f8b6ca4e964f",
+        "target": "epistemic:3ef30bc17a738d84ad4e",
+        "kind": "epistemic",
+        "trust": "derived"
+      },
+      {
+        "source": "agent:789369c93d2add87bfcc",
+        "target": "epistemic:3ef30bc17a738d84ad4e",
+        "kind": "agent-cognition",
+        "trust": "derived"
+      },
+      {
+        "source": "episode:4e03ea04f8b6ca4e964f",
+        "target": "memory:bedd1fa6ea412d282154",
+        "kind": "remembered-in",
+        "trust": "derived"
+      },
+      {
+        "source": "agent:cb335013d409a0a0dd2f",
+        "target": "memory:bedd1fa6ea412d282154",
+        "kind": "private-memory",
+        "trust": "derived"
+      },
+      {
+        "source": "rt_3899ea879f2f29e1dcbb05cc",
+        "target": "sym:46f68082cc98b9ba70b6",
+        "kind": "runtime-observed",
+        "trust": "semantic"
+      },
+      {
+        "source": "rt_9f36d9ef9667961588037572",
+        "target": "sym:940853360262fd4fb4f7",
+        "kind": "runtime-observed",
+        "trust": "semantic"
+      },
+      {
+        "source": "episode:4e03ea04f8b6ca4e964f",
+        "target": "rt_0fbc5946d7027f152b1b9d86",
+        "kind": "runtime-evidence",
+        "trust": "derived"
+      },
+      {
+        "source": "episode:4e03ea04f8b6ca4e964f",
+        "target": "rt_3899ea879f2f29e1dcbb05cc",
+        "kind": "runtime-evidence",
+        "trust": "derived"
+      },
+      {
+        "source": "episode:4e03ea04f8b6ca4e964f",
+        "target": "rt_eb434609bb9c6b4ab089320b",
+        "kind": "runtime-evidence",
+        "trust": "derived"
+      },
+      {
+        "source": "episode:4e03ea04f8b6ca4e964f",
+        "target": "rt_52d32b2bb33db9985070d3e6",
+        "kind": "runtime-evidence",
+        "trust": "derived"
+      },
+      {
+        "source": "episode:4e03ea04f8b6ca4e964f",
+        "target": "rt_9f36d9ef9667961588037572",
+        "kind": "runtime-evidence",
+        "trust": "derived"
+      },
+      {
+        "source": "episode:4e03ea04f8b6ca4e964f",
+        "target": "rt_44e1935f28ea8df120948514",
+        "kind": "runtime-evidence",
+        "trust": "derived"
+      },
+      {
+        "source": "sym:940853360262fd4fb4f7",
+        "target": "effect:eff:36e53416b37b8d01d866",
+        "kind": "effect-reads",
+        "trust": "parser"
+      },
+      {
+        "source": "sym:940853360262fd4fb4f7",
+        "target": "effect:eff:b30e410238a0f07f9e02",
+        "kind": "effect-reads",
+        "trust": "parser"
+      },
+      {
+        "source": "sym:940853360262fd4fb4f7",
+        "target": "effect:eff:89ece9b34b0a21938ea5",
+        "kind": "effect-returns",
+        "trust": "parser"
+      },
+      {
+        "source": "sym:940853360262fd4fb4f7",
+        "target": "effect:eff:5a235bec511aeb42b49f",
+        "kind": "effect-reads",
+        "trust": "parser"
+      },
+      {
+        "source": "sym:940853360262fd4fb4f7",
+        "target": "effect:eff:d161d0564d0d2c2da547",
+        "kind": "effect-reads",
+        "trust": "parser"
+      },
+      {
+        "source": "sym:940853360262fd4fb4f7",
+        "target": "effect:eff:b47eba4c730dca34791e",
+        "kind": "effect-returns",
+        "trust": "parser"
+      },
+      {
+        "source": "sym:940853360262fd4fb4f7",
+        "target": "effect:eff:38d8bd8d0beb5d2ae3a6",
+        "kind": "effect-reads",
+        "trust": "parser"
+      },
+      {
+        "source": "sym:940853360262fd4fb4f7",
+        "target": "effect:eff:4c46606620cb85473139",
+        "kind": "effect-reads",
+        "trust": "parser"
+      },
+      {
+        "source": "sym:a43b1f1f80fa06904c04",
+        "target": "effect:eff:a493d6910ed6c2ef77fd",
+        "kind": "effect-reads",
+        "trust": "parser"
+      },
+      {
+        "source": "sym:a43b1f1f80fa06904c04",
+        "target": "effect:eff:46cf8558152ac7480280",
+        "kind": "effect-reads",
+        "trust": "parser"
+      },
+      {
+        "source": "sym:a43b1f1f80fa06904c04",
+        "target": "effect:eff:aca066372e413093214f",
+        "kind": "effect-env-read",
+        "trust": "parser"
+      },
+      {
+        "source": "sym:a43b1f1f80fa06904c04",
+        "target": "effect:eff:fdf0c698e56808e25073",
+        "kind": "effect-reads",
+        "trust": "parser"
+      },
+      {
+        "source": "sym:a43b1f1f80fa06904c04",
+        "target": "effect:eff:5f39452e3f17dd1fca8e",
+        "kind": "effect-reads",
+        "trust": "parser"
+      },
+      {
+        "source": "sym:a43b1f1f80fa06904c04",
+        "target": "effect:eff:4a2aea59e8a8a6f06c07",
+        "kind": "effect-reads",
+        "trust": "parser"
+      },
+      {
+        "source": "sym:a43b1f1f80fa06904c04",
+        "target": "effect:eff:35c37c964b32c2cda3ba",
+        "kind": "effect-returns",
+        "trust": "parser"
+      },
+      {
+        "source": "sym:a43b1f1f80fa06904c04",
+        "target": "effect:eff:2e6ddf22685c2b802e07",
+        "kind": "effect-reads",
+        "trust": "parser"
+      },
+      {
+        "source": "sym:a43b1f1f80fa06904c04",
+        "target": "effect:eff:d68e7f27094b81aa043f",
+        "kind": "effect-reads",
+        "trust": "parser"
+      },
+      {
+        "source": "sym:a43b1f1f80fa06904c04",
+        "target": "effect:eff:83dacb614f3a08ef22d9",
+        "kind": "effect-reads",
+        "trust": "parser"
+      },
+      {
+        "source": "sym:a43b1f1f80fa06904c04",
+        "target": "effect:eff:3e5e054801630e87110d",
+        "kind": "effect-writes",
+        "trust": "parser"
+      },
+      {
+        "source": "sym:a43b1f1f80fa06904c04",
+        "target": "effect:eff:fbd53aed12e229b55cd3",
+        "kind": "effect-reads",
+        "trust": "parser"
+      },
+      {
+        "source": "sym:a43b1f1f80fa06904c04",
+        "target": "effect:eff:f10a5a1f78613e3bc99a",
+        "kind": "effect-reads",
+        "trust": "parser"
+      },
+      {
+        "source": "sym:a43b1f1f80fa06904c04",
+        "target": "effect:eff:058787e7ff4a4e4b618d",
+        "kind": "effect-writes",
+        "trust": "parser"
+      },
+      {
+        "source": "sym:a43b1f1f80fa06904c04",
+        "target": "effect:eff:b77a21f3ecc1b3b0a23e",
+        "kind": "effect-reads",
+        "trust": "parser"
+      },
+      {
+        "source": "sym:a43b1f1f80fa06904c04",
+        "target": "effect:eff:3aeb6f5df0d78364c966",
+        "kind": "effect-reads",
+        "trust": "parser"
+      },
+      {
+        "source": "sym:a43b1f1f80fa06904c04",
+        "target": "effect:eff:ff3c5d497742c3ef3283",
+        "kind": "effect-reads",
+        "trust": "parser"
+      },
+      {
+        "source": "sym:a43b1f1f80fa06904c04",
+        "target": "effect:eff:7dc10e6a48a77a29f057",
+        "kind": "effect-sanitizes",
+        "trust": "parser"
+      },
+      {
+        "source": "sym:a43b1f1f80fa06904c04",
+        "target": "effect:eff:df1ba5ff1a137204a5d2",
+        "kind": "effect-writes",
+        "trust": "parser"
+      },
+      {
+        "source": "sym:a43b1f1f80fa06904c04",
+        "target": "effect:eff:e50ee02f1316a7c33969",
+        "kind": "effect-reads",
+        "trust": "parser"
+      },
+      {
+        "source": "sym:4936bd99141b04e64a8f",
+        "target": "effect:eff:5095cc607c3b7b1e5997",
+        "kind": "effect-reads",
+        "trust": "parser"
+      },
+      {
+        "source": "sym:4936bd99141b04e64a8f",
+        "target": "effect:eff:9d7d207f8e6596de33ad",
+        "kind": "effect-reads",
+        "trust": "parser"
+      },
+      {
+        "source": "sym:4936bd99141b04e64a8f",
+        "target": "effect:eff:3f5e6b512f07c794ce1e",
+        "kind": "effect-reads",
+        "trust": "parser"
+      },
+      {
+        "source": "sym:4936bd99141b04e64a8f",
+        "target": "effect:eff:ccc20e0581f0729da19b",
+        "kind": "effect-returns",
+        "trust": "parser"
+      },
+      {
+        "source": "file:a99307c61c3c55875b5b",
+        "target": "effect:eff:42697c7db3ac4f528f06",
+        "kind": "effect-reads",
+        "trust": "parser"
+      },
+      {
+        "source": "file:a99307c61c3c55875b5b",
+        "target": "effect:eff:ccfa57c8204c601af05e",
+        "kind": "effect-reads",
+        "trust": "parser"
+      },
+      {
+        "source": "file:a99307c61c3c55875b5b",
+        "target": "effect:eff:3e2aafcc51e57470f1f2",
+        "kind": "effect-reads",
+        "trust": "parser"
+      },
+      {
+        "source": "sym:46f68082cc98b9ba70b6",
+        "target": "effect:eff:60769726b76df31fbe59",
+        "kind": "effect-reads",
+        "trust": "parser"
+      },
+      {
+        "source": "sym:940853360262fd4fb4f7",
+        "target": "flow:flow:32be8f6786119b79cbf6",
+        "kind": "dataflow-argument-to-call",
+        "trust": "parser"
+      },
+      {
+        "source": "sym:940853360262fd4fb4f7",
+        "target": "flow:flow:f49ee1a7be9e00b7753e",
+        "kind": "dataflow-argument-to-call",
+        "trust": "parser"
+      },
+      {
+        "source": "sym:940853360262fd4fb4f7",
+        "target": "flow:flow:278674dfc04f7d5f9d52",
+        "kind": "dataflow-return-flow",
+        "trust": "parser"
+      },
+      {
+        "source": "sym:940853360262fd4fb4f7",
+        "target": "flow:flow:d3ac4764397f4b5b32f5",
+        "kind": "dataflow-return-flow",
+        "trust": "parser"
+      },
+      {
+        "source": "sym:940853360262fd4fb4f7",
+        "target": "flow:flow:be4f3dcd1069b5d262f4",
+        "kind": "dataflow-return-flow",
+        "trust": "parser"
+      },
+      {
+        "source": "sym:940853360262fd4fb4f7",
+        "target": "flow:flow:818faf512aaeffde911d",
+        "kind": "dataflow-argument-to-call",
+        "trust": "parser"
+      },
+      {
+        "source": "sym:940853360262fd4fb4f7",
+        "target": "flow:flow:0efb047d0f28c31fc883",
+        "kind": "dataflow-argument-to-call",
+        "trust": "parser"
+      },
+      {
+        "source": "sym:940853360262fd4fb4f7",
+        "target": "flow:flow:6c658e0721d4704e2c07",
+        "kind": "dataflow-return-flow",
+        "trust": "parser"
+      },
+      {
+        "source": "sym:940853360262fd4fb4f7",
+        "target": "flow:flow:e2e4d61dcabe9fd7f3b9",
+        "kind": "dataflow-return-flow",
+        "trust": "parser"
+      },
+      {
+        "source": "sym:940853360262fd4fb4f7",
+        "target": "flow:flow:963f5a905d4d7c502da3",
+        "kind": "dataflow-return-flow",
+        "trust": "parser"
+      },
+      {
+        "source": "sym:940853360262fd4fb4f7",
+        "target": "flow:flow:8319c38d26e109ba18a3",
+        "kind": "dataflow-condition-flow",
+        "trust": "parser"
+      },
+      {
+        "source": "sym:a43b1f1f80fa06904c04",
+        "target": "flow:flow:ca1871dcf79929d7334f",
+        "kind": "dataflow-argument-to-call",
+        "trust": "parser"
+      },
+      {
+        "source": "sym:a43b1f1f80fa06904c04",
+        "target": "flow:flow:207332179ec43f240293",
+        "kind": "dataflow-return-flow",
+        "trust": "parser"
+      },
+      {
+        "source": "sym:a43b1f1f80fa06904c04",
+        "target": "flow:flow:833dd26cc7ef45882b15",
+        "kind": "dataflow-return-flow",
+        "trust": "parser"
+      },
+      {
+        "source": "sym:a43b1f1f80fa06904c04",
+        "target": "flow:flow:7bad2d0fde3816169163",
+        "kind": "dataflow-return-flow",
+        "trust": "parser"
+      },
+      {
+        "source": "sym:a43b1f1f80fa06904c04",
+        "target": "flow:flow:c2df4c955fcbf27e4d43",
+        "kind": "dataflow-return-flow",
+        "trust": "parser"
+      },
+      {
+        "source": "sym:a43b1f1f80fa06904c04",
+        "target": "flow:flow:61285adb2468bdf5f4f1",
+        "kind": "dataflow-return-flow",
+        "trust": "parser"
+      },
+      {
+        "source": "sym:a43b1f1f80fa06904c04",
+        "target": "flow:flow:e880b3c942db80e1f2cc",
+        "kind": "dataflow-return-flow",
+        "trust": "parser"
+      },
+      {
+        "source": "sym:a43b1f1f80fa06904c04",
+        "target": "flow:flow:00e55dd59ac11f2ba4bb",
+        "kind": "dataflow-return-flow",
+        "trust": "parser"
+      },
+      {
+        "source": "sym:a43b1f1f80fa06904c04",
+        "target": "flow:flow:ee0a4a7f79a134c8d0d7",
+        "kind": "dataflow-return-flow",
+        "trust": "parser"
+      },
+      {
+        "source": "sym:a43b1f1f80fa06904c04",
+        "target": "flow:flow:c06d0a37c69c90d33cad",
+        "kind": "dataflow-return-flow",
+        "trust": "parser"
+      },
+      {
+        "source": "sym:a43b1f1f80fa06904c04",
+        "target": "flow:flow:42266af3c54006a137ca",
+        "kind": "dataflow-assigns",
+        "trust": "parser"
+      },
+      {
+        "source": "sym:a43b1f1f80fa06904c04",
+        "target": "flow:flow:39700471400db8ff93cf",
+        "kind": "dataflow-assigns",
+        "trust": "parser"
+      },
+      {
+        "source": "sym:a43b1f1f80fa06904c04",
+        "target": "flow:flow:f7ecb68a21073d670ea2",
+        "kind": "dataflow-assigns",
+        "trust": "parser"
+      },
+      {
+        "source": "sym:a43b1f1f80fa06904c04",
+        "target": "flow:flow:85243e40e472db8ad0fb",
+        "kind": "dataflow-assigns",
+        "trust": "parser"
+      },
+      {
+        "source": "sym:a43b1f1f80fa06904c04",
+        "target": "flow:flow:dd99e5628333036b6197",
+        "kind": "dataflow-call-result",
+        "trust": "parser"
+      },
+      {
+        "source": "sym:a43b1f1f80fa06904c04",
+        "target": "flow:flow:b9b7da87eb5addda6578",
+        "kind": "dataflow-argument-to-call",
+        "trust": "parser"
+      },
+      {
+        "source": "sym:a43b1f1f80fa06904c04",
+        "target": "flow:flow:00af5dfb156a6f65d2b7",
+        "kind": "dataflow-argument-to-call",
+        "trust": "parser"
+      },
+      {
+        "source": "sym:a43b1f1f80fa06904c04",
+        "target": "flow:flow:1b2be0ffccc1384d012a",
+        "kind": "dataflow-argument-to-call",
+        "trust": "parser"
+      },
+      {
+        "source": "sym:a43b1f1f80fa06904c04",
+        "target": "flow:flow:d996348dac0c5a9c857a",
+        "kind": "dataflow-assigns",
+        "trust": "parser"
+      },
+      {
+        "source": "sym:a43b1f1f80fa06904c04",
+        "target": "flow:flow:c1625e408a29c6d63a65",
+        "kind": "dataflow-assigns",
+        "trust": "parser"
+      },
+      {
+        "source": "sym:a43b1f1f80fa06904c04",
+        "target": "flow:flow:a3005e30004fea4b7d32",
+        "kind": "dataflow-assigns",
+        "trust": "parser"
+      },
+      {
+        "source": "sym:a43b1f1f80fa06904c04",
+        "target": "flow:flow:9813aff527300bd2fccb",
+        "kind": "dataflow-assigns",
+        "trust": "parser"
+      },
+      {
+        "source": "sym:a43b1f1f80fa06904c04",
+        "target": "flow:flow:d0a4269891ffc238154d",
+        "kind": "dataflow-assigns",
+        "trust": "parser"
+      },
+      {
+        "source": "sym:a43b1f1f80fa06904c04",
+        "target": "flow:flow:ac9563b2629ab686a56b",
+        "kind": "dataflow-call-result",
+        "trust": "parser"
+      },
+      {
+        "source": "sym:a43b1f1f80fa06904c04",
+        "target": "flow:flow:76b7fb1643170cac2835",
+        "kind": "dataflow-argument-to-call",
+        "trust": "parser"
+      },
+      {
+        "source": "sym:4936bd99141b04e64a8f",
+        "target": "flow:flow:4b7229127542005c141f",
+        "kind": "dataflow-return-flow",
+        "trust": "parser"
+      },
+      {
+        "source": "file:a99307c61c3c55875b5b",
+        "target": "flow:flow:fac1afa3535802e2e1d9",
+        "kind": "dataflow-condition-flow",
+        "trust": "parser"
+      },
+      {
+        "source": "file:a99307c61c3c55875b5b",
+        "target": "flow:flow:25d4d0ae50a9693cf89e",
+        "kind": "dataflow-condition-flow",
+        "trust": "parser"
+      },
+      {
+        "source": "sym:46f68082cc98b9ba70b6",
+        "target": "flow:flow:b513e7bf022951f14017",
+        "kind": "dataflow-argument-to-call",
+        "trust": "parser"
+      },
+      {
+        "source": "sym:46f68082cc98b9ba70b6",
+        "target": "flow:flow:b1a6a3de9e1ab151794f",
+        "kind": "dataflow-argument-to-call",
+        "trust": "parser"
+      },
+      {
+        "source": "sym:46f68082cc98b9ba70b6",
+        "target": "flow:flow:b160cfc7a89078c414e3",
+        "kind": "dataflow-argument-to-call",
+        "trust": "parser"
+      },
+      {
+        "source": "agent:9e64220982f129a88ba4",
+        "target": "world:ce313526f8ec43ae879a",
+        "kind": "world-fork",
+        "trust": "exact"
+      },
+      {
+        "source": "agent:789369c93d2add87bfcc",
+        "target": "world:64e3589c9195e7eb80da",
+        "kind": "world-fork",
+        "trust": "exact"
+      },
+      {
+        "source": "world:cb0cb5bce2bb222aac90",
+        "target": "world:8af15a047727e4ffe2e2",
+        "kind": "contains",
+        "trust": "heuristic",
+        "evidence": "workflow line 2"
+      },
+      {
+        "source": "world:cb0cb5bce2bb222aac90",
+        "target": "world:c413cc7a2de516a5a875",
+        "kind": "contains",
+        "trust": "heuristic",
+        "evidence": "workflow line 4"
+      },
+      {
+        "source": "world:cb0cb5bce2bb222aac90",
+        "target": "world:7cb3ad9a8cebac0bb4c6",
+        "kind": "contains",
+        "trust": "heuristic",
+        "evidence": "workflow line 6"
+      },
+      {
+        "source": "world:2340c1a3c47675aeedfb",
+        "target": "world:1d08a1f99a21d2bd8b3b",
+        "kind": "creates",
+        "trust": "heuristic",
+        "evidence": "SQL CREATE TABLE"
+      },
+      {
+        "source": "world:4020260ce0f73f80fb7c",
+        "target": "world:2adde08048b056d49292",
+        "kind": "declares",
+        "trust": "parser",
+        "evidence": "OpenAPI paths"
+      },
+      {
+        "source": "world:2adde08048b056d49292",
+        "target": "world:88d1d55ce1762f60c255",
+        "kind": "operation",
+        "trust": "parser",
+        "evidence": "OpenAPI operation"
+      },
+      {
+        "source": "world:4020260ce0f73f80fb7c",
+        "target": "world:be6819d81224ce73dce8",
+        "kind": "declares",
+        "trust": "parser",
+        "evidence": "OpenAPI paths"
+      },
+      {
+        "source": "world:be6819d81224ce73dce8",
+        "target": "world:ba0932f37896cba8077d",
+        "kind": "operation",
+        "trust": "parser",
+        "evidence": "OpenAPI operation"
+      },
+      {
+        "source": "world:43684451e9579b6c6583",
+        "target": "world:891debd8f52703b44b29",
+        "kind": "exposes-task",
+        "trust": "parser",
+        "evidence": "package.json scripts"
+      },
+      {
+        "source": "world:43684451e9579b6c6583",
+        "target": "world:7973e1551ba92f35ac1e",
+        "kind": "exposes-task",
+        "trust": "parser",
+        "evidence": "package.json scripts"
+      },
+      {
+        "source": "rt_21591ff7b3f805d9034c2396",
+        "target": "rt_9d1c1d514edb7452a0c594cc",
+        "kind": "observed-operation",
+        "count": 1,
+        "error_count": 0,
+        "duration_ms_total": 0.0,
+        "duration_ms_max": null,
+        "duration_ms_avg": 0.0
+      },
+      {
+        "source": "rt_1ca216c54fd406d8da0ab3e0",
+        "target": "rt_40be4a706dca3592a4b98f4f",
+        "kind": "observed-operation",
+        "count": 1,
+        "error_count": 0,
+        "duration_ms_total": 0.0,
+        "duration_ms_max": null,
+        "duration_ms_avg": 0.0
+      },
+      {
+        "source": "rt_40be4a706dca3592a4b98f4f",
+        "target": "rt_dbab6515cf463007c9c07519",
+        "kind": "observed-at",
+        "count": 1,
+        "error_count": 0,
+        "duration_ms_total": 0.0,
+        "duration_ms_max": null,
+        "duration_ms_avg": 0.0
+      },
+      {
+        "source": "rt_15a4c8a40cc417c4d4861a71",
+        "target": "rt_4bdd4e04ccbefbb3dfaae152",
+        "kind": "observed-operation",
+        "count": 1,
+        "error_count": 0,
+        "duration_ms_total": 0.6,
+        "duration_ms_max": 0.6,
+        "duration_ms_avg": 0.6
+      },
+      {
+        "source": "rt_4bdd4e04ccbefbb3dfaae152",
+        "target": "rt_1eed1eb1f24e670303f9d648",
+        "kind": "db-access",
+        "count": 1,
+        "error_count": 0,
+        "duration_ms_total": 0.6,
+        "duration_ms_max": 0.6,
+        "duration_ms_avg": 0.6
+      },
+      {
+        "source": "rt_15a4c8a40cc417c4d4861a71",
+        "target": "rt_501f7277a1dde1e6b9c6bbed",
+        "kind": "observed-operation",
+        "count": 1,
+        "error_count": 0,
+        "duration_ms_total": 1.3,
+        "duration_ms_max": 1.3,
+        "duration_ms_avg": 1.3
+      },
+      {
+        "source": "rt_501f7277a1dde1e6b9c6bbed",
+        "target": "rt_6c793691fc5ddd5d88ee03c6",
+        "kind": "db-access",
+        "count": 1,
+        "error_count": 0,
+        "duration_ms_total": 1.3,
+        "duration_ms_max": 1.3,
+        "duration_ms_avg": 1.3
+      },
+      {
+        "source": "rt_15a4c8a40cc417c4d4861a71",
+        "target": "rt_3443277282ecf9c8a75c9b00",
+        "kind": "observed-operation",
+        "count": 1,
+        "error_count": 0,
+        "duration_ms_total": 5.8,
+        "duration_ms_max": 5.8,
+        "duration_ms_avg": 5.8
+      },
+      {
+        "source": "rt_15a4c8a40cc417c4d4861a71",
+        "target": "rt_dbf1e71282fc7c1d6ae48bba",
+        "kind": "serves",
+        "count": 1,
+        "error_count": 0,
+        "duration_ms_total": 5.8,
+        "duration_ms_max": 5.8,
+        "duration_ms_avg": 5.8
+      },
+      {
+        "source": "rt_3443277282ecf9c8a75c9b00",
+        "target": "rt_af5052229ed13759286a7851",
+        "kind": "observed-at",
+        "count": 1,
+        "error_count": 0,
+        "duration_ms_total": 0.0,
+        "duration_ms_max": null,
+        "duration_ms_avg": 0.0
+      },
+      {
+        "source": "rt_6a05ed9b3e81bebfe318e9c2",
+        "target": "rt_f34da70e24b20235d68c3af2",
+        "kind": "observed-operation",
+        "count": 1,
+        "error_count": 0,
+        "duration_ms_total": 0.4,
+        "duration_ms_max": 0.4,
+        "duration_ms_avg": 0.4
+      },
+      {
+        "source": "rt_6a05ed9b3e81bebfe318e9c2",
+        "target": "rt_78c28e34923a9d3ae7ef42fd",
+        "kind": "serves",
+        "count": 1,
+        "error_count": 0,
+        "duration_ms_total": 0.4,
+        "duration_ms_max": 0.4,
+        "duration_ms_avg": 0.4
+      },
+      {
+        "source": "rt_3443277282ecf9c8a75c9b00",
+        "target": "rt_4bdd4e04ccbefbb3dfaae152",
+        "kind": "span-child",
+        "count": 1,
+        "error_count": 0,
+        "duration_ms_total": 0.6,
+        "duration_ms_max": 0.6,
+        "duration_ms_avg": 0.6
+      },
+      {
+        "source": "rt_3443277282ecf9c8a75c9b00",
+        "target": "rt_501f7277a1dde1e6b9c6bbed",
+        "kind": "span-child",
+        "count": 1,
+        "error_count": 0,
+        "duration_ms_total": 1.3,
+        "duration_ms_max": 1.3,
+        "duration_ms_avg": 1.3
+      },
+      {
+        "source": "rt_f34da70e24b20235d68c3af2",
+        "target": "rt_3443277282ecf9c8a75c9b00",
+        "kind": "span-child",
+        "count": 1,
+        "error_count": 0,
+        "duration_ms_total": 5.8,
+        "duration_ms_max": 5.8,
+        "duration_ms_avg": 5.8
+      }
+    ]
+  },
+  "activity_seq": 56,
+  "activity": [
+    {
+      "seq": 1,
+      "kind": "source.file-created",
+      "category": "source",
+      "agent_id": null,
+      "episode_id": null,
+      "ref_id": null,
+      "path": ".github/workflows/ci.yml",
+      "revision": "rev:02a7c0bd5a806b88f0b9",
+      "status": "changed",
+      "summary": "file-created: .github/workflows/ci.yml",
+      "created_at": "2026-08-07T16:15:56.258461+00:00",
+      "data": {
+        "reason": "initial-ingest",
+        "refresh_mode": "deep",
+        "revision_after": "rev:02a7c0bd5a806b88f0b9",
+        "revision_before": null
+      }
+    },
+    {
+      "seq": 2,
+      "kind": "source.file-created",
+      "category": "source",
+      "agent_id": null,
+      "episode_id": null,
+      "ref_id": null,
+      "path": "AGENTS.md",
+      "revision": "rev:02a7c0bd5a806b88f0b9",
+      "status": "changed",
+      "summary": "file-created: AGENTS.md",
+      "created_at": "2026-08-07T16:15:56.261387+00:00",
+      "data": {
+        "reason": "initial-ingest",
+        "refresh_mode": "deep",
+        "revision_after": "rev:02a7c0bd5a806b88f0b9",
+        "revision_before": null
+      }
+    },
+    {
+      "seq": 3,
+      "kind": "source.file-created",
+      "category": "source",
+      "agent_id": null,
+      "episode_id": null,
+      "ref_id": null,
+      "path": "auth/claims.py",
+      "revision": "rev:02a7c0bd5a806b88f0b9",
+      "status": "changed",
+      "summary": "file-created: auth/claims.py",
+      "created_at": "2026-08-07T16:15:56.262704+00:00",
+      "data": {
+        "reason": "initial-ingest",
+        "refresh_mode": "deep",
+        "revision_after": "rev:02a7c0bd5a806b88f0b9",
+        "revision_before": null
+      }
+    },
+    {
+      "seq": 4,
+      "kind": "source.file-created",
+      "category": "source",
+      "agent_id": null,
+      "episode_id": null,
+      "ref_id": null,
+      "path": "auth/subscription.py",
+      "revision": "rev:02a7c0bd5a806b88f0b9",
+      "status": "changed",
+      "summary": "file-created: auth/subscription.py",
+      "created_at": "2026-08-07T16:15:56.263541+00:00",
+      "data": {
+        "reason": "initial-ingest",
+        "refresh_mode": "deep",
+        "revision_after": "rev:02a7c0bd5a806b88f0b9",
+        "revision_before": null
+      }
+    },
+    {
+      "seq": 5,
+      "kind": "source.file-created",
+      "category": "source",
+      "agent_id": null,
+      "episode_id": null,
+      "ref_id": null,
+      "path": "billing/invoice.py",
+      "revision": "rev:02a7c0bd5a806b88f0b9",
+      "status": "changed",
+      "summary": "file-created: billing/invoice.py",
+      "created_at": "2026-08-07T16:15:56.264367+00:00",
+      "data": {
+        "reason": "initial-ingest",
+        "refresh_mode": "deep",
+        "revision_after": "rev:02a7c0bd5a806b88f0b9",
+        "revision_before": null
+      }
+    },
+    {
+      "seq": 6,
+      "kind": "source.file-created",
+      "category": "source",
+      "agent_id": null,
+      "episode_id": null,
+      "ref_id": null,
+      "path": "docker-compose.yml",
+      "revision": "rev:02a7c0bd5a806b88f0b9",
+      "status": "changed",
+      "summary": "file-created: docker-compose.yml",
+      "created_at": "2026-08-07T16:15:56.265208+00:00",
+      "data": {
+        "reason": "initial-ingest",
+        "refresh_mode": "deep",
+        "revision_after": "rev:02a7c0bd5a806b88f0b9",
+        "revision_before": null
+      }
+    },
+    {
+      "seq": 7,
+      "kind": "source.file-created",
+      "category": "source",
+      "agent_id": null,
+      "episode_id": null,
+      "ref_id": null,
+      "path": "migrations/001_users.sql",
+      "revision": "rev:02a7c0bd5a806b88f0b9",
+      "status": "changed",
+      "summary": "file-created: migrations/001_users.sql",
+      "created_at": "2026-08-07T16:15:56.265996+00:00",
+      "data": {
+        "reason": "initial-ingest",
+        "refresh_mode": "deep",
+        "revision_after": "rev:02a7c0bd5a806b88f0b9",
+        "revision_before": null
+      }
+    },
+    {
+      "seq": 8,
+      "kind": "source.file-created",
+      "category": "source",
+      "agent_id": null,
+      "episode_id": null,
+      "ref_id": null,
+      "path": "openapi.json",
+      "revision": "rev:02a7c0bd5a806b88f0b9",
+      "status": "changed",
+      "summary": "file-created: openapi.json",
+      "created_at": "2026-08-07T16:15:56.266878+00:00",
+      "data": {
+        "reason": "initial-ingest",
+        "refresh_mode": "deep",
+        "revision_after": "rev:02a7c0bd5a806b88f0b9",
+        "revision_before": null
+      }
+    },
+    {
+      "seq": 9,
+      "kind": "source.file-created",
+      "category": "source",
+      "agent_id": null,
+      "episode_id": null,
+      "ref_id": null,
+      "path": "package.json",
+      "revision": "rev:02a7c0bd5a806b88f0b9",
+      "status": "changed",
+      "summary": "file-created: package.json",
+      "created_at": "2026-08-07T16:15:56.267724+00:00",
+      "data": {
+        "reason": "initial-ingest",
+        "refresh_mode": "deep",
+        "revision_after": "rev:02a7c0bd5a806b88f0b9",
+        "revision_before": null
+      }
+    },
+    {
+      "seq": 10,
+      "kind": "source.file-created",
+      "category": "source",
+      "agent_id": null,
+      "episode_id": null,
+      "ref_id": null,
+      "path": "tests/test_auth.py",
+      "revision": "rev:02a7c0bd5a806b88f0b9",
+      "status": "changed",
+      "summary": "file-created: tests/test_auth.py",
+      "created_at": "2026-08-07T16:15:56.268556+00:00",
+      "data": {
+        "reason": "initial-ingest",
+        "refresh_mode": "deep",
+        "revision_after": "rev:02a7c0bd5a806b88f0b9",
+        "revision_before": null
+      }
+    },
+    {
+      "seq": 11,
+      "kind": "source.file-created",
+      "category": "source",
+      "agent_id": null,
+      "episode_id": null,
+      "ref_id": null,
+      "path": "ui/index.html",
+      "revision": "rev:02a7c0bd5a806b88f0b9",
+      "status": "changed",
+      "summary": "file-created: ui/index.html",
+      "created_at": "2026-08-07T16:15:56.269329+00:00",
+      "data": {
+        "reason": "initial-ingest",
+        "refresh_mode": "deep",
+        "revision_after": "rev:02a7c0bd5a806b88f0b9",
+        "revision_before": null
+      }
+    },
+    {
+      "seq": 12,
+      "kind": "agent.connected",
+      "category": "agent",
+      "agent_id": "agent:789369c93d2add87bfcc",
+      "episode_id": null,
+      "ref_id": null,
+      "path": null,
+      "revision": "rev:02a7c0bd5a806b88f0b9",
+      "status": "active",
+      "summary": "agent connected: Codex",
+      "created_at": "2026-08-07T16:15:56.272990+00:00",
+      "data": {
+        "name": "Codex"
+      }
+    },
+    {
+      "seq": 13,
+      "kind": "agent.connected",
+      "category": "agent",
+      "agent_id": "agent:9e64220982f129a88ba4",
+      "episode_id": null,
+      "ref_id": null,
+      "path": null,
+      "revision": "rev:02a7c0bd5a806b88f0b9",
+      "status": "active",
+      "summary": "agent connected: Claude Code",
+      "created_at": "2026-08-07T16:15:56.274250+00:00",
+      "data": {
+        "name": "Claude Code"
+      }
+    },
+    {
+      "seq": 14,
+      "kind": "agent.connected",
+      "category": "agent",
+      "agent_id": "agent:cb335013d409a0a0dd2f",
+      "episode_id": null,
+      "ref_id": null,
+      "path": null,
+      "revision": "rev:02a7c0bd5a806b88f0b9",
+      "status": "active",
+      "summary": "agent connected: Verifier Agent",
+      "created_at": "2026-08-07T16:15:56.275447+00:00",
+      "data": {
+        "name": "Verifier Agent"
+      }
+    },
+    {
+      "seq": 15,
+      "kind": "episode.started",
+      "category": "cognition",
+      "agent_id": null,
+      "episode_id": "episode:4e03ea04f8b6ca4e964f",
+      "ref_id": "episode:4e03ea04f8b6ca4e964f",
+      "path": null,
+      "revision": "rev:02a7c0bd5a806b88f0b9",
+      "status": "investigating",
+      "summary": "Fix expired subscription permissions during token refresh",
+      "created_at": "2026-08-07T16:15:56.285229+00:00",
+      "data": {
+        "context_handle": "ctx:bfe64102b0961ecf9f8c",
+        "task": "Fix expired subscription permissions during token refresh"
+      }
+    },
+    {
+      "seq": 16,
+      "kind": "memory.admitted",
+      "category": "memory",
+      "agent_id": "agent:789369c93d2add87bfcc",
+      "episode_id": null,
+      "ref_id": "ctx:bfe64102b0961ecf9f8c",
+      "path": null,
+      "revision": "rev:02a7c0bd5a806b88f0b9",
+      "status": "resident",
+      "summary": "admitted 6 context objects",
+      "created_at": "2026-08-07T16:15:56.289538+00:00",
+      "data": {
+        "object_ids": [
+          "sym:940853360262fd4fb4f7",
+          "sym:46f68082cc98b9ba70b6",
+          "file:a99307c61c3c55875b5b",
+          "sym:a43b1f1f80fa06904c04",
+          "file:794b0fd272c6d7c46087",
+          "file:025c1bd1e8e3d3b2e92b"
+        ],
+        "pinned": 2
+      }
+    },
+    {
+      "seq": 17,
+      "kind": "context.page-fault",
+      "category": "memory",
+      "agent_id": "agent:789369c93d2add87bfcc",
+      "episode_id": null,
+      "ref_id": "sym:940853360262fd4fb4f7",
+      "path": "auth/claims.py",
+      "revision": "rev:02a7c0bd5a806b88f0b9",
+      "status": "paged",
+      "summary": "paged auth/claims.py",
+      "created_at": "2026-08-07T16:15:56.296344+00:00",
+      "data": {
+        "end_line": null,
+        "handle": "ctx:bfe64102b0961ecf9f8c",
+        "source_bytes": 0,
+        "start_line": null
+      }
+    },
+    {
+      "seq": 18,
+      "kind": "context.page-fault",
+      "category": "memory",
+      "agent_id": "agent:789369c93d2add87bfcc",
+      "episode_id": null,
+      "ref_id": "sym:46f68082cc98b9ba70b6",
+      "path": "tests/test_auth.py",
+      "revision": "rev:02a7c0bd5a806b88f0b9",
+      "status": "paged",
+      "summary": "paged tests/test_auth.py",
+      "created_at": "2026-08-07T16:15:56.297397+00:00",
+      "data": {
+        "end_line": null,
+        "handle": "ctx:bfe64102b0961ecf9f8c",
+        "source_bytes": 0,
+        "start_line": null
+      }
+    },
+    {
+      "seq": 19,
+      "kind": "context.page-fault",
+      "category": "memory",
+      "agent_id": "agent:789369c93d2add87bfcc",
+      "episode_id": null,
+      "ref_id": "sym:a43b1f1f80fa06904c04",
+      "path": "auth/claims.py",
+      "revision": "rev:02a7c0bd5a806b88f0b9",
+      "status": "paged",
+      "summary": "paged auth/claims.py",
+      "created_at": "2026-08-07T16:15:56.298386+00:00",
+      "data": {
+        "end_line": null,
+        "handle": "ctx:bfe64102b0961ecf9f8c",
+        "source_bytes": 0,
+        "start_line": null
+      }
+    },
+    {
+      "seq": 20,
+      "kind": "context.page-fault",
+      "category": "memory",
+      "agent_id": "agent:789369c93d2add87bfcc",
+      "episode_id": null,
+      "ref_id": "sym:a83a606d6585c90c599a",
+      "path": "auth/subscription.py",
+      "revision": "rev:02a7c0bd5a806b88f0b9",
+      "status": "paged",
+      "summary": "paged auth/subscription.py",
+      "created_at": "2026-08-07T16:15:56.299415+00:00",
+      "data": {
+        "end_line": null,
+        "handle": "ctx:bfe64102b0961ecf9f8c",
+        "source_bytes": 0,
+        "start_line": null
+      }
+    },
+    {
+      "seq": 21,
+      "kind": "context.page-fault",
+      "category": "memory",
+      "agent_id": "agent:789369c93d2add87bfcc",
+      "episode_id": null,
+      "ref_id": "sym:aaf6c4558a5935cb1f4e",
+      "path": "tests/test_auth.py",
+      "revision": "rev:02a7c0bd5a806b88f0b9",
+      "status": "paged",
+      "summary": "paged tests/test_auth.py",
+      "created_at": "2026-08-07T16:15:56.300554+00:00",
+      "data": {
+        "end_line": null,
+        "handle": "ctx:bfe64102b0961ecf9f8c",
+        "source_bytes": 0,
+        "start_line": null
+      }
+    },
+    {
+      "seq": 22,
+      "kind": "context.page-fault",
+      "category": "memory",
+      "agent_id": "agent:789369c93d2add87bfcc",
+      "episode_id": null,
+      "ref_id": "sym:4936bd99141b04e64a8f",
+      "path": "auth/claims.py",
+      "revision": "rev:02a7c0bd5a806b88f0b9",
+      "status": "paged",
+      "summary": "paged auth/claims.py",
+      "created_at": "2026-08-07T16:15:56.302351+00:00",
+      "data": {
+        "end_line": null,
+        "handle": "ctx:bfe64102b0961ecf9f8c",
+        "source_bytes": 0,
+        "start_line": null
+      }
+    },
+    {
+      "seq": 23,
+      "kind": "hypothesis.created",
+      "category": "cognition",
+      "agent_id": null,
+      "episode_id": "episode:4e03ea04f8b6ca4e964f",
+      "ref_id": "hypothesis:636dcd88aa378ef0f7c9",
+      "path": null,
+      "revision": "rev:02a7c0bd5a806b88f0b9",
+      "status": "active",
+      "summary": "subscription freshness is lost before refresh-token claim construction",
+      "created_at": "2026-08-07T16:15:56.306860+00:00",
+      "data": {
+        "prior_confidence": 0.7
+      }
+    },
+    {
+      "seq": 24,
+      "kind": "hypothesis.created",
+      "category": "cognition",
+      "agent_id": null,
+      "episode_id": "episode:4e03ea04f8b6ca4e964f",
+      "ref_id": "hypothesis:093ca25cd4f746c4f52b",
+      "path": null,
+      "revision": "rev:02a7c0bd5a806b88f0b9",
+      "status": "active",
+      "summary": "claim builder elevates admin users even when the subscription is expired",
+      "created_at": "2026-08-07T16:15:56.311028+00:00",
+      "data": {
+        "prior_confidence": 0.55
+      }
+    },
+    {
+      "seq": 25,
+      "kind": "epistemic.created",
+      "category": "cognition",
+      "agent_id": "agent:789369c93d2add87bfcc",
+      "episode_id": "episode:4e03ea04f8b6ca4e964f",
+      "ref_id": "epistemic:3ef30bc17a738d84ad4e",
+      "path": null,
+      "revision": "rev:02a7c0bd5a806b88f0b9",
+      "status": "open",
+      "summary": "unknown: whether the refresh path receives subscription state after revalidation",
+      "created_at": "2026-08-07T16:15:56.314125+00:00",
+      "data": {
+        "kind": "unknown"
+      }
+    },
+    {
+      "seq": 26,
+      "kind": "epistemic.created",
+      "category": "cognition",
+      "agent_id": "agent:789369c93d2add87bfcc",
+      "episode_id": "episode:4e03ea04f8b6ca4e964f",
+      "ref_id": "epistemic:c8d585d5044822dec404",
+      "path": null,
+      "revision": "rev:02a7c0bd5a806b88f0b9",
+      "status": "open",
+      "summary": "contradiction: static state input exists, but observed runtime freshness has not been established",
+      "created_at": "2026-08-07T16:15:56.315338+00:00",
+      "data": {
+        "kind": "contradiction"
+      }
+    },
+    {
+      "seq": 27,
+      "kind": "memory.recorded",
+      "category": "memory",
+      "agent_id": null,
+      "episode_id": null,
+      "ref_id": "memory:3a7c973531065e5de0f0",
+      "path": null,
+      "revision": "rev:02a7c0bd5a806b88f0b9",
+      "status": "active",
+      "summary": "decision memory: Prefer evidence-bearing counterfactual worlds before canonical auth mutation",
+      "created_at": "2026-08-07T16:15:56.318016+00:00",
+      "data": {
+        "evidence_ids": [],
+        "supersedes": null
+      }
+    },
+    {
+      "seq": 28,
+      "kind": "effect.refresh",
+      "category": "effect",
+      "agent_id": null,
+      "episode_id": null,
+      "ref_id": null,
+      "path": null,
+      "revision": "rev:02a7c0bd5a806b88f0b9",
+      "status": "observed",
+      "summary": "Effect Twin refreshed: 29 facts",
+      "created_at": "2026-08-07T16:15:56.321385+00:00",
+      "data": {
+        "facts": 29,
+        "paths": 1
+      }
+    },
+    {
+      "seq": 29,
+      "kind": "dataflow.refresh",
+      "category": "effect",
+      "agent_id": null,
+      "episode_id": null,
+      "ref_id": null,
+      "path": null,
+      "revision": "rev:02a7c0bd5a806b88f0b9",
+      "status": "observed",
+      "summary": "Dataflow Twin refreshed: 31 facts",
+      "created_at": "2026-08-07T16:15:56.324922+00:00",
+      "data": {
+        "facts": 31,
+        "paths": 1
+      }
+    },
+    {
+      "seq": 30,
+      "kind": "runtime.observed",
+      "category": "runtime",
+      "agent_id": "agent:789369c93d2add87bfcc",
+      "episode_id": "episode:4e03ea04f8b6ca4e964f",
+      "ref_id": "rt_44e1935f28ea8df120948514",
+      "path": null,
+      "revision": "rev:02a7c0bd5a806b88f0b9",
+      "status": "observed",
+      "summary": "click refresh token",
+      "created_at": "2026-08-07T16:15:56.326447+00:00",
+      "data": {
+        "duration_ms": 0.4,
+        "runtime_id": "rt_44e1935f28ea8df120948514",
+        "source": "opentelemetry",
+        "trace_id": "trace-refresh"
+      }
+    },
+    {
+      "seq": 31,
+      "kind": "runtime.observed",
+      "category": "runtime",
+      "agent_id": "agent:789369c93d2add87bfcc",
+      "episode_id": "episode:4e03ea04f8b6ca4e964f",
+      "ref_id": "sym:940853360262fd4fb4f7",
+      "path": "auth/claims.py",
+      "revision": "rev:02a7c0bd5a806b88f0b9",
+      "status": "observed",
+      "summary": "POST /token/refresh",
+      "created_at": "2026-08-07T16:15:56.335019+00:00",
+      "data": {
+        "duration_ms": 5.8,
+        "runtime_id": "rt_9f36d9ef9667961588037572",
+        "source": "opentelemetry",
+        "trace_id": "trace-refresh"
+      }
+    },
+    {
+      "seq": 32,
+      "kind": "runtime.observed",
+      "category": "runtime",
+      "agent_id": "agent:789369c93d2add87bfcc",
+      "episode_id": "episode:4e03ea04f8b6ca4e964f",
+      "ref_id": "rt_52d32b2bb33db9985070d3e6",
+      "path": null,
+      "revision": "rev:02a7c0bd5a806b88f0b9",
+      "status": "observed",
+      "summary": "SELECT subscription",
+      "created_at": "2026-08-07T16:15:56.336430+00:00",
+      "data": {
+        "duration_ms": 1.3,
+        "runtime_id": "rt_52d32b2bb33db9985070d3e6",
+        "source": "opentelemetry",
+        "trace_id": "trace-refresh"
+      }
+    },
+    {
+      "seq": 33,
+      "kind": "runtime.observed",
+      "category": "runtime",
+      "agent_id": "agent:789369c93d2add87bfcc",
+      "episode_id": "episode:4e03ea04f8b6ca4e964f",
+      "ref_id": "rt_eb434609bb9c6b4ab089320b",
+      "path": null,
+      "revision": "rev:02a7c0bd5a806b88f0b9",
+      "status": "observed",
+      "summary": "GET entitlement cache",
+      "created_at": "2026-08-07T16:15:56.337652+00:00",
+      "data": {
+        "duration_ms": 0.6,
+        "runtime_id": "rt_eb434609bb9c6b4ab089320b",
+        "source": "opentelemetry",
+        "trace_id": "trace-refresh"
+      }
+    },
+    {
+      "seq": 34,
+      "kind": "world.forked",
+      "category": "counterfactual",
+      "agent_id": "agent:789369c93d2add87bfcc",
+      "episode_id": null,
+      "ref_id": "world:64e3589c9195e7eb80da",
+      "path": null,
+      "revision": "rev:02a7c0bd5a806b88f0b9",
+      "status": "open",
+      "summary": "counterfactual world: WORLD A · harden claim elevation",
+      "created_at": "2026-08-07T16:15:56.340266+00:00",
+      "data": {}
+    },
+    {
+      "seq": 35,
+      "kind": "world.patch",
+      "category": "counterfactual",
+      "agent_id": "agent:789369c93d2add87bfcc",
+      "episode_id": null,
+      "ref_id": "world:64e3589c9195e7eb80da",
+      "path": "auth/claims.py",
+      "revision": "rev:02a7c0bd5a806b88f0b9",
+      "status": "staged",
+      "summary": "counterfactual replace_text: auth/claims.py",
+      "created_at": "2026-08-07T16:15:56.343832+00:00",
+      "data": {}
+    },
+    {
+      "seq": 36,
+      "kind": "world.forked",
+      "category": "counterfactual",
+      "agent_id": "agent:9e64220982f129a88ba4",
+      "episode_id": null,
+      "ref_id": "world:ce313526f8ec43ae879a",
+      "path": null,
+      "revision": "rev:02a7c0bd5a806b88f0b9",
+      "status": "open",
+      "summary": "counterfactual world: WORLD B · explicit refresh gate",
+      "created_at": "2026-08-07T16:15:56.346863+00:00",
+      "data": {}
+    },
+    {
+      "seq": 37,
+      "kind": "world.patch",
+      "category": "counterfactual",
+      "agent_id": "agent:9e64220982f129a88ba4",
+      "episode_id": null,
+      "ref_id": "world:ce313526f8ec43ae879a",
+      "path": "auth/claims.py",
+      "revision": "rev:02a7c0bd5a806b88f0b9",
+      "status": "staged",
+      "summary": "counterfactual replace_text: auth/claims.py",
+      "created_at": "2026-08-07T16:15:56.348515+00:00",
+      "data": {}
+    },
+    {
+      "seq": 38,
+      "kind": "agent.world-comparison",
+      "category": "counterfactual",
+      "agent_id": "agent:cb335013d409a0a0dd2f",
+      "episode_id": "episode:4e03ea04f8b6ca4e964f",
+      "ref_id": null,
+      "path": null,
+      "revision": "rev:02a7c0bd5a806b88f0b9",
+      "status": "running",
+      "summary": "Verifier compares WORLD A and WORLD B",
+      "created_at": "2026-08-07T16:15:56.352968+00:00",
+      "data": {
+        "world_ids": [
+          "world:64e3589c9195e7eb80da",
+          "world:ce313526f8ec43ae879a"
+        ]
+      }
+    },
+    {
+      "seq": 39,
+      "kind": "transaction.staged",
+      "category": "mutation",
+      "agent_id": "agent:9e64220982f129a88ba4",
+      "episode_id": "episode:4e03ea04f8b6ca4e964f",
+      "ref_id": "tx:5a313e4e6da2beb284fe",
+      "path": null,
+      "revision": "rev:02a7c0bd5a806b88f0b9",
+      "status": "staged",
+      "summary": "staged transaction tx:5a313e4e6da2beb284fe",
+      "created_at": "2026-08-07T16:15:56.363334+00:00",
+      "data": {
+        "operation_count": 1,
+        "paths": [
+          "auth/claims.py"
+        ]
+      }
+    },
+    {
+      "seq": 40,
+      "kind": "source.file-modified",
+      "category": "source",
+      "agent_id": null,
+      "episode_id": null,
+      "ref_id": null,
+      "path": "auth/claims.py",
+      "revision": "rev:d059aa55a83060740306",
+      "status": "changed",
+      "summary": "file-modified: auth/claims.py",
+      "created_at": "2026-08-07T16:15:56.398136+00:00",
+      "data": {
+        "reason": "transaction:tx:5a313e4e6da2beb284fe",
+        "refresh_mode": "targeted",
+        "revision_after": "rev:d059aa55a83060740306",
+        "revision_before": "rev:02a7c0bd5a806b88f0b9"
+      }
+    },
+    {
+      "seq": 41,
+      "kind": "agent.source-invalidated",
+      "category": "coordination",
+      "agent_id": "agent:789369c93d2add87bfcc",
+      "episode_id": null,
+      "ref_id": "notify:eb1f5aa969b4ea89a971",
+      "path": "auth/claims.py",
+      "revision": "rev:d059aa55a83060740306",
+      "status": "stale",
+      "summary": "agent cognition invalidated: auth/claims.py",
+      "created_at": "2026-08-07T16:15:56.402440+00:00",
+      "data": {
+        "action": "selective-revalidate",
+        "caused_by_transaction": "tx:5a313e4e6da2beb284fe"
+      }
+    },
+    {
+      "seq": 42,
+      "kind": "transaction.committed",
+      "category": "mutation",
+      "agent_id": "agent:9e64220982f129a88ba4",
+      "episode_id": null,
+      "ref_id": "tx:5a313e4e6da2beb284fe",
+      "path": null,
+      "revision": "rev:d059aa55a83060740306",
+      "status": "committed",
+      "summary": "committed tx:5a313e4e6da2beb284fe",
+      "created_at": "2026-08-07T16:15:56.402942+00:00",
+      "data": {
+        "changed_paths": [
+          "auth/claims.py"
+        ],
+        "committed_revision": "rev:d059aa55a83060740306",
+        "rebased_from_revision": null
+      }
+    },
+    {
+      "seq": 43,
+      "kind": "world.promoted",
+      "category": "counterfactual",
+      "agent_id": "agent:9e64220982f129a88ba4",
+      "episode_id": "episode:4e03ea04f8b6ca4e964f",
+      "ref_id": "world:ce313526f8ec43ae879a",
+      "path": null,
+      "revision": "rev:d059aa55a83060740306",
+      "status": "committed",
+      "summary": "counterfactual promoted: WORLD B · explicit refresh gate",
+      "created_at": "2026-08-07T16:15:56.403524+00:00",
+      "data": {
+        "transaction_id": "tx:5a313e4e6da2beb284fe"
+      }
+    },
+    {
+      "seq": 44,
+      "kind": "verification.started",
+      "category": "verification",
+      "agent_id": null,
+      "episode_id": "episode:4e03ea04f8b6ca4e964f",
+      "ref_id": null,
+      "path": null,
+      "revision": "rev:d059aa55a83060740306",
+      "status": "running",
+      "summary": "verification started",
+      "created_at": "2026-08-07T16:15:57.176108+00:00",
+      "data": {
+        "candidate_test_files": [
+          "tests/test_auth.py"
+        ],
+        "changed_paths": [
+          "auth/claims.py"
+        ],
+        "object_ids": []
+      }
+    },
+    {
+      "seq": 45,
+      "kind": "verification.completed",
+      "category": "verification",
+      "agent_id": null,
+      "episode_id": "episode:4e03ea04f8b6ca4e964f",
+      "ref_id": "run:2c7fcbce3e15b8c40f52",
+      "path": null,
+      "revision": "rev:d059aa55a83060740306",
+      "status": "passed",
+      "summary": "verification passed",
+      "created_at": "2026-08-07T16:15:58.555292+00:00",
+      "data": {
+        "exit_code": 0,
+        "recorded_evidence_ids": [],
+        "selected_test_files": [
+          "tests/test_auth.py"
+        ],
+        "selection_mode": "targeted-files"
+      }
+    },
+    {
+      "seq": 46,
+      "kind": "memory.recorded",
+      "category": "memory",
+      "agent_id": "agent:cb335013d409a0a0dd2f",
+      "episode_id": "episode:4e03ea04f8b6ca4e964f",
+      "ref_id": "memory:bedd1fa6ea412d282154",
+      "path": null,
+      "revision": "rev:d059aa55a83060740306",
+      "status": "active",
+      "summary": "experiment memory: WORLD B promoted and targeted auth verifier passed",
+      "created_at": "2026-08-07T16:15:58.556096+00:00",
+      "data": {
+        "evidence_ids": [],
+        "supersedes": null
+      }
+    },
+    {
+      "seq": 47,
+      "kind": "epistemic.updated",
+      "category": "cognition",
+      "agent_id": "agent:789369c93d2add87bfcc",
+      "episode_id": "episode:4e03ea04f8b6ca4e964f",
+      "ref_id": "epistemic:c8d585d5044822dec404",
+      "path": null,
+      "revision": "rev:d059aa55a83060740306",
+      "status": "resolved",
+      "summary": "contradiction: static state input exists, but observed runtime freshness has not been established",
+      "created_at": "2026-08-07T16:15:58.556991+00:00",
+      "data": {}
+    },
+    {
+      "seq": 48,
+      "kind": "ui.runtime-opened",
+      "category": "ui",
+      "agent_id": null,
+      "episode_id": null,
+      "ref_id": "ui-session:1d3be70c2433a13ae855",
+      "path": null,
+      "revision": "rev:d059aa55a83060740306",
+      "status": "observing",
+      "summary": "opened UI runtime: ui/index.html",
+      "created_at": "2026-08-07T16:15:59.138305+00:00",
+      "data": {
+        "allow_external": false,
+        "screenshot": false,
+        "target": "ui/index.html"
+      }
+    },
+    {
+      "seq": 49,
+      "kind": "ui.runtime-observed",
+      "category": "ui",
+      "agent_id": null,
+      "episode_id": null,
+      "ref_id": "ui-session:1d3be70c2433a13ae855",
+      "path": null,
+      "revision": "rev:d059aa55a83060740306",
+      "status": "observed",
+      "summary": "observed UI runtime",
+      "created_at": "2026-08-07T16:15:59.148981+00:00",
+      "data": {
+        "element_count": 2,
+        "screenshot": false
+      }
+    },
+    {
+      "seq": 50,
+      "kind": "ui.action-started",
+      "category": "ui",
+      "agent_id": null,
+      "episode_id": null,
+      "ref_id": "ui:id:refreshBtn",
+      "path": null,
+      "revision": "rev:d059aa55a83060740306",
+      "status": "running",
+      "summary": "UI click: ui:id:refreshBtn",
+      "created_at": "2026-08-07T16:15:59.149903+00:00",
+      "data": {
+        "action": "click",
+        "handle": "ui:id:refreshBtn",
+        "has_value": false,
+        "session_id": "ui-session:1d3be70c2433a13ae855"
+      }
+    },
+    {
+      "seq": 51,
+      "kind": "ui.action-completed",
+      "category": "ui",
+      "agent_id": null,
+      "episode_id": null,
+      "ref_id": "ui:id:refreshBtn",
+      "path": null,
+      "revision": "rev:d059aa55a83060740306",
+      "status": "passed",
+      "summary": "UI click: ui:id:refreshBtn",
+      "created_at": "2026-08-07T16:15:59.233406+00:00",
+      "data": {
+        "action": "click",
+        "handle": "ui:id:refreshBtn",
+        "screenshot": false,
+        "session_id": "ui-session:1d3be70c2433a13ae855"
+      }
+    },
+    {
+      "seq": 52,
+      "kind": "ui.assertion",
+      "category": "ui",
+      "agent_id": null,
+      "episode_id": null,
+      "ref_id": "ui-session:1d3be70c2433a13ae855",
+      "path": null,
+      "revision": "rev:d059aa55a83060740306",
+      "status": "passed",
+      "summary": "UI assertion passed",
+      "created_at": "2026-08-07T16:15:59.241863+00:00",
+      "data": {
+        "assertion_count": 1,
+        "passed": true
+      }
+    },
+    {
+      "seq": 53,
+      "kind": "ui.runtime-closed",
+      "category": "ui",
+      "agent_id": null,
+      "episode_id": null,
+      "ref_id": "ui-session:1d3be70c2433a13ae855",
+      "path": null,
+      "revision": "rev:d059aa55a83060740306",
+      "status": "closed",
+      "summary": "closed UI runtime",
+      "created_at": "2026-08-07T16:15:59.250478+00:00",
+      "data": {}
+    },
+    {
+      "seq": 54,
+      "kind": "runtime.observed",
+      "category": "runtime",
+      "agent_id": "agent:cb335013d409a0a0dd2f",
+      "episode_id": "episode:4e03ea04f8b6ca4e964f",
+      "ref_id": "sym:46f68082cc98b9ba70b6",
+      "path": "tests/test_auth.py",
+      "revision": "rev:d059aa55a83060740306",
+      "status": "INFO",
+      "summary": "counterfactual WORLD B verifier passed",
+      "created_at": "2026-08-07T16:15:59.318646+00:00",
+      "data": {
+        "duration_ms": null,
+        "runtime_id": "rt_3899ea879f2f29e1dcbb05cc",
+        "source": "opentelemetry",
+        "trace_id": null
+      }
+    },
+    {
+      "seq": 55,
+      "kind": "runtime.observed",
+      "category": "runtime",
+      "agent_id": "agent:cb335013d409a0a0dd2f",
+      "episode_id": "episode:4e03ea04f8b6ca4e964f",
+      "ref_id": "rt_0fbc5946d7027f152b1b9d86",
+      "path": null,
+      "revision": "rev:d059aa55a83060740306",
+      "status": "observed",
+      "summary": "habitat.world.promoted",
+      "created_at": "2026-08-07T16:15:59.319884+00:00",
+      "data": {
+        "duration_ms": null,
+        "runtime_id": "rt_0fbc5946d7027f152b1b9d86",
+        "source": "opentelemetry",
+        "trace_id": null
+      }
+    },
+    {
+      "seq": 56,
+      "kind": "observatory.started",
+      "category": "observatory",
+      "agent_id": null,
+      "episode_id": null,
+      "ref_id": null,
+      "path": null,
+      "revision": "rev:d059aa55a83060740306",
+      "status": "live",
+      "summary": "Habitat Observatory started",
+      "created_at": "2026-08-07T16:15:59.339885+00:00",
+      "data": {
+        "read_only": true,
+        "url": "http://127.0.0.1:42253/"
+      }
+    }
+  ],
+  "visual_metrics": {
+    "graph_nodes": 150,
+    "graph_edges": 126,
+    "effects": 49,
+    "dataflows": 55,
+    "runtime_topology_nodes": 16,
+    "world_entities": 18,
+    "counterfactual_worlds": 2
+  },
+  "claim_boundary": "Human visual observatory only. Read model is SQLite query-only and never exposes raw private model chain-of-thought."
+}

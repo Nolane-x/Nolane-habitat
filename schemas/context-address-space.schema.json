@@ -1,0 +1,85 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "nolane.habitat/context-address-space/v1alpha5",
+  "type": "object",
+  "required": [
+    "handle",
+    "compiled_revision",
+    "current_revision",
+    "stale",
+    "pages",
+    "page_count",
+    "source_page_count",
+    "whole_file_dump_default"
+  ],
+  "properties": {
+    "handle": {
+      "type": "string"
+    },
+    "compiled_revision": {
+      "type": "string"
+    },
+    "current_revision": {
+      "type": "string"
+    },
+    "stale": {
+      "type": "boolean"
+    },
+    "pages": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "page_id",
+          "virtual_address",
+          "object_id",
+          "path",
+          "page_class",
+          "state",
+          "fetchable",
+          "relevance"
+        ],
+        "properties": {
+          "page_id": {
+            "type": "string"
+          },
+          "virtual_address": {
+            "type": "string",
+            "pattern": "^ctx://"
+          },
+          "object_id": {
+            "type": "string"
+          },
+          "path": {
+            "type": "string"
+          },
+          "page_class": {
+            "type": "string"
+          },
+          "state": {
+            "type": "string"
+          },
+          "fetchable": {
+            "type": "boolean"
+          },
+          "relevance": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 1
+          }
+        }
+      }
+    },
+    "page_count": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "source_page_count": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "whole_file_dump_default": {
+      "const": false
+    }
+  }
+}

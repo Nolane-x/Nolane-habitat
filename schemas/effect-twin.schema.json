@@ -1,0 +1,19 @@
+{
+  "$schema":"https://json-schema.org/draft/2020-12/schema",
+  "$id":"nolane.habitat/effect-twin/v1alpha13",
+  "type":"object",
+  "required":["revision","effects","count","claim_boundary"],
+  "properties":{
+    "revision":{"type":"string"},
+    "effects":{"type":"array","items":{"type":"object","required":["id","path","kind","trust","runtime_support"],"properties":{
+      "id":{"type":"string"},"path":{"type":"string"},"symbol_id":{"type":["string","null"]},"kind":{"type":"string"},"target":{"type":["string","null"]},"line":{"type":["integer","null"]},
+      "trust":{"enum":["exact","semantic","parser","derived","heuristic"]},"revision":{"type":"string"},
+      "runtime_support":{"$ref":"#/$defs/runtimeSupport"}
+    },"additionalProperties":true}},
+    "count":{"type":"integer","minimum":0},"kind_counts":{"type":"object"},"runtime_support_counts":{"type":"object"},"claim_boundary":{"type":"string"}
+  },
+  "$defs":{"runtimeSupport":{"type":"object","required":["grade","observed","runtime_refs","runtime_ref_count","claim_boundary"],"properties":{
+    "grade":{"enum":["none","weak","strong"]},"observed":{"type":"boolean"},"runtime_refs":{"type":"array"},"runtime_ref_count":{"type":"integer","minimum":0},"independent_trace_count":{"type":"integer","minimum":0},"dimensions":{"type":"object"},"claim_boundary":{"type":"string"}
+  },"additionalProperties":true}},
+  "additionalProperties":true
+}

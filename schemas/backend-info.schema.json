@@ -1,0 +1,136 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "nolane.habitat/backend-info/v1alpha7",
+  "type": "object",
+  "required": [
+    "backend_id",
+    "kind",
+    "authority",
+    "authoritative_root",
+    "materialized_root",
+    "execution_kind",
+    "supports_native_watch",
+    "capabilities",
+    "semantic_twin_authority",
+    "source_authority_id",
+    "execution_provider_id",
+    "source_authority",
+    "execution_provider",
+    "substrate_composable"
+  ],
+  "properties": {
+    "backend_id": {
+      "type": "string"
+    },
+    "kind": {
+      "type": "string"
+    },
+    "authority": {
+      "type": "string"
+    },
+    "authoritative_root": {
+      "type": "string"
+    },
+    "materialized_root": {
+      "type": "string"
+    },
+    "execution_kind": {
+      "type": "string"
+    },
+    "supports_native_watch": {
+      "type": "boolean"
+    },
+    "capabilities": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "semantic_twin_authority": {
+      "const": false
+    },
+    "semantic_materialization_role": {
+      "type": "string"
+    },
+    "source_authority_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "execution_provider_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "source_authority": {
+      "type": "object",
+      "required": [
+        "authority_id",
+        "kind",
+        "authority",
+        "authoritative_root",
+        "materialized_root",
+        "supports_native_watch",
+        "capabilities"
+      ],
+      "properties": {
+        "authority_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "kind": {
+          "type": "string"
+        },
+        "authority": {
+          "type": "string"
+        },
+        "authoritative_root": {
+          "type": "string"
+        },
+        "materialized_root": {
+          "type": "string"
+        },
+        "supports_native_watch": {
+          "type": "boolean"
+        },
+        "capabilities": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      },
+      "additionalProperties": false
+    },
+    "execution_provider": {
+      "type": "object",
+      "required": [
+        "provider_id",
+        "kind",
+        "execution_root",
+        "capabilities"
+      ],
+      "properties": {
+        "provider_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "kind": {
+          "type": "string"
+        },
+        "execution_root": {
+          "type": "string"
+        },
+        "capabilities": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      },
+      "additionalProperties": false
+    },
+    "substrate_composable": {
+      "const": true
+    }
+  },
+  "additionalProperties": false
+}

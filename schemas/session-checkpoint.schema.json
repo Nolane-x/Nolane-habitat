@@ -1,0 +1,6 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema", "$id": "nolane.habitat/session-checkpoint/v1alpha1",
+  "type": "object", "required": ["id", "task", "revision", "resident_objects", "created_at"],
+  "properties": {"id": {"type": "string", "pattern": "^session:"}, "task": {"type": "string"}, "revision": {"type": "string"},
+    "resident_objects": {"type": "array", "items": {"type": "object"}}, "notes": {"type": ["string", "null"]}, "created_at": {"type": "string"}}
+}

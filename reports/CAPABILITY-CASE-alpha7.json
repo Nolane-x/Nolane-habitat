@@ -1,0 +1,30 @@
+{
+  "format": "nolane-habitat-capability-case/v1",
+  "release": "0.1.0-alpha.7",
+  "admitted": [
+    "composable source-authority/execution-provider substrate with compatibility facade",
+    "fail-closed detached-executor source mutation boundary",
+    "persistent TypeScript LanguageService with bounded host lifecycle",
+    "bounded Jedi Project LRU plus per-source semantic partitions",
+    "line-budget semantic exploration with zero exact-source reads",
+    "context page-fault/utilization accounting with explicit uncertainty",
+    "cross-revision workflow provenance graph",
+    "idempotent host runtime-service shutdown"
+  ],
+  "not_admitted": [
+    "Cloudflare Computer compatibility",
+    "production remote write-back",
+    "universal token reduction",
+    "same-model coding-success superiority",
+    "full program causality",
+    "AGI capability"
+  ],
+  "evidence": [
+    "reports/TEST-EVIDENCE-alpha7.txt",
+    "reports/DEMO-EVIDENCE-alpha7.json",
+    "reports/BACKEND-COMPOSITION-alpha7.json",
+    "reports/EXPLORER-PRECISION-alpha7.json",
+    "reports/AGI-ZIP-STRESS-alpha7.json",
+    "reports/SELF-AUDIT-alpha7.md"
+  ]
+}

@@ -1,0 +1,10 @@
+{
+  "$schema":"https://json-schema.org/draft/2020-12/schema",
+  "$id":"nolane.habitat/verification-result/v1alpha2",
+  "type":"object",
+  "required":["plan","receipt"],
+  "properties":{
+    "plan":{"type":"object","required":["revision","ranked_test_files","test_capabilities","unknowns"]},
+    "receipt":{"type":"object","required":["id","capability","argv","cwd","exit_code","timed_out","duration_ms","stdout","stderr","changed_paths","structured"]}
+  }
+}

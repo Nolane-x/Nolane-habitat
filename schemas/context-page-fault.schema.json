@@ -1,0 +1,33 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "nolane.habitat/context-page-fault/v1alpha5",
+  "type": "object",
+  "required": [
+    "handle",
+    "pages",
+    "faults",
+    "source_bytes"
+  ],
+  "properties": {
+    "handle": {
+      "type": "string"
+    },
+    "pages": {
+      "type": "array"
+    },
+    "faults": {
+      "type": "array",
+      "items": {
+        "type": "object"
+      }
+    },
+    "source_bytes": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "max_source_bytes": {
+      "type": "integer",
+      "minimum": 1
+    }
+  }
+}

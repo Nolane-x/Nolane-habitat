@@ -1,0 +1,62 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "nolane.habitat/world-health/v1alpha14",
+  "type": "object",
+  "required": [
+    "revision",
+    "status",
+    "blockers",
+    "coordination",
+    "counterfactuals",
+    "invariants",
+    "cognition",
+    "claim_boundary"
+  ],
+  "properties": {
+    "revision": {
+      "type": "string"
+    },
+    "agent_id": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "status": {
+      "enum": [
+        "healthy",
+        "degraded",
+        "critical"
+      ]
+    },
+    "blockers": {
+      "type": "array",
+      "items": {
+        "type": "object"
+      }
+    },
+    "coordination": {
+      "type": "object"
+    },
+    "counterfactuals": {
+      "type": "object"
+    },
+    "invariants": {
+      "type": "object"
+    },
+    "active_evidence": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "cognition": {
+      "type": "object"
+    },
+    "claim_boundary": {
+      "type": "string"
+    },
+    "executive": {
+      "type": "object"
+    }
+  },
+  "additionalProperties": true
+}

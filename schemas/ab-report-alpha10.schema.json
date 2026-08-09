@@ -1,0 +1,25 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://nolane.local/habitat/schemas/ab-report-alpha10.schema.json",
+  "title": "Habitat Controlled Agent A/B Harness Report",
+  "type": "object",
+  "required": ["schema", "runs", "paired_summary", "comparability", "claim_boundary"],
+  "properties": {
+    "schema": {"const": 3},
+    "runs": {"type": "array", "items": {"type": "object"}},
+    "paired_summary": {"type": "object"},
+    "comparability": {
+      "type": "object",
+      "required": ["same_model_observed", "same_scaffold_observed", "independent_evaluator", "strong_evidence_ready"],
+      "properties": {
+        "same_model_observed": {"type": "boolean"},
+        "same_scaffold_observed": {"type": "boolean"},
+        "independent_evaluator": {"type": "boolean"},
+        "strong_evidence_ready": {"type": "boolean"},
+        "reasons": {"type": "array", "items": {"type": "string"}}
+      }
+    },
+    "claim_boundary": {"type": "string"}
+  },
+  "additionalProperties": true
+}

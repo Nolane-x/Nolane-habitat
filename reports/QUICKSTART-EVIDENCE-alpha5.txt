@@ -1,0 +1,5 @@
+QUICKSTART_PASS
+create_revision rev:d13fa8623b2da175b1fc
+enter_revision rev:d13fa8623b2da175b1fc
+orient_objects 1
+confidence high

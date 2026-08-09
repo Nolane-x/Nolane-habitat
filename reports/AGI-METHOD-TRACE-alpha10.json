@@ -1,0 +1,79 @@
+{
+  "claim_boundary": "Engineering belief trace. It records decisions and falsification, not AGI capability or product superiority.",
+  "entries": [
+    {
+      "belief": "A full sandbox provider should be admitted by capability, not name or binary presence.",
+      "change": "Bubblewrap provider is optional and admitted only after executable probe; untrusted execution never silently downgrades.",
+      "decision": "retain-fail-closed",
+      "observation": "This host has no bubblewrap; only partial user/network namespace capability exists.",
+      "probe": "Run an actual minimal namespace/mount probe and inspect provider receipt claims.",
+      "rival": "Finding bubblewrap on PATH is enough to claim safe execution.",
+      "verifier": "alpha10 sandbox tests + demo world summary"
+    },
+    {
+      "belief": "Path leases plus global revision checks are enough for useful multi-agent concurrency.",
+      "change": "Read-set invalidation notifications block owner commit until selective revalidation; only then may optimistic rebase proceed.",
+      "decision": "reject-path-only-rebase",
+      "observation": "A disjoint path precondition can still coexist with stale cognition.",
+      "probe": "Agent A observes config.py and stages auth.py; Agent B commits config.py before A commits auth.py.",
+      "rival": "Agents can hold stale read assumptions even when their target path is disjoint.",
+      "verifier": "alpha10 coordination regression + vertical demo"
+    },
+    {
+      "belief": "Global hypothesis confidence can summarize a multi-agent team.",
+      "change": "Shared hypothesis remains common; agent_hypothesis_beliefs stores private stance/confidence/rationale.",
+      "decision": "reject-global-belief",
+      "observation": "Shared world object and agent belief state need separate namespaces.",
+      "probe": "Create one shared hypothesis and assign opposing/private stances to two agents.",
+      "rival": "Different agents may legitimately hold conflicting beliefs over the same shared hypothesis.",
+      "verifier": "alpha10 private-belief tests + demo"
+    },
+    {
+      "belief": "Repository guidance files should be injected automatically because they may help.",
+      "change": "AGENTS.md/CLAUDE.md/CONTRIBUTING/Copilot instructions become scoped guidance metadata with explicit paged reads.",
+      "decision": "reject-auto-injection",
+      "observation": "Unfiltered context is not reliably beneficial; Habitat can discover guidance without forcing it into solver history.",
+      "probe": "Research current context-retrieval findings and compare guidance presence with Habitat page-fault architecture.",
+      "rival": "Static guidance can pollute context and increase exploration cost.",
+      "verifier": "alpha10 guidance regression"
+    },
+    {
+      "belief": "Same-model A/B readiness can be inferred from using similar commands/prompts.",
+      "change": "A/B schema 3 exposes comparability; strong_evidence_ready requires all IDs present/unique and independent evaluator.",
+      "decision": "retain-strict-contract",
+      "observation": "Comparability can be mechanically gated rather than narrated.",
+      "probe": "Run contract smoke with explicit identical IDs plus independent evaluator, then omit evaluator.",
+      "rival": "Without observed model/scaffold identity and independent evaluator the report is not controlled evidence.",
+      "verifier": "alpha10 A/B tests + AB-HARNESS-CONTRACT-alpha10.json"
+    },
+    {
+      "belief": "Per-module process isolation is the safest default test matrix.",
+      "change": "Test matrix defaults to four empirically balanced process shards; module mode remains forensic.",
+      "decision": "reject-default-module-isolation",
+      "observation": "Per-module default exceeded the runner budget; manually balanced four shards completed all tests.",
+      "probe": "Run module-isolated matrix across the suite.",
+      "rival": "Repeated provider startup makes isolation itself the dominant test cost.",
+      "verifier": "TEST-MATRIX-alpha10.json"
+    },
+    {
+      "belief": "More parallel test shards should reduce wall time.",
+      "change": "Release admission records sequential isolated shard results; parallel mode remains optional/host-sensitive.",
+      "decision": "reject-unconditional-parallelism",
+      "observation": "The external runner timed out while four individually admitted shards passed sequentially.",
+      "probe": "Run four balanced shards concurrently.",
+      "rival": "Provider/browser/language-service contention can make parallelism host-sensitive.",
+      "verifier": "self-audit finding + four shard reports"
+    },
+    {
+      "belief": "Git temporal cognition can be implemented from formatted command output without a real-repo regression.",
+      "change": "Use tab separator contract supported by for-each-ref.",
+      "decision": "reject-format-assumption",
+      "observation": "for-each-ref did not interpret the original separator as expected.",
+      "probe": "Run branch discovery on a real temporary repository.",
+      "rival": "Git subcommands have different format escape semantics.",
+      "verifier": "alpha10 Git branch regression"
+    }
+  ],
+  "method": "belief-rival-probe-correction-verifier",
+  "release": "0.1.0-alpha.10"
+}

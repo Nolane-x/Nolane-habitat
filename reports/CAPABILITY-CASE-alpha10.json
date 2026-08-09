@@ -1,0 +1,36 @@
+{
+  "admitted": {
+    "ab_harness": "paired external-agent/evaluator orchestration with explicit comparability gate",
+    "dependency_world": "direct manifest + supported lockfile resolution view",
+    "governance": "path/action policy preflight + expiring single-use host approvals",
+    "guidance_world": "scoped repository guidance discovery with explicit reads; no automatic injection",
+    "invariants": "explicit project invariant registry and verifier/contradiction links; no automatic proof",
+    "multi_agent_coordination": "local read-set invalidation + selective revalidation + path leases + transaction ownership + disjoint optimistic rebase",
+    "private_cognition": "agent-private utility/residency/observations/notifications/hypothesis beliefs; shared verified world remains common",
+    "sandbox_provider": "optional executable-probed Bubblewrap profile; current host does not admit full sandbox",
+    "state_lifecycle": "bounded non-authoritative retention/GC + closed-agent private-state forget + POSIX permission hardening",
+    "temporal_world": "Git branches/worktrees/conflicts/history/blame/commit file impact",
+    "test_matrix": "four bounded isolated process shards covering the full unittest module set"
+  },
+  "evidence": [
+    "186-test balanced-shard regression matrix",
+    "alpha10 vertical demo",
+    "supplied AGI ZIP stress",
+    "A/B contract smoke",
+    "version/package identity tests",
+    "compileall",
+    "quick-start smoke"
+  ],
+  "not_admitted": [
+    "production-safe sandbox on the current host",
+    "proof that Bubblewrap policy is universally secure",
+    "distributed multi-process consensus or semantic merge",
+    "encrypted cognitive state at rest",
+    "calibrated Bayesian belief probabilities",
+    "formal proof of project invariants",
+    "complete production/runtime world beyond connected repository/runtime evidence",
+    "universal language semantic parity",
+    "real same-model Habitat superiority result"
+  ],
+  "release": "0.1.0-alpha.10"
+}

@@ -1,0 +1,11 @@
+{
+  "$schema":"https://json-schema.org/draft/2020-12/schema",
+  "$id":"nolane.habitat/workspace-event/v1alpha2",
+  "type":"object",
+  "required":["seq","kind","observed_at","source","details"],
+  "properties":{
+    "seq":{"type":"integer","minimum":1},"kind":{"type":"string"},"path":{"type":["string","null"]},
+    "observed_at":{"type":"string"},"revision_before":{"type":["string","null"]},"revision_after":{"type":["string","null"]},
+    "old_digest":{"type":["string","null"]},"new_digest":{"type":["string","null"]},"source":{"type":"string"},"details":{"type":"object"}
+  }
+}

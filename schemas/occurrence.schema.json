@@ -1,0 +1,14 @@
+{
+  "$schema":"https://json-schema.org/draft/2020-12/schema",
+  "$id":"nolane.habitat/occurrence/v1alpha2",
+  "type":"object",
+  "required":["id","file_id","path","role","target_id","source_id","text","start_line","provider","trust"],
+  "properties":{
+    "id":{"type":"string"},"file_id":{"type":"string"},"path":{"type":"string"},
+    "role":{"enum":["definition","call","import","test-link","reference"]},
+    "target_id":{"type":["string","null"]},"source_id":{"type":["string","null"]},"text":{"type":"string"},
+    "start_line":{"type":"integer","minimum":1},"start_column":{"type":["integer","null"],"minimum":1},
+    "end_line":{"type":["integer","null"],"minimum":1},"end_column":{"type":["integer","null"],"minimum":1},
+    "provider":{"type":"string"},"trust":{"enum":["exact","semantic","parser","derived","heuristic"]},"evidence":{"type":["string","null"]}
+  }
+}

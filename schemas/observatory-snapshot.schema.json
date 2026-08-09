@@ -1,0 +1,134 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "nolane.habitat/observatory-snapshot/v1alpha14",
+  "type": "object",
+  "required": [
+    "revision",
+    "read_only",
+    "project",
+    "agents",
+    "episodes",
+    "hypotheses",
+    "epistemic",
+    "evidence",
+    "runtime",
+    "context_memory",
+    "graph",
+    "activity_seq",
+    "claim_boundary",
+    "project_world",
+    "runtime_topology",
+    "cognitive_director",
+    "visual_metrics",
+    "observer_health",
+    "graph_sampling"
+  ],
+  "properties": {
+    "revision": {
+      "type": "string"
+    },
+    "generated_at": {},
+    "read_only": {
+      "const": true
+    },
+    "backend": {
+      "type": "object"
+    },
+    "execution_security": {
+      "type": "object"
+    },
+    "project": {
+      "type": "object"
+    },
+    "agents": {
+      "type": "array"
+    },
+    "episodes": {
+      "type": "array"
+    },
+    "hypotheses": {
+      "type": "array"
+    },
+    "epistemic": {
+      "type": "array"
+    },
+    "evidence": {
+      "type": "array"
+    },
+    "runtime": {
+      "type": "array"
+    },
+    "context_memory": {
+      "type": "object"
+    },
+    "graph": {
+      "type": "object",
+      "required": [
+        "nodes",
+        "edges"
+      ]
+    },
+    "activity_seq": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "claim_boundary": {
+      "type": "string"
+    },
+    "effects": {
+      "type": "array"
+    },
+    "counterfactual_worlds": {
+      "type": "array"
+    },
+    "invariants": {
+      "type": "array"
+    },
+    "coordination": {
+      "type": "object"
+    },
+    "project_world": {
+      "type": "object"
+    },
+    "runtime_topology": {
+      "type": "object"
+    },
+    "cognitive_director": {
+      "type": "object"
+    },
+    "visual_metrics": {
+      "type": "object"
+    },
+    "project_memory": {
+      "type": "array"
+    },
+    "dataflows": {
+      "type": "array"
+    },
+    "observer_health": {
+      "type": "object",
+      "required": [
+        "snapshot_consistency",
+        "external_projection_consistency",
+        "activity_loop",
+        "epistemic_pressure",
+        "activity_seq"
+      ]
+    },
+    "graph_sampling": {
+      "type": "object",
+      "required": [
+        "bounded",
+        "source_totals",
+        "read_model_limits",
+        "graph_candidates",
+        "graph_edges",
+        "claim_boundary"
+      ]
+    },
+    "executive": {
+      "type": "object"
+    }
+  },
+  "additionalProperties": true
+}

@@ -1,0 +1,221 @@
+{
+  "release": "0.1.0-alpha.4",
+  "benchmark": "protocol-trace-plumbing-v1",
+  "fixture": {
+    "files": 122,
+    "noise_files": 120
+  },
+  "filesystem": {
+    "credential": {
+      "files_read": 122,
+      "source_bytes_read": 4911,
+      "navigation_operations": 123,
+      "top_paths": [
+        "auth.py"
+      ],
+      "definition": "deterministic full-text scan, not an agent"
+    },
+    "billing": {
+      "files_read": 122,
+      "source_bytes_read": 4911,
+      "navigation_operations": 123,
+      "top_paths": [
+        "billing.py"
+      ],
+      "definition": "deterministic full-text scan, not an agent"
+    }
+  },
+  "habitat": {
+    "cold_related": {
+      "context": {
+        "handle": "ctx:de70601e80b4da99d170",
+        "paths": [
+          "auth.py",
+          "auth.py"
+        ],
+        "lanes": [
+          "lexical+symbol",
+          "lexical"
+        ]
+      },
+      "packet": {
+        "object_count": 2,
+        "exact_source_bytes": 127,
+        "packet_bytes": 1226
+      },
+      "trace": {
+        "trace_id": "trace:5449df27dff0d060b853",
+        "label": "cold-related-task",
+        "active": false,
+        "started_at": "2026-08-07T06:10:57.152521+00:00",
+        "stopped_at": "2026-08-07T06:10:57.169808+00:00",
+        "start_revision": "rev:9f8d91e73ebbe4c8b1aa",
+        "end_revision": "rev:9f8d91e73ebbe4c8b1aa",
+        "call_count": 2,
+        "ok_calls": 2,
+        "duration_ms": 15,
+        "request_bytes": 239,
+        "response_bytes": 2363,
+        "exact_source_bytes": 127,
+        "methods": {
+          "workspace.orient": 1,
+          "workspace.context.materialize": 1
+        },
+        "calls": [
+          {
+            "seq": 1,
+            "trace_id": "trace:5449df27dff0d060b853",
+            "method": "workspace.orient",
+            "ok": 1,
+            "duration_ms": 13,
+            "request_bytes": 101,
+            "response_bytes": 1075,
+            "source_bytes": 0,
+            "revision": "rev:9f8d91e73ebbe4c8b1aa",
+            "recorded_at": "2026-08-07T06:10:57.166385+00:00"
+          },
+          {
+            "seq": 2,
+            "trace_id": "trace:5449df27dff0d060b853",
+            "method": "workspace.context.materialize",
+            "ok": 1,
+            "duration_ms": 2,
+            "request_bytes": 138,
+            "response_bytes": 1288,
+            "source_bytes": 127,
+            "revision": "rev:9f8d91e73ebbe4c8b1aa",
+            "recorded_at": "2026-08-07T06:10:57.169180+00:00"
+          }
+        ]
+      }
+    },
+    "resident_related": {
+      "context": {
+        "handle": "ctx:fec3fd3174c160dbc171",
+        "paths": [
+          "auth.py",
+          "auth.py"
+        ],
+        "lanes": [
+          "lexical+symbol+resident",
+          "lexical+resident"
+        ]
+      },
+      "packet": {
+        "object_count": 2,
+        "exact_source_bytes": 127,
+        "packet_bytes": 1229
+      },
+      "trace": {
+        "trace_id": "trace:00ceb2199ad839057c4c",
+        "label": "resident-related-task",
+        "active": false,
+        "started_at": "2026-08-07T06:10:57.177034+00:00",
+        "stopped_at": "2026-08-07T06:10:57.193469+00:00",
+        "start_revision": "rev:9f8d91e73ebbe4c8b1aa",
+        "end_revision": "rev:9f8d91e73ebbe4c8b1aa",
+        "call_count": 2,
+        "ok_calls": 2,
+        "duration_ms": 14,
+        "request_bytes": 242,
+        "response_bytes": 2505,
+        "exact_source_bytes": 127,
+        "methods": {
+          "workspace.orient": 1,
+          "workspace.context.materialize": 1
+        },
+        "calls": [
+          {
+            "seq": 3,
+            "trace_id": "trace:00ceb2199ad839057c4c",
+            "method": "workspace.orient",
+            "ok": 1,
+            "duration_ms": 12,
+            "request_bytes": 104,
+            "response_bytes": 1214,
+            "source_bytes": 0,
+            "revision": "rev:9f8d91e73ebbe4c8b1aa",
+            "recorded_at": "2026-08-07T06:10:57.189935+00:00"
+          },
+          {
+            "seq": 4,
+            "trace_id": "trace:00ceb2199ad839057c4c",
+            "method": "workspace.context.materialize",
+            "ok": 1,
+            "duration_ms": 2,
+            "request_bytes": 138,
+            "response_bytes": 1291,
+            "source_bytes": 127,
+            "revision": "rev:9f8d91e73ebbe4c8b1aa",
+            "recorded_at": "2026-08-07T06:10:57.192783+00:00"
+          }
+        ]
+      }
+    },
+    "unrelated": {
+      "context": {
+        "handle": "ctx:f4fe6755785b06fb33b7",
+        "paths": [
+          "billing.py",
+          "billing.py"
+        ],
+        "lanes": [
+          "lexical+symbol",
+          "lexical"
+        ]
+      },
+      "packet": {
+        "object_count": 2,
+        "exact_source_bytes": 92,
+        "packet_bytes": 1188
+      },
+      "trace": {
+        "trace_id": "trace:4f47de530c5b95d7b6df",
+        "label": "unrelated-task",
+        "active": false,
+        "started_at": "2026-08-07T06:10:57.194252+00:00",
+        "stopped_at": "2026-08-07T06:10:57.209172+00:00",
+        "start_revision": "rev:9f8d91e73ebbe4c8b1aa",
+        "end_revision": "rev:9f8d91e73ebbe4c8b1aa",
+        "call_count": 2,
+        "ok_calls": 2,
+        "duration_ms": 12,
+        "request_bytes": 232,
+        "response_bytes": 2325,
+        "exact_source_bytes": 92,
+        "methods": {
+          "workspace.orient": 1,
+          "workspace.context.materialize": 1
+        },
+        "calls": [
+          {
+            "seq": 5,
+            "trace_id": "trace:4f47de530c5b95d7b6df",
+            "method": "workspace.orient",
+            "ok": 1,
+            "duration_ms": 11,
+            "request_bytes": 94,
+            "response_bytes": 1075,
+            "source_bytes": 0,
+            "revision": "rev:9f8d91e73ebbe4c8b1aa",
+            "recorded_at": "2026-08-07T06:10:57.205971+00:00"
+          },
+          {
+            "seq": 6,
+            "trace_id": "trace:4f47de530c5b95d7b6df",
+            "method": "workspace.context.materialize",
+            "ok": 1,
+            "duration_ms": 1,
+            "request_bytes": 138,
+            "response_bytes": 1250,
+            "source_bytes": 92,
+            "revision": "rev:9f8d91e73ebbe4c8b1aa",
+            "recorded_at": "2026-08-07T06:10:57.208535+00:00"
+          }
+        ]
+      }
+    }
+  },
+  "instrumentation_guarantee": "Counts protocol calls and serialized bytes observed by Habitat; exact_source_bytes counts only responses marked as exact-source authority.",
+  "claim_boundary": "Not an LLM A/B. No token, reasoning, success-rate, or universal speed claim is admitted from this harness."
+}

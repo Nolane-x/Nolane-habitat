@@ -1,0 +1,33 @@
+Nolane Habitat 0.1.0-alpha.14 — final source-tree regression evidence
+
+alpha0-4:    66 / 66 PASS   (82.79s)
+alpha5-7:    38 / 38 PASS   (76.82s)
+alpha8-10:   56 / 56 PASS   (64.22s)
+alpha11-14:  69 / 69 PASS   (77.06s)
+core:        26 / 26 PASS   (17.20s)
+sample:       2 /  2 PASS   (0.07s)
+TOTAL:      257 / 257 PASS
+
+All six counted shard processes exited with code 0 after the final runtime, receipt-provenance,
+full-chain assurance, packaging, documentation and compatibility changes.
+
+Static / contract gates:
+- Python compileall: PASS
+- Observatory app.js: node --check PASS
+- JSON schemas: 56 / 56 parse PASS
+- pytest collection: 257 tests
+- MCP compact catalog: 12 tools
+- protocol surface: 162 methods, including 8 workspace.executive.* methods
+- package candidate filter: no build/, dist/, __pycache__, .pytest_cache or *.egg-info transient artifacts
+
+Wheel / isolated target gate:
+- wheel: nolane_habitat-0.1.0a14-py3-none-any.whl
+- isolated import version: 0.1.0-alpha.14
+- isolated manifest schema: 10
+- isolated executive_trajectory capability: true
+- isolated Executive Trajectory start: active
+- packaged executive.py + Observatory HTML/CSS/JS: present
+- post-close runtime services: 0 TypeScript sessions, 0 Jedi projects, 0 Playwright users/browser
+
+Only completed process runs are counted. Earlier exploratory combined/foreground invocations that hit
+host wall-clock/lifecycle boundaries are deliberately not relabeled as PASS.

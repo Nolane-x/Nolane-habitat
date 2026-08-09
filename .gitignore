@@ -1,0 +1,12 @@
+.venv/
+.habitat/
+.worktrees/
+worktrees/
+*.sqlite3
+*.sqlite3-*
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+.coverage
+htmlcov/

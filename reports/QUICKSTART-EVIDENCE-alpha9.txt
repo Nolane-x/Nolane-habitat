@@ -1,0 +1,7 @@
+Alpha.9 quick-start / operator smoke
+create: PASS
+enter: PASS
+orient: PASS (returned ranked object)
+policy-status: PASS
+execution-security: PASS; security object exposes containment profile/full_sandbox claim
+package/runtime target: pending RC isolated-install gate

@@ -1,0 +1,31 @@
+{
+  "release": "0.1.0-alpha.4",
+  "case": "resident-agent-native-project-workspace",
+  "admission": "bounded experimental checkpoint pending packaged-artifact verification",
+  "supported_claims": [
+    "ordinary folder/ZIP/file can be represented as a revisioned semantic twin while canonical source remains authoritative",
+    "base relation work can be reused at per-source partition granularity when outbound facts/candidate surfaces do not change",
+    "Context Residency preserves semantic working-set references/provenance without copied source bodies and exposes stale/pin/overcommit state",
+    "fresh task-relevant residency can act as a bounded context prior without forcing unrelated historical objects into a new task",
+    "checkpoint/resume binds source/provider/event/resident state and classifies direct/selective-revalidate/reorient continuation",
+    "supported static JSX handlers can be linked as bounded UI source evidence",
+    "protocol traces can measure calls/serialized bytes/exact-source bytes without becoming operation authority"
+  ],
+  "rejected_claims": [
+    "specific LLM token reduction",
+    "universal coding-agent uplift",
+    "fully incremental TypeScript whole-project semantics",
+    "universal code understanding",
+    "production hostile-code sandbox",
+    "framework-complete runtime UI ownership",
+    "AGI capability"
+  ],
+  "evidence_refs": [
+    "TEST-EVIDENCE-alpha4.txt",
+    "DEMO-EVIDENCE-alpha4.json",
+    "AGI-ZIP-STRESS-alpha4.json",
+    "PROTOCOL-TRACE-BENCHMARK-alpha4.json",
+    "AGI-METHOD-TRACE-alpha4.json"
+  ],
+  "rollback": "Canonical source is independent of semantic/residency state; derivative workspace state is rebuildable. Source transactions remain rollbackable under their existing conflict conditions."
+}

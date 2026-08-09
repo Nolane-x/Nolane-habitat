@@ -1,0 +1,116 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "nolane.habitat/context-efficiency/v1alpha7",
+  "type": "object",
+  "required": [
+    "handle",
+    "compiled_revision",
+    "current_revision",
+    "fault_count",
+    "unique_fetched_objects",
+    "exact_source_bytes",
+    "used_objects",
+    "unhelpful_objects",
+    "unrated_objects",
+    "measurement_boundary"
+  ],
+  "properties": {
+    "handle": {
+      "type": "string"
+    },
+    "compiled_revision": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "current_revision": {
+      "type": "string"
+    },
+    "fault_count": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "unique_fetched_objects": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "exact_source_bytes": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "used_objects": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "unhelpful_objects": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "unrated_objects": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "utilization_ratio": {
+      "type": [
+        "number",
+        "null"
+      ],
+      "minimum": 0,
+      "maximum": 1
+    },
+    "rated_ratio": {
+      "type": [
+        "number",
+        "null"
+      ],
+      "minimum": 0,
+      "maximum": 1
+    },
+    "source_bytes_per_used_object": {
+      "type": [
+        "number",
+        "null"
+      ],
+      "minimum": 0
+    },
+    "measurement_boundary": {
+      "type": "string"
+    },
+    "agent_visible_source_bytes": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "backend_authority_bytes_read": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "unique_page_faults": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "duplicate_page_faults": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "refetch_ratio": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 1
+    },
+    "authority_io_amplification": {
+      "type": [
+        "number",
+        "null"
+      ],
+      "minimum": 0
+    }
+  },
+  "additionalProperties": false
+}

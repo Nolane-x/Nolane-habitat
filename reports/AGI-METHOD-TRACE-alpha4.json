@@ -1,0 +1,192 @@
+{
+  "release": "0.1.0-alpha.4",
+  "method": "nolane-agi-style falsifiable engineering loop",
+  "charter": {
+    "goal": "Move Habitat from a live semantic workspace toward a resident, provenance-bound agent project environment without replacing canonical source files.",
+    "non_goals": [
+      "OS replacement",
+      "generic terminal wrapper",
+      "copied-source memory store",
+      "fabricated token/capability claims",
+      "production hostile-code sandbox"
+    ],
+    "protected_invariants": [
+      "canonical source remains authority",
+      "resident state stores provenance not source bodies",
+      "project code is not executed during indexing",
+      "generic shell absent from normal agent protocol",
+      "consequential writes deep-hash canonical bytes",
+      "weak evidence is not silently upgraded",
+      "telemetry cannot change operation outcome"
+    ]
+  },
+  "belief_updates": [
+    {
+      "id": "B1",
+      "initial_belief": "File/compiler reuse plus graph set-diff is sufficient semantic incrementality.",
+      "rival": "Relation resolution itself can still repeat broad work after local edits.",
+      "probe": "Track per-source relation partitions under no-op, body-only edit and candidate-surface expansion.",
+      "observation": "AGI stress warm has 78 partitions with 0 recomputed; documentation and body-only code probes each recompile one file but recompute 0 base relation partitions. A duplicate-candidate regression forces affected reverse partition invalidation.",
+      "decision": "REJECT coarse incrementality belief",
+      "change": "Resolver index + per-source unresolved-fact/candidate-surface fingerprints.",
+      "verifier": "alpha4 relation-partition regressions + AGI-ZIP-STRESS-alpha4.json"
+    },
+    {
+      "id": "B2",
+      "initial_belief": "A task context packet is enough continuity for an agent.",
+      "rival": "Repeated turns still rediscover useful objects unless a persistent working set exists.",
+      "probe": "Admit task context, edit source, switch to related/unrelated tasks, inspect freshness/ranking/materialization.",
+      "observation": "Fresh relevant residents can receive a bounded resident lane; stale residents are excluded from exact-source materialization; unrelated billing task does not inherit auth residency in regression/benchmark.",
+      "decision": "PARTIALLY REJECT",
+      "change": "Persistent Context Residency storing references/provenance/relevance/pin/access state without source bodies.",
+      "verifier": "residency stale/materialize/task-prior tests + alpha4 demo/trace benchmark"
+    },
+    {
+      "id": "B3",
+      "initial_belief": "Eviction can always satisfy configured residency capacity.",
+      "rival": "Pinned residents can legitimately make the bound unsatisfiable.",
+      "probe": "Pin more residents than max_objects permits, then tighten capacity.",
+      "observation": "Pinned residents remain and capacity receipt reports overcommitted with explicit reason.",
+      "decision": "BOUND",
+      "change": "Fail visibly on pinned overcommit; never silently evict a pin.",
+      "verifier": "test_pinned_residency_reports_overcommit_instead_of_evicting_pin"
+    },
+    {
+      "id": "B4",
+      "initial_belief": "Checkpoint notes plus revision are enough to resume.",
+      "rival": "Provider identity and resident evidence can drift independently of narrative task text.",
+      "probe": "Resume unchanged, after unrelated edit, and after resident-source edit.",
+      "observation": "Modes classify direct → selective-revalidate → reorient; checkpoint binds compiler/provider fingerprint and event cursor.",
+      "decision": "REJECT narrative-only continuation",
+      "change": "Provenance-bound checkpoint/resume state and explicit continuation classes.",
+      "verifier": "test_checkpoint_binds_residency_and_distinguishes_resume_modes"
+    },
+    {
+      "id": "B5",
+      "initial_belief": "Component/render ownership is sufficient UI-to-source evidence.",
+      "rival": "Agent often needs the actual handler implementing an interaction.",
+      "probe": "Parse TSX onClick identifier, resolve semantic handler, correlate runtime unique anchor.",
+      "observation": "Supported fixture exposes framework-event-handler:click to handleSave at parser trust.",
+      "decision": "EXTEND bounded evidence",
+      "change": "handles_event relation and runtime handler source hints; ambiguity still downgrades trust.",
+      "verifier": "test_runtime_ui_maps_unique_jsx_event_handler + alpha4 demo UI evidence"
+    },
+    {
+      "id": "B6",
+      "initial_belief": "Protocol plumbing can be benchmarked from ad-hoc counters.",
+      "rival": "Without first-class transparent instrumentation, numbers may be inconsistent or perturb operations.",
+      "probe": "Trace orient/materialize calls and force recorder failure.",
+      "observation": "Trace reports calls/request/response/exact-source bytes; forced telemetry failure leaves query result successful.",
+      "decision": "REJECT ad-hoc instrumentation",
+      "change": "Persistent trace sessions; trace controls excluded; telemetry non-authoritative.",
+      "verifier": "protocol trace/failure-isolation tests + PROTOCOL-TRACE-BENCHMARK-alpha4.json"
+    },
+    {
+      "id": "B7",
+      "initial_belief": "Implementation-class structural bonus is useful even with no task concept match.",
+      "rival": "It fills context budget with unrelated helper functions.",
+      "probe": "120-noise-file credential fixture; inspect selected paths.",
+      "observation": "Initial trace included billing/noise symbols; after requiring at least one content match, credential tasks select only auth.py and billing task only billing.py.",
+      "decision": "REJECT generic structural promotion",
+      "change": "Task-class/trust bonuses apply only after content evidence exists.",
+      "verifier": "test_specific_task_does_not_fill_context_with_unrelated_generic_symbols + regenerated trace benchmark"
+    }
+  ],
+  "negative_results_preserved": [
+    {
+      "id": "F1",
+      "failure": "Legacy alpha.3 regression expected any Python edit to miss the base semantic cache.",
+      "correction": "Updated the contract only after relation-partition correctness proved body-only reuse is legitimate."
+    },
+    {
+      "id": "F2",
+      "failure": "Draft residency test assumed orientation selected exactly one object.",
+      "correction": "Verify source-free storage invariant rather than incidental selection cardinality."
+    },
+    {
+      "id": "F3",
+      "failure": "Draft source-free assertion confused source_digest/source_bytes_estimate provenance with copied source body.",
+      "correction": "Check absence of exact source payload, while allowing provenance fields."
+    },
+    {
+      "id": "F4",
+      "failure": "Relation partition fingerprint initially included source digest and dirtied body-only edits.",
+      "correction": "Removed digest from relation partition identity; provider/compiler version remains a separate invalidation boundary."
+    },
+    {
+      "id": "F5",
+      "failure": "First alpha.4 trace benchmark materialized unrelated noise symbols because implementation structural bonus applied without content match.",
+      "correction": "Require at least one strong content match before structural/trust promotion; add regression and regenerate report."
+    },
+    {
+      "id": "F6",
+      "failure": "RC package smoke in a stdlib venv could not import setuptools.build_meta because that venv did not inherit the host /opt/pyvenv site-packages.",
+      "correction": "Do not weaken pyproject metadata. Verify with the host setuptools 82.0.1 backend using --no-build-isolation --no-deps --target, then isolated-mode import from that target."
+    }
+  ],
+  "admission_evidence": {
+    "tests": "88/88 PASS in source tree before packaging",
+    "demo": {
+      "resident_materialized_source_bytes": 266,
+      "resident_materialized_objects": 4,
+      "trace_call_count": 2,
+      "trace_exact_source_bytes": 318,
+      "resident_state_after_mutation": {
+        "fresh": 3,
+        "stale": 1,
+        "missing": 0
+      },
+      "targeted_verification_exit": 0,
+      "targeted_test_files": [
+        "tests/test_auth.py"
+      ],
+      "ui_handler_hints": 1,
+      "warm_compiled": 0,
+      "warm_reused": 5,
+      "warm_relation_partitions_recomputed": 0
+    },
+    "agi_zip_stress": {
+      "files": 251,
+      "symbols": 865,
+      "occurrences": 3429,
+      "warm_compiled": 0,
+      "warm_reused": 251,
+      "base_partitions": 78,
+      "warm_partitions_recomputed": 0,
+      "documentation_compiled": 1,
+      "documentation_partitions_recomputed": 0,
+      "body_only_code_compiled": 1,
+      "body_only_code_partitions_recomputed": 0
+    },
+    "protocol_trace_plumbing": {
+      "cold_related": {
+        "paths": [
+          "auth.py",
+          "auth.py"
+        ],
+        "calls": 2,
+        "response_bytes": 2363,
+        "exact_source_bytes": 127
+      },
+      "resident_related": {
+        "paths": [
+          "auth.py",
+          "auth.py"
+        ],
+        "calls": 2,
+        "response_bytes": 2505,
+        "exact_source_bytes": 127
+      },
+      "unrelated": {
+        "paths": [
+          "billing.py",
+          "billing.py"
+        ],
+        "calls": 2,
+        "response_bytes": 2325,
+        "exact_source_bytes": 92
+      }
+    }
+  },
+  "claim_boundary": "Admit bounded semantic-partition/residency/checkpoint/UI-handler/instrumentation mechanisms only. No token reduction, coding-success uplift, fully incremental TypeScript semantics, hostile-code sandbox, framework-complete provenance, AGI claim."
+}

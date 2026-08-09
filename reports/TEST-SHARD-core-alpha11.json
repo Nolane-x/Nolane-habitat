@@ -1,0 +1,37 @@
+{
+  "claim_boundary": "Default balanced-shard CI feedback. Every selected unittest module is executed, but a separate monolithic long-lived-host probe remains useful for lifecycle/pathological-state testing.",
+  "group_count": 1,
+  "groups": [
+    {
+      "group": "core",
+      "modules": [
+        "tests.test_capabilities",
+        "tests.test_compiler",
+        "tests.test_execution",
+        "tests.test_large_file_coverage",
+        "tests.test_protocol",
+        "tests.test_python_jedi",
+        "tests.test_schemas",
+        "tests.test_source_bridge",
+        "tests.test_storage",
+        "tests.test_workspace"
+      ],
+      "returncode": 0,
+      "status": "passed",
+      "stderr_tail": "----------------------------------------------------------------------\nRan 26 tests in 4.406s\n\nOK\n",
+      "stdout_tail": "",
+      "tests": 26,
+      "wall_ms": 5285.89
+    }
+  ],
+  "known_test_count": 26,
+  "mode": "shard",
+  "schema": 2,
+  "statuses": {
+    "failed": 0,
+    "infra-error": 0,
+    "passed": 1,
+    "timeout": 0
+  },
+  "wall_ms": 5286.56
+}

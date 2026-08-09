@@ -1,0 +1,2 @@
+python -m compileall -q habitat benchmarks tools tests
+PASS

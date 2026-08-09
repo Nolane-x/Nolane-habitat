@@ -1,0 +1,306 @@
+$ python -m habitat create PROJECT HABITAT
+{
+  "workspace": "/tmp/tmp.CDqJTXu9QD/habitat",
+  "source_root": "/tmp/tmp.CDqJTXu9QD/project",
+  "mode": "linked-folder",
+  "revision": "rev:02d0987de273aa04e5d2",
+  "file_count": 1,
+  "symbol_count": 1,
+  "diagnostic_count": 0,
+  "occurrence_count": 1,
+  "event_cursor": 2,
+  "startup_transaction_recovery": [],
+  "languages": {
+    "python": 1.0
+  },
+  "capabilities": [],
+  "backend": {
+    "backend_id": "backend:449172fad0b767e9128b",
+    "kind": "local-filesystem",
+    "authority": "source-files",
+    "authoritative_root": "/tmp/tmp.CDqJTXu9QD/project",
+    "materialized_root": "/tmp/tmp.CDqJTXu9QD/project",
+    "execution_kind": "local-process",
+    "supports_native_watch": true,
+    "capabilities": [
+      "discover",
+      "execute",
+      "read",
+      "reconcile",
+      "trusted-local",
+      "watch",
+      "write"
+    ],
+    "source_authority_id": "authority:ae5280eadc5211246e7e",
+    "execution_provider_id": "executor:07890bdb544331997afe",
+    "source_authority": {
+      "authority_id": "authority:ae5280eadc5211246e7e",
+      "kind": "local-filesystem",
+      "authority": "source-files",
+      "authoritative_root": "/tmp/tmp.CDqJTXu9QD/project",
+      "materialized_root": "/tmp/tmp.CDqJTXu9QD/project",
+      "supports_native_watch": true,
+      "capabilities": [
+        "read",
+        "write",
+        "reconcile",
+        "watch"
+      ]
+    },
+    "execution_provider": {
+      "provider_id": "executor:07890bdb544331997afe",
+      "kind": "local-process",
+      "execution_root": "/tmp/tmp.CDqJTXu9QD/project",
+      "capabilities": [
+        "discover",
+        "execute",
+        "trusted-local"
+      ]
+    },
+    "semantic_twin_authority": false,
+    "semantic_materialization_role": "shared-source-view",
+    "substrate_composable": true
+  },
+  "semantic_providers": {
+    "python-ast": {
+      "available": true,
+      "trust_ceiling": "semantic",
+      "project_linking": true
+    },
+    "python-jedi": {
+      "available": true,
+      "reason": "Jedi static semantic engine available",
+      "version": "0.20.0",
+      "trust_ceiling": "semantic",
+      "project_linking": true,
+      "files": 1,
+      "relations": 0,
+      "occurrences": 0,
+      "calls_examined": 1,
+      "unresolved_calls": 1,
+      "ambiguous_calls": 0,
+      "file_errors": 0,
+      "cache_hit": false,
+      "domain_digest": "899f8ba50c448f7199166b7c1882fe57da8bedfa506e45c267907655bf7e36cc",
+      "api_surface_digest": "81ce214bab563eaac29c40b325ac4049c706aba861ed21d612172915b761a8f8",
+      "partitions_total": 1,
+      "partitions_reused": 0,
+      "partitions_recomputed": 1,
+      "project_session_reused": false,
+      "persistent_session": true,
+      "project_cache_policy": "bounded-lru",
+      "project_execution": false
+    },
+    "typescript-compiler-api": {
+      "available": true,
+      "reason": "TypeScript compiler API resolved by Node",
+      "trust_ceiling": "semantic",
+      "project_linking": true
+    },
+    "java": {
+      "available": true,
+      "provider": "regex-fallback",
+      "trust_ceiling": "heuristic"
+    },
+    "runtime-browser": {
+      "available": true,
+      "reason": "Playwright + system Chromium available",
+      "browser": "/usr/bin/chromium",
+      "browser_sandbox_enabled": false,
+      "security_note": "running as root requires Chromium --no-sandbox; treat UI execution as trusted-project only"
+    }
+  },
+  "index_health": {
+    "truncated_text_files": 0,
+    "incomplete_parse_files": 0,
+    "indexed_bytes": 54,
+    "source_bytes": 54
+  },
+  "live_workspace": {
+    "ordinary_sync": "metadata candidates -> targeted content hash -> incremental semantic admission",
+    "mutation_integrity": "reconcile + digest-bound target preflight + write-ahead journal + targeted post-write refresh; explicit refresh() is whole-project deep scrub",
+    "watcher": {
+      "running": false,
+      "revision": "rev:02d0987de273aa04e5d2"
+    },
+    "context_refresh": true,
+    "context_materialization": "bounded symbol-body packet; no automatic whole-file dump",
+    "context_residency": {
+      "revision": "rev:02d0987de273aa04e5d2",
+      "config": {
+        "max_objects": 32,
+        "max_source_bytes": 120000
+      },
+      "count": 0,
+      "source_bytes_estimate": 0,
+      "state_counts": {
+        "fresh": 0,
+        "stale": 0,
+        "missing": 0
+      },
+      "objects": []
+    },
+    "virtual_context_memory": true,
+    "content_addressed_state": "Merkle snapshots derived from already-hashed canonical files; no source copy",
+    "active_evidence": 0,
+    "semantic_rename": "Python/Jedi precision lane; fail-closed outside proven provider boundary"
+  },
+  "principles": {
+    "source_authority": "source files",
+    "semantic_twin": "derived and provenance-bound",
+    "terminal": "not an agent primitive; raw process output is fallback evidence",
+    "ui": "semantic runtime state first; pixels optional secondary oracle",
+    "context": "orientation and bounded exact-source packets; retrieved metadata is not authority"
+  }
+}
+$ python -m habitat orient HABITAT "fix credential validation" --budget 12
+{
+  "task": "fix credential validation",
+  "revision": "rev:02d0987de273aa04e5d2",
+  "objects": [
+    {
+      "object_id": "sym:b3f6914c8c2f3e63e3a2",
+      "object_type": "symbol",
+      "relevance": 1.0,
+      "reason": "indexed task-to-symbol structural match",
+      "path": "auth.py",
+      "source_range": [
+        1,
+        2
+      ],
+      "lane": "symbol",
+      "trust": "exact"
+    }
+  ],
+  "unknowns": [],
+  "omitted_candidates": 0,
+  "budget": 12,
+  "task_class": "implementation",
+  "handle": "ctx:e1643cc3663bb6737f74",
+  "lane_counts": {
+    "symbol": 1
+  },
+  "trust_counts": {
+    "exact": 1
+  },
+  "decision_packet": {
+    "objective": "fix credential validation",
+    "revision": "rev:02d0987de273aa04e5d2",
+    "retrieval_confidence": "high",
+    "top_candidate_score": 1.0,
+    "concept_coverage": 1.0,
+    "concept_neighborhood_coverage": 1.0,
+    "coverage_evaluated_concepts": 2,
+    "coverage_truncated": false,
+    "supported_concepts": [
+      "credential",
+      "validation"
+    ],
+    "unsupported_concepts": [],
+    "abstention_recommended": false,
+    "top_evidence_lanes": [
+      "symbol"
+    ],
+    "context_utility_priors_applied": 0,
+    "context_utility_is_non_authoritative": true,
+    "inspect_first": [
+      "sym:b3f6914c8c2f3e63e3a2"
+    ],
+    "exact_source_required_before_mutation": [],
+    "context_is_orientation_not_authority": true,
+    "omitted_candidates": 0
+  }
+}
+$ python -m habitat backend-info HABITAT
+{
+  "backend_id": "backend:449172fad0b767e9128b",
+  "kind": "local-filesystem",
+  "authority": "source-files",
+  "authoritative_root": "/tmp/tmp.CDqJTXu9QD/project",
+  "materialized_root": "/tmp/tmp.CDqJTXu9QD/project",
+  "execution_kind": "local-process",
+  "supports_native_watch": true,
+  "capabilities": [
+    "discover",
+    "execute",
+    "read",
+    "reconcile",
+    "trusted-local",
+    "watch",
+    "write"
+  ],
+  "source_authority_id": "authority:ae5280eadc5211246e7e",
+  "execution_provider_id": "executor:07890bdb544331997afe",
+  "source_authority": {
+    "authority_id": "authority:ae5280eadc5211246e7e",
+    "kind": "local-filesystem",
+    "authority": "source-files",
+    "authoritative_root": "/tmp/tmp.CDqJTXu9QD/project",
+    "materialized_root": "/tmp/tmp.CDqJTXu9QD/project",
+    "supports_native_watch": true,
+    "capabilities": [
+      "read",
+      "write",
+      "reconcile",
+      "watch"
+    ]
+  },
+  "execution_provider": {
+    "provider_id": "executor:07890bdb544331997afe",
+    "kind": "local-process",
+    "execution_root": "/tmp/tmp.CDqJTXu9QD/project",
+    "capabilities": [
+      "discover",
+      "execute",
+      "trusted-local"
+    ]
+  },
+  "semantic_twin_authority": false,
+  "semantic_materialization_role": "shared-source-view",
+  "substrate_composable": true
+}
+$ python -m habitat.server --help
+usage: habitat-agent-server [-h] [--no-observatory] [--no-open-observatory]
+                            [--observatory-port OBSERVATORY_PORT]
+                            workspace
+
+positional arguments:
+  workspace
+
+options:
+  -h, --help            show this help message and exit
+  --no-observatory
+  --no-open-observatory
+  --observatory-port OBSERVATORY_PORT
+$ python -m habitat.observatory --help
+usage: habitat-observatory [-h] [--host {127.0.0.1,localhost,::1}]
+                           [--port PORT] [--no-open]
+                           workspace
+
+Read-only real-time Nolane Habitat Observatory
+
+positional arguments:
+  workspace
+
+options:
+  -h, --help            show this help message and exit
+  --host {127.0.0.1,localhost,::1}
+  --port PORT
+  --no-open
+$ python -m habitat.mcp_adapter --help
+usage: mcp_adapter.py [-h] [--no-observatory] [--no-open-observatory]
+                      [--observatory-port OBSERVATORY_PORT]
+                      workspace
+
+Run Nolane Habitat as an MCP stdio server
+
+positional arguments:
+  workspace             Path to an existing Habitat workspace
+
+options:
+  -h, --help            show this help message and exit
+  --no-observatory      Do not auto-start the read-only realtime Observatory
+  --no-open-observatory
+                        Start Observatory without opening a browser
+  --observatory-port OBSERVATORY_PORT
+                        Loopback Observatory port; 0 chooses a free port

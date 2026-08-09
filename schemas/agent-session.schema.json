@@ -1,0 +1,10 @@
+{
+  "$schema":"https://json-schema.org/draft/2020-12/schema",
+  "$id":"nolane.habitat/agent-session/v1alpha9",
+  "type":"object",
+  "required":["id","name","status","created_at","updated_at","metadata","leases"],
+  "properties":{
+    "id":{"type":"string","pattern":"^agent:"},"name":{"type":"string"},"status":{"enum":["active","closed"]},
+    "created_at":{"type":"string"},"updated_at":{"type":"string"},"metadata":{"type":"object"},"leases":{"type":"array","items":{"type":"object"}}
+  },"additionalProperties":false
+}

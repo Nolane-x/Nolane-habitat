@@ -1,0 +1,96 @@
+{
+  "claim_boundary": "All current test modules are covered by four independently completed unittest shard processes. This is regression evidence, not proof of absence of all defects.",
+  "combined_runner_observation": "A single orchestrator invocation remained host-sensitive despite each identical shard passing independently. Admission uses the four completed isolated shard runs and does not relabel the combined external timeout as pass.",
+  "group_count": 4,
+  "groups": [
+    {
+      "group": "alpha0-4",
+      "modules": [
+        "tests.test_adversarial",
+        "tests.test_alpha1_protocol",
+        "tests.test_alpha1_schema_contracts",
+        "tests.test_alpha1_semantics",
+        "tests.test_alpha2_schema_contracts",
+        "tests.test_alpha2_semantic_loop",
+        "tests.test_alpha3_live_workspace",
+        "tests.test_alpha3_schema_contracts",
+        "tests.test_alpha4_agent_residency",
+        "tests.test_alpha4_schema_contracts"
+      ],
+      "returncode": 0,
+      "status": "passed",
+      "stderr_tail": "----------------------------------------------------------------------\nRan 66 tests in 24.186s\n\nOK\n",
+      "stdout_tail": "",
+      "tests": 66,
+      "wall_ms": 26041.27
+    },
+    {
+      "group": "alpha5-7",
+      "modules": [
+        "tests.test_alpha5_deep_evolution",
+        "tests.test_alpha5_schema_contracts",
+        "tests.test_alpha6_backend_cognition",
+        "tests.test_alpha6_schema_contracts",
+        "tests.test_alpha7_deep_substrate",
+        "tests.test_alpha7_schema_contracts"
+      ],
+      "returncode": 0,
+      "status": "passed",
+      "stderr_tail": "----------------------------------------------------------------------\nRan 38 tests in 27.612s\n\nOK\n",
+      "stdout_tail": "",
+      "tests": 38,
+      "wall_ms": 29446.26
+    },
+    {
+      "group": "alpha8-12",
+      "modules": [
+        "tests.test_alpha8_integrity_cognition",
+        "tests.test_alpha9_benchmark_harness",
+        "tests.test_alpha9_policy_multiagent_git",
+        "tests.test_alpha9_schema_contracts",
+        "tests.test_alpha10_deep_evolution",
+        "tests.test_alpha11_observatory_runtime",
+        "tests.test_alpha12_cinematic_world",
+        "tests.test_alpha12_observatory_cinematic"
+      ],
+      "returncode": 0,
+      "status": "passed",
+      "stderr_tail": "----------------------------------------------------------------------\nRan 83 tests in 25.001s\n\nOK\n",
+      "stdout_tail": "",
+      "tests": 83,
+      "wall_ms": 27312.85
+    },
+    {
+      "group": "core",
+      "modules": [
+        "tests.test_capabilities",
+        "tests.test_compiler",
+        "tests.test_execution",
+        "tests.test_large_file_coverage",
+        "tests.test_protocol",
+        "tests.test_python_jedi",
+        "tests.test_schemas",
+        "tests.test_source_bridge",
+        "tests.test_storage",
+        "tests.test_workspace"
+      ],
+      "returncode": 0,
+      "status": "passed",
+      "stderr_tail": "----------------------------------------------------------------------\nRan 26 tests in 4.726s\n\nOK\n",
+      "stdout_tail": "",
+      "tests": 26,
+      "wall_ms": 5650.24
+    }
+  ],
+  "known_test_count": 213,
+  "mode": "isolated-shard-admission",
+  "release": "0.1.0-alpha.12",
+  "schema": 3,
+  "statuses": {
+    "failed": 0,
+    "infra-error": 0,
+    "passed": 4,
+    "timeout": 0
+  },
+  "summed_child_wall_ms": 88450.62
+}

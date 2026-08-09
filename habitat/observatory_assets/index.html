@@ -1,0 +1,129 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Nolane Habitat Observatory</title>
+<link rel="stylesheet" href="/style.css">
+</head>
+<body>
+<canvas id="ambient"></canvas>
+<div class="scanlines"></div><div class="vignette"></div><div class="noise"></div>
+<div class="shell">
+  <header class="topbar">
+    <div class="brand"><span class="mark"><i></i>N</span><div><b>NOLANE HABITAT</b><small>REALTIME MACHINE-WORLD / AI OPERATOR OBSERVATORY</small></div></div>
+    <div class="statusline"><span id="liveDot" class="dot live"></span><span id="connection">LIVE</span><span class="sep">/</span><span id="revision">REV —</span><span class="sep">/</span><span id="clock">--:--:--</span></div>
+    <div class="telemetry-strip"><span><b id="eventRate">0.0</b> EVT/S</span><span><b id="graphCount">0</b> NODES</span><span><b id="effectCountTop">0</b> FX</span><span><b id="dataflowCountTop">0</b> DF</span><span><b id="runtimeCountTop">0</b> RT</span><span><b id="operatorTop">IDLE</b> UI</span><span><b id="healthTop">OK</b> HEALTH</span><span><b id="loopTop">NONE</b> LOOP</span><span><b id="thrashTop">0%</b> THRASH</span><span><b id="lodTop">FULL</b> LOD</span></div>
+    <div class="readonly">OBSERVER ONLY · AI CONTROL PLANE</div>
+  </header>
+
+  <div id="agentRail" class="agent-rail"></div>
+
+  <main class="main-grid">
+    <aside class="dock left-dock">
+      <section class="glass project-panel">
+        <div class="panel-title"><span>PROJECT WORLD</span><span id="worldStats"></span></div>
+        <div class="section-label">HOT SOURCE</div><div id="projectWorld" class="tree"></div>
+        <div class="section-label">SYSTEM ENTITIES</div><div id="worldEntities" class="entity-list"></div>
+        <div class="section-label">ALT WORLDS</div><div id="worldForks" class="entity-list compact"></div>
+      </section>
+    </aside>
+
+    <section id="stage" class="glass world-stage stage-world">
+      <div class="panel-title world-title">
+        <span id="stageTitle">HABITAT WORLD MAP</span>
+        <div class="stage-tabs" role="tablist" aria-label="Observatory visualization mode">
+          <span class="stage-tab active" data-stage="world" role="tab" tabindex="0" aria-selected="true">WORLD</span>
+          <span class="stage-tab" data-stage="operator" role="tab" tabindex="0" aria-selected="false">AI OPERATOR</span>
+          <span class="stage-tab" data-stage="split" role="tab" tabindex="0" aria-selected="false">SPLIT</span>
+          <span id="mapLegend">SEMANTIC · EFFECT · RUNTIME · COGNITIVE</span>
+        </div>
+      </div>
+
+      <div class="world-layer">
+        <canvas id="worldMap"></canvas>
+        <div class="world-overlay top-left">
+          <div class="hud-kicker">COGNITIVE DIRECTOR</div>
+          <div id="directorOp" class="director-op">OBSERVING</div>
+          <div id="directorReason" class="director-reason">waiting for the next machine-world transition</div>
+          <div class="director-meta"><span id="directorInfo">INFO —</span><span id="directorCost">COST —</span></div>
+        </div>
+        <div class="world-overlay top-right">
+          <div class="radar"><div class="radar-ring r1"></div><div class="radar-ring r2"></div><div class="radar-sweep"></div><b id="debtValue">0</b><small>EPISTEMIC<br>DEBT</small></div>
+        </div>
+        <div class="world-overlay bottom-left"><span class="auto-camera">● AUTO CAMERA</span><span id="worldPulseText">waiting for activity</span></div>
+        <div class="world-overlay bottom-right"><span id="worldTopologyStats">0 LINKS · 0 FLOWS</span></div>
+        <div id="shockFlash" class="shock-flash"></div>
+      </div>
+
+      <div id="operatorSurface" class="operator-surface" aria-live="polite">
+        <div class="operator-window">
+          <div class="browser-chrome">
+            <div class="traffic"><i></i><i></i><i></i></div>
+            <div class="browser-nav"><span>‹</span><span>›</span><span>↻</span></div>
+            <div class="address-bar"><span class="lock">⌁</span><span id="operatorUrl">waiting for AI browser runtime…</span><b id="operatorProtocol">AI VIEW</b></div>
+            <div class="browser-badges"><span id="operatorSession">NO SESSION</span><span id="operatorStream">SNAPSHOT</span><span class="ai-controlled"><i></i> AI CONTROLLED</span></div>
+          </div>
+          <div id="operatorViewport" class="operator-viewport">
+            <div class="viewport-hud top"><span id="operatorTitle">NO ACTIVE UI RUNTIME</span><span id="operatorViewportSize">— × —</span></div>
+            <img id="operatorFrame" alt="Authoritative AI browser viewport mirror">
+            <div id="operatorEmpty" class="operator-empty">
+              <div class="orbital-eye"><i></i><i></i><b>N</b></div>
+              <strong>WAITING FOR AI TO OPEN A UI</strong>
+              <small>When the agent opens a local page or localhost app, the Playwright/CDP viewport is mirrored here in a near-live stream.</small>
+            </div>
+            <div class="viewport-grid"></div><div class="viewport-scan"></div>
+            <div id="targetBox" class="target-box"><span id="targetLabel">TARGET</span></div>
+            <div id="clickPulse" class="click-pulse"></div>
+            <div id="aiCursor" class="ai-cursor">
+              <svg viewBox="0 0 30 38" aria-hidden="true"><path d="M3 2 3 31 11 23 17 36 22 33 16 21 27 21Z"></path></svg>
+              <span id="cursorLabel">NOLANE AI</span>
+            </div>
+            <div id="typingGhost" class="typing-ghost"><span>TYPE</span><b id="typingText"></b><i></i></div>
+            <div class="viewport-hud bottom"><span id="operatorAction">IDLE / OBSERVING</span><span id="operatorFrameSeq">FRAME 0</span></div>
+          </div>
+        </div>
+
+        <aside class="operator-inspector">
+          <div class="operator-head"><span>AI ACTION TRACE</span><b id="operatorState">IDLE</b></div>
+          <div class="operator-brain">
+            <div class="brain-ring r1"></div><div class="brain-ring r2"></div><div class="brain-core">N</div>
+            <div class="brain-beam b1"></div><div class="brain-beam b2"></div><div class="brain-beam b3"></div>
+          </div>
+          <div class="inspector-section"><label>CURRENT TARGET</label><strong id="operatorTarget">—</strong><small id="operatorHandle">no semantic handle</small></div>
+          <div class="inspector-grid">
+            <div><label>ACTION</label><b id="operatorActionKind">—</b></div>
+            <div><label>POINTER</label><b id="operatorPointer">—</b></div>
+            <div><label>DOM Δ</label><b id="operatorDelta">0 / 0 / 0</b></div>
+            <div><label>NETWORK</label><b id="operatorNetwork">0</b></div>
+            <div><label>CONSOLE</label><b id="operatorConsole">0</b></div>
+            <div><label>LAYOUT</label><b id="operatorLayout">0</b></div>
+          </div>
+          <div class="inspector-section terminal-readout"><label>VISIBLE INTENT</label><div id="operatorIntent">No UI action yet.</div></div>
+          <div class="operator-timeline" id="operatorTimeline"></div>
+          <div class="operator-note">PIXELS ARE OBSERVER MIRROR ONLY · VERIFICATION REMAINS SEMANTIC</div>
+        </aside>
+      </div>
+    </section>
+
+    <aside class="dock right-dock">
+      <section class="glass cognition-panel">
+        <div class="panel-title"><span>COGNITIVE STATE</span><span id="cognitiveState">OBSERVING</span></div>
+        <div id="taskCard" class="task-card"></div>
+        <div class="section-label">ACTIVE HYPOTHESES</div><div id="hypotheses" class="stack"></div>
+        <div class="section-label">EPISTEMIC FRONTIER</div><div id="epistemic" class="stack frontier"></div>
+        <div class="section-label">INVARIANTS / COORDINATION</div><div id="invariantCoord" class="stack compact-stack"></div>
+      </section>
+    </aside>
+  </main>
+
+  <section class="lower-grid">
+    <section class="glass memory-panel"><div class="panel-title"><span>MEMORY / CONTEXT</span><span id="memoryBudget"></span></div><div id="memory" class="memory-list"></div></section>
+    <section class="glass signal-panel"><div class="panel-title"><span>EFFECT / RUNTIME FLOW</span><span id="signalCount">0 SIGNALS</span></div><div id="signals" class="signal-list"></div></section>
+    <section class="glass activity-panel"><div class="panel-title"><span>AGENT ACTIVITY</span><span id="activitySeq">SEQ 0</span></div><div id="activity" class="activity"></div></section>
+  </section>
+
+  <footer><span>AI acts inside Habitat. Humans observe the machine world and the AI browser mirror.</span><span id="backendState"></span></footer>
+</div>
+<script src="/app.js"></script>
+</body>
+</html>

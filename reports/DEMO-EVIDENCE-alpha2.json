@@ -1,0 +1,640 @@
+{
+  "release": "0.1.0-alpha.2",
+  "cold_ingest_ms": 977.12,
+  "enter": {
+    "workspace": "/tmp/tmpbokfdxev/habitat",
+    "source_root": "/tmp/tmpbokfdxev/project",
+    "mode": "linked-folder",
+    "revision": "rev:73569db753a6501dccbd",
+    "file_count": 7,
+    "symbol_count": 10,
+    "diagnostic_count": 0,
+    "occurrence_count": 18,
+    "event_cursor": 8,
+    "languages": {
+      "python": 0.714,
+      "javascript": 0.143,
+      "html": 0.143
+    },
+    "capabilities": [
+      {
+        "id": "python.unittest",
+        "kind": "test",
+        "argv": [
+          "/opt/pyvenv/bin/python",
+          "-m",
+          "unittest",
+          "discover",
+          "-s",
+          "tests",
+          "-v"
+        ],
+        "confidence": "project-structure",
+        "available": true,
+        "availability_reason": "Python stdlib unittest is available in the active interpreter",
+        "toolchain": {
+          "executable": "/opt/pyvenv/bin/python",
+          "version": "Python 3.13.5"
+        }
+      },
+      {
+        "id": "python.pytest",
+        "kind": "test",
+        "argv": [
+          "/opt/pyvenv/bin/python",
+          "-m",
+          "pytest",
+          "-q"
+        ],
+        "confidence": "host-probe",
+        "available": true,
+        "availability_reason": "pytest importable in active interpreter",
+        "toolchain": {
+          "executable": "/opt/pyvenv/bin/python",
+          "version": "Python 3.13.5"
+        }
+      }
+    ],
+    "semantic_providers": {
+      "python-ast": {
+        "available": true,
+        "trust_ceiling": "semantic",
+        "project_linking": true
+      },
+      "typescript-compiler-api": {
+        "available": true,
+        "reason": "TypeScript compiler API resolved by Node",
+        "trust_ceiling": "semantic",
+        "project_linking": true
+      },
+      "java": {
+        "available": true,
+        "provider": "regex-fallback",
+        "trust_ceiling": "heuristic"
+      },
+      "runtime-browser": {
+        "available": true,
+        "reason": "Playwright + system Chromium available",
+        "browser": "/usr/bin/chromium"
+      }
+    },
+    "index_health": {
+      "truncated_text_files": 0,
+      "incomplete_parse_files": 0,
+      "indexed_bytes": 820,
+      "source_bytes": 820
+    },
+    "principles": {
+      "source_authority": "source files",
+      "semantic_twin": "derived and provenance-bound",
+      "terminal": "not an agent primitive; raw process output is fallback evidence",
+      "ui": "semantic runtime state first; pixels optional secondary oracle"
+    }
+  },
+  "context": {
+    "task_class": "implementation",
+    "objects": [
+      {
+        "object_id": "sym:e2ca12fad7c2597454e5",
+        "object_type": "symbol",
+        "relevance": 0.8920917333333334,
+        "reason": "lexical index match; task-to-symbol structural match; dependency expansion:calls trust:semantic",
+        "path": "service.py",
+        "source_range": [
+          3,
+          4
+        ],
+        "lane": "lexical+symbol+graph",
+        "trust": "exact"
+      },
+      {
+        "object_id": "sym:b3f6914c8c2f3e63e3a2",
+        "object_type": "symbol",
+        "relevance": 0.8121528035555555,
+        "reason": "task-to-symbol structural match; dependency expansion:calls trust:semantic",
+        "path": "auth.py",
+        "source_range": [
+          1,
+          2
+        ],
+        "lane": "symbol+graph",
+        "trust": "exact"
+      },
+      {
+        "object_id": "sym:a3112fbd967070358e8e",
+        "object_type": "symbol",
+        "relevance": 0.788517248,
+        "reason": "lexical index match; task-to-symbol structural match; dependency expansion:calls trust:semantic",
+        "path": "tests/test_auth.py",
+        "source_range": [
+          4,
+          4
+        ],
+        "lane": "lexical+symbol+graph",
+        "trust": "exact"
+      },
+      {
+        "object_id": "sym:67d75764532bb258ec2b",
+        "object_type": "symbol",
+        "relevance": 0.7415555555555555,
+        "reason": "task-to-symbol structural match",
+        "path": "other.py",
+        "source_range": [
+          1,
+          2
+        ],
+        "lane": "symbol",
+        "trust": "exact"
+      },
+      {
+        "object_id": "file:a99307c61c3c55875b5b",
+        "object_type": "file",
+        "relevance": 0.6023040000000001,
+        "reason": "lexical index match; test-file lane; dependency expansion:imports trust:exact",
+        "path": "tests/test_auth.py",
+        "source_range": null,
+        "lane": "lexical+test+graph",
+        "trust": "exact"
+      },
+      {
+        "object_id": "sym:f1d8c5ffdde6c480a392",
+        "object_type": "symbol",
+        "relevance": 0.5743644444444443,
+        "reason": "task-to-symbol structural match; dependency expansion:calls trust:semantic",
+        "path": "tests/test_other.py",
+        "source_range": [
+          4,
+          4
+        ],
+        "lane": "symbol+graph",
+        "trust": "exact"
+      },
+      {
+        "object_id": "file:3a47b4c168e35e57a3d7",
+        "object_type": "file",
+        "relevance": 0.43,
+        "reason": "lexical index match",
+        "path": "service.py",
+        "source_range": null,
+        "lane": "lexical",
+        "trust": null
+      },
+      {
+        "object_id": "sym:aae95edbfdfd6555d9a7",
+        "object_type": "symbol",
+        "relevance": 0.36613029258239993,
+        "reason": "task-to-symbol structural match; dependency expansion:contains trust:exact",
+        "path": "tests/test_auth.py",
+        "source_range": [
+          3,
+          4
+        ],
+        "lane": "symbol+graph",
+        "trust": "exact"
+      }
+    ],
+    "trust_counts": {
+      "exact": 7,
+      "unknown": 1
+    },
+    "decision_packet": {
+      "objective": "fix credential validation and verify login behavior",
+      "revision": "rev:73569db753a6501dccbd",
+      "inspect_first": [
+        "sym:e2ca12fad7c2597454e5",
+        "sym:b3f6914c8c2f3e63e3a2",
+        "sym:a3112fbd967070358e8e",
+        "sym:67d75764532bb258ec2b",
+        "file:a99307c61c3c55875b5b",
+        "sym:f1d8c5ffdde6c480a392"
+      ],
+      "exact_source_required_before_mutation": [],
+      "context_is_orientation_not_authority": true,
+      "omitted_candidates": 3
+    }
+  },
+  "references_to_auth_validate": {
+    "object_id": "sym:b3f6914c8c2f3e63e3a2",
+    "revision": "rev:73569db753a6501dccbd",
+    "count": 2,
+    "occurrences": [
+      {
+        "id": "occ:dd03bbbd7819458616f5",
+        "file_id": "file:dbcf43432c07570656f9",
+        "path": "auth.py",
+        "role": "definition",
+        "target_id": "sym:b3f6914c8c2f3e63e3a2",
+        "source_id": "sym:b3f6914c8c2f3e63e3a2",
+        "text": "validate_credentials",
+        "start_line": 1,
+        "start_column": null,
+        "end_line": 1,
+        "end_column": null,
+        "provider": "python-ast",
+        "trust": "exact",
+        "evidence": "symbol definition anchor"
+      },
+      {
+        "id": "occ:8f4ca3d28b29c3335523",
+        "file_id": "file:3a47b4c168e35e57a3d7",
+        "path": "service.py",
+        "role": "call",
+        "target_id": "sym:b3f6914c8c2f3e63e3a2",
+        "source_id": "sym:e2ca12fad7c2597454e5",
+        "text": "calls",
+        "start_line": 4,
+        "start_column": null,
+        "end_line": 4,
+        "end_column": null,
+        "provider": "project-linker",
+        "trust": "semantic",
+        "evidence": "line 4"
+      }
+    ],
+    "truncated": false
+  },
+  "impact": {
+    "changed_paths": [
+      "auth.py"
+    ],
+    "seed_object_ids": [
+      "file:dbcf43432c07570656f9",
+      "sym:b3f6914c8c2f3e63e3a2"
+    ],
+    "ranked_test_files": [
+      {
+        "path": "tests/test_auth.py",
+        "score": 0.893172,
+        "depth": 2,
+        "terminal_object_id": "sym:a3112fbd967070358e8e",
+        "evidence_chain": [
+          "sym:b3f6914c8c2f3e63e3a2",
+          {
+            "source_id": "sym:e2ca12fad7c2597454e5",
+            "target_id": "sym:b3f6914c8c2f3e63e3a2",
+            "relation": "calls",
+            "trust": "semantic",
+            "evidence": "line 4",
+            "path": "service.py"
+          },
+          {
+            "source_id": "sym:a3112fbd967070358e8e",
+            "target_id": "sym:e2ca12fad7c2597454e5",
+            "relation": "calls",
+            "trust": "semantic",
+            "evidence": "line 4",
+            "path": "tests/test_auth.py"
+          }
+        ]
+      }
+    ],
+    "graph_edges_examined": 5,
+    "max_depth": 5,
+    "confidence": "semantic",
+    "unknowns": [],
+    "revision": "rev:73569db753a6501dccbd"
+  },
+  "verification": {
+    "plan": {
+      "revision": "rev:73569db753a6501dccbd",
+      "changed_paths": [
+        "auth.py"
+      ],
+      "linked_test_files": [
+        "tests/test_auth.py"
+      ],
+      "ranked_test_files": [
+        {
+          "path": "tests/test_auth.py",
+          "score": 0.893172,
+          "depth": 2,
+          "terminal_object_id": "sym:a3112fbd967070358e8e",
+          "evidence_chain": [
+            "sym:b3f6914c8c2f3e63e3a2",
+            {
+              "source_id": "sym:e2ca12fad7c2597454e5",
+              "target_id": "sym:b3f6914c8c2f3e63e3a2",
+              "relation": "calls",
+              "trust": "semantic",
+              "evidence": "line 4",
+              "path": "service.py"
+            },
+            {
+              "source_id": "sym:a3112fbd967070358e8e",
+              "target_id": "sym:e2ca12fad7c2597454e5",
+              "relation": "calls",
+              "trust": "semantic",
+              "evidence": "line 4",
+              "path": "tests/test_auth.py"
+            }
+          ]
+        }
+      ],
+      "impact_confidence": "semantic",
+      "graph_edges_examined": 5,
+      "test_capabilities": [
+        {
+          "id": "python.unittest",
+          "kind": "test",
+          "argv": [
+            "/opt/pyvenv/bin/python",
+            "-m",
+            "unittest",
+            "discover",
+            "-s",
+            "tests",
+            "-v"
+          ],
+          "confidence": "project-structure",
+          "available": true,
+          "availability_reason": "Python stdlib unittest is available in the active interpreter",
+          "toolchain": {
+            "executable": "/opt/pyvenv/bin/python",
+            "version": "Python 3.13.5"
+          }
+        },
+        {
+          "id": "python.pytest",
+          "kind": "test",
+          "argv": [
+            "/opt/pyvenv/bin/python",
+            "-m",
+            "pytest",
+            "-q"
+          ],
+          "confidence": "host-probe",
+          "available": true,
+          "availability_reason": "pytest importable in active interpreter",
+          "toolchain": {
+            "executable": "/opt/pyvenv/bin/python",
+            "version": "Python 3.13.5"
+          }
+        }
+      ],
+      "targeted_support": [
+        {
+          "capability": "python.unittest",
+          "mode": "file-targeted",
+          "trust": "exact"
+        },
+        {
+          "capability": "python.pytest",
+          "mode": "file-targeted",
+          "trust": "exact"
+        }
+      ],
+      "minimality": "ranked tests are graph-derived candidates; targeted execution is used only for supported frameworks",
+      "unknowns": []
+    },
+    "receipt": {
+      "id": "run:7c978c3dae4c8985a923",
+      "capability": "python.pytest",
+      "argv": [
+        "/opt/pyvenv/bin/python",
+        "-m",
+        "pytest",
+        "-q",
+        "tests/test_auth.py"
+      ],
+      "cwd": "/tmp/tmpbokfdxev/project",
+      "exit_code": 0,
+      "timed_out": false,
+      "duration_ms": 1366,
+      "stdout": ".                                                                        [100%]\n1 passed in 0.02s\n",
+      "stderr": "",
+      "stdout_truncated": false,
+      "stderr_truncated": false,
+      "changed_paths": [],
+      "structured": {
+        "kind": "test",
+        "framework": "pytest",
+        "status": "passed",
+        "total": 1,
+        "passed": 1,
+        "failed": 0,
+        "errors": 0,
+        "skipped": 0,
+        "failed_tests": [],
+        "selection": {
+          "mode": "targeted-files",
+          "selected_test_files": [
+            "tests/test_auth.py"
+          ],
+          "candidate_test_files": [
+            "tests/test_auth.py"
+          ],
+          "impact_confidence": "semantic"
+        }
+      }
+    }
+  },
+  "transaction": {
+    "status": "committed",
+    "semantic_diff": {
+      "auth.py": {
+        "added_symbol_ids": [],
+        "removed_symbol_ids": []
+      }
+    }
+  },
+  "events_after_commit": {
+    "since_seq": 8,
+    "next_seq": 12,
+    "latest_seq": 12,
+    "events": [
+      {
+        "seq": 9,
+        "kind": "semantic-refresh",
+        "path": null,
+        "observed_at": "2026-08-07T05:00:36.401567+00:00",
+        "revision_before": "rev:73569db753a6501dccbd",
+        "revision_after": "rev:73569db753a6501dccbd",
+        "old_digest": null,
+        "new_digest": null,
+        "source": "semantic-twin",
+        "details": {
+          "reason": "pre-stage-deep-reconcile",
+          "unchanged_revision": true,
+          "compiled_files": 0,
+          "reused_files": 7,
+          "project_semantic_cache_hit": true,
+          "providers": {
+            "typescript-project": {
+              "available": true,
+              "reason": "TypeScript Program + TypeChecker",
+              "version": "5.8.3",
+              "files": 1,
+              "relations": 0,
+              "occurrences": 0
+            },
+            "cache": {
+              "reused": true
+            }
+          }
+        }
+      },
+      {
+        "seq": 10,
+        "kind": "semantic-refresh",
+        "path": null,
+        "observed_at": "2026-08-07T05:00:36.404940+00:00",
+        "revision_before": "rev:73569db753a6501dccbd",
+        "revision_after": "rev:73569db753a6501dccbd",
+        "old_digest": null,
+        "new_digest": null,
+        "source": "semantic-twin",
+        "details": {
+          "reason": "pre-commit-reconcile:tx:9951b4585b4b4a8cd5d1",
+          "unchanged_revision": true,
+          "compiled_files": 0,
+          "reused_files": 7,
+          "project_semantic_cache_hit": true,
+          "providers": {
+            "typescript-project": {
+              "available": true,
+              "reason": "TypeScript Program + TypeChecker",
+              "version": "5.8.3",
+              "files": 1,
+              "relations": 0,
+              "occurrences": 0
+            },
+            "cache": {
+              "reused": true
+            }
+          }
+        }
+      },
+      {
+        "seq": 11,
+        "kind": "file-modified",
+        "path": "auth.py",
+        "observed_at": "2026-08-07T05:00:36.953143+00:00",
+        "revision_before": "rev:73569db753a6501dccbd",
+        "revision_after": "rev:450b374fe586ee2df3c2",
+        "old_digest": "4f60b772b6c2188aaf05dc680fc3e50863d3bbe451d35fd55421f779695c8b7b",
+        "new_digest": "779ff292ce6dbac0f4d30da11db890b4b0762f24b7cd24d41de759edabc6b004",
+        "source": "source-bridge",
+        "details": {
+          "reason": "transaction:tx:9951b4585b4b4a8cd5d1"
+        }
+      },
+      {
+        "seq": 12,
+        "kind": "semantic-refresh",
+        "path": null,
+        "observed_at": "2026-08-07T05:00:36.953143+00:00",
+        "revision_before": "rev:73569db753a6501dccbd",
+        "revision_after": "rev:450b374fe586ee2df3c2",
+        "old_digest": null,
+        "new_digest": null,
+        "source": "semantic-twin",
+        "details": {
+          "reason": "transaction:tx:9951b4585b4b4a8cd5d1",
+          "unchanged_revision": false,
+          "compiled_files": 1,
+          "reused_files": 6,
+          "project_semantic_cache_hit": false,
+          "providers": {
+            "typescript-project": {
+              "available": true,
+              "reason": "TypeScript Program + TypeChecker",
+              "version": "5.8.3",
+              "files": 1,
+              "relations": 0,
+              "occurrences": 0
+            },
+            "cache": {
+              "reused": false
+            }
+          }
+        }
+      }
+    ],
+    "has_more": false
+  },
+  "ui": {
+    "output_text": "Hello Nolane",
+    "button_source_hints": [
+      {
+        "object_id": "ui:b6d75d8748bbc6614ea4",
+        "path": "index.html",
+        "line": 1,
+        "relation": "same-data-testid",
+        "trust": "parser"
+      },
+      {
+        "object_id": "file:e07d531ac040ce3f40e0",
+        "path": "app.js",
+        "line": 1,
+        "column": 44,
+        "relation": "runtime-event-listener:click",
+        "trust": "semantic"
+      }
+    ],
+    "delta": {
+      "added": [],
+      "removed": [],
+      "changed": [
+        {
+          "handle": "ui:id:out",
+          "changes": {
+            "name": {
+              "before": null,
+              "after": "Hello Nolane"
+            },
+            "text": {
+              "before": "",
+              "after": "Hello Nolane"
+            },
+            "visible": {
+              "before": false,
+              "after": true
+            },
+            "rect": {
+              "before": {
+                "x": 8,
+                "y": 29,
+                "width": 1424,
+                "height": 0
+              },
+              "after": {
+                "x": 8,
+                "y": 29,
+                "width": 1424,
+                "height": 18
+              }
+            }
+          }
+        }
+      ]
+    }
+  },
+  "warm_refresh": {
+    "revision": "rev:450b374fe586ee2df3c2",
+    "changed_paths": [],
+    "unchanged": true,
+    "compiled_files": 0,
+    "reused_files": 7,
+    "providers": {
+      "python-ast": 5,
+      "html-semantic-parser": 1,
+      "typescript-compiler-api": 1
+    },
+    "project_semantics": {
+      "typescript-project": {
+        "available": true,
+        "reason": "TypeScript Program + TypeChecker",
+        "version": "5.8.3",
+        "files": 1,
+        "relations": 0,
+        "occurrences": 0
+      },
+      "cache": {
+        "reused": true
+      }
+    },
+    "project_semantic_cache_hit": true,
+    "occurrence_count": 18
+  },
+  "claim_boundary": "Executable demo evidence only; no LLM token-savings or universal correctness claim."
+}

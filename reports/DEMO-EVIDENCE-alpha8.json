@@ -1,0 +1,61 @@
+{
+  "release": "0.1.0-alpha.8",
+  "cold_ingest_ms": 1405.71,
+  "perception_integrity": {
+    "old_revision": "rev:2b14f26a6664da5b37ec",
+    "new_revision": "rev:00dbfabb59e2e66dddd0",
+    "detected_paths": [
+      "auth.py"
+    ],
+    "same_size_restored_mtime_detected": true
+  },
+  "sparse_context_io": {
+    "file_size_bytes": 1056985,
+    "agent_visible_source_bytes": 94,
+    "backend_authority_bytes_read": 8639,
+    "io_mode": "authoritative-range-read",
+    "source_preview": "def validate_credentials(user, password):\n    return user == \"admin\" and password == \"secret\"\n"
+  },
+  "mutation_fidelity": {
+    "crlf_before": true,
+    "crlf_after": true,
+    "mode_before": "0o755",
+    "mode_after": "0o755",
+    "logic_updated": true
+  },
+  "verification": {
+    "status": "passed",
+    "exit_code": 0,
+    "environment_fingerprint": {
+      "os": "Linux",
+      "os_release": "6.18.35",
+      "architecture": "x86_64",
+      "python_version": "3.13.5",
+      "python_executable": "/opt/pyvenv/bin/python",
+      "argv0": "/opt/pyvenv/bin/python",
+      "cwd": "/tmp/tmp_qq46vcv/project",
+      "environment_keys": [
+        "CI"
+      ],
+      "security_profile": "trusted-local-process",
+      "sandboxed": false,
+      "network_restricted": false,
+      "filesystem_restricted": false
+    }
+  },
+  "source_policy": {
+    "gitignored_secret_indexed": false
+  },
+  "hypothesis_loop": {
+    "hypothesis_status": "supported",
+    "confidence": 0.7,
+    "confidence_semantics": "agent belief annotation; not calibrated probability",
+    "experiment_status": "completed"
+  },
+  "no_gold": {
+    "confidence": "low",
+    "abstained": true,
+    "source_bytes_read": 0
+  },
+  "claim_boundary": "Alpha.8 integrity/I-O/cognition mechanism evidence. Agent-visible bytes and authority bytes are separate; neither is a token count. Local execution remains explicitly unsandboxed."
+}

@@ -1,0 +1,28 @@
+{
+  "release": "0.1.0-alpha.14",
+  "source_tree": {
+    "total_tests": 257,
+    "passed": 257,
+    "failed": 0,
+    "shards": [
+      {"name": "alpha0-4", "tests": 66, "passed": 66, "seconds": 82.79, "exit_code": 0},
+      {"name": "alpha5-7", "tests": 38, "passed": 38, "seconds": 76.82, "exit_code": 0},
+      {"name": "alpha8-10", "tests": 56, "passed": 56, "seconds": 64.22, "exit_code": 0},
+      {"name": "alpha11-14", "tests": 69, "passed": 69, "seconds": 77.06, "exit_code": 0},
+      {"name": "core", "tests": 26, "passed": 26, "seconds": 17.20, "exit_code": 0},
+      {"name": "sample", "tests": 2, "passed": 2, "seconds": 0.07, "exit_code": 0}
+    ],
+    "completed_process_evidence_only": true,
+    "collection_count": 257
+  },
+  "static_gates": {
+    "compileall": "PASS",
+    "observatory_js_node_check": "PASS",
+    "json_schema_files": 56,
+    "json_schema_parse": "PASS",
+    "mcp_tools": 12,
+    "protocol_methods": 162,
+    "executive_protocol_methods": 8
+  },
+  "claim_boundary": "Independent process shards are the admission evidence because long combined provider/browser lifecycles are host-sensitive. Every counted shard exited 0; incomplete exploratory invocations are not counted."
+}

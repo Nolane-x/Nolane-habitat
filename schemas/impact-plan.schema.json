@@ -1,0 +1,13 @@
+{
+  "$schema":"https://json-schema.org/draft/2020-12/schema",
+  "$id":"nolane.habitat/impact-plan/v1alpha2",
+  "type":"object",
+  "required":["changed_paths","seed_object_ids","ranked_test_files","graph_edges_examined","max_depth","confidence","unknowns","revision"],
+  "properties":{
+    "changed_paths":{"type":"array","items":{"type":"string"}},"seed_object_ids":{"type":"array","items":{"type":"string"}},
+    "ranked_test_files":{"type":"array","items":{"type":"object","required":["path","score","depth","evidence_chain"],"properties":{
+      "path":{"type":"string"},"score":{"type":"number","minimum":0},"depth":{"type":"integer","minimum":1},"evidence_chain":{"type":"array"}}}},
+    "graph_edges_examined":{"type":"integer","minimum":0},"max_depth":{"type":"integer","minimum":1},
+    "confidence":{"enum":["semantic","structural","unknown"]},"unknowns":{"type":"array","items":{"type":"string"}},"revision":{"type":"string"}
+  }
+}

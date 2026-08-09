@@ -1,0 +1,11 @@
+{
+  "$schema":"https://json-schema.org/draft/2020-12/schema",
+  "$id":"nolane.habitat/counterfactual-world/v1alpha12",
+  "type":"object",
+  "required":["id","label","base_revision","status","changes"],
+  "properties":{
+    "id":{"type":"string"},"label":{"type":"string"},"owner_agent_id":{"type":["string","null"]},"base_revision":{"type":"string"},
+    "status":{"enum":["open","promoted","discarded"]},"overlay_root":{"type":"string"},"changes":{"type":"array"},
+    "claim_boundary":{"type":"string"}
+  },"additionalProperties":true
+}

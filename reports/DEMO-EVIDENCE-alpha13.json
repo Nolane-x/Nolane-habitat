@@ -1,0 +1,351 @@
+{
+  "version": "0.1.0-alpha.13",
+  "revision": "rev:d709cf1b05abaf3ceb88",
+  "agents": 3,
+  "activity_seq": 210,
+  "graph": {
+    "nodes": 328,
+    "edges": 102,
+    "sampling": {
+      "bounded": true,
+      "source_totals": {
+        "files": 161,
+        "symbols": 159,
+        "relations": 7,
+        "effects": 649,
+        "dataflows": 505,
+        "runtime_events": 4
+      },
+      "read_model_limits": {
+        "files": 90,
+        "symbols": 120,
+        "relations": 800,
+        "effects": 160,
+        "dataflows": 180,
+        "runtime_events": 40
+      },
+      "graph_candidates": 328,
+      "graph_edges": 102,
+      "claim_boundary": "Observer graph is a bounded focus+context projection; omitted project state is disclosed rather than treated as absent."
+    }
+  },
+  "visual_metrics": {
+    "graph_nodes": 328,
+    "graph_edges": 102,
+    "effects": 160,
+    "dataflows": 180,
+    "runtime_topology_nodes": 8,
+    "world_entities": 15,
+    "counterfactual_worlds": 2
+  },
+  "observer_health": {
+    "snapshot_consistency": "sqlite-read-transaction",
+    "external_projection_consistency": "revision-bound-best-effort",
+    "activity_loop": {
+      "risk": "medium",
+      "score": 3,
+      "repeat_ratio": 0.225,
+      "no_progress_streak": 16,
+      "same_operation_tail": 1,
+      "dominant": {
+        "kind": "tool.started",
+        "ref_id": "workspace.inspect",
+        "path": null,
+        "status": "running",
+        "count": 9
+      },
+      "window": 40,
+      "claim_boundary": "Visible Habitat operation repetition only; not access to private chain-of-thought."
+    },
+    "epistemic_pressure": {
+      "score": 17,
+      "level": "high",
+      "blockers": [
+        {
+          "kind": "contradiction",
+          "id": "epistemic:9bbbb653b0f6e757c314",
+          "statement": "static input exists but fresh runtime state has not been demonstrated",
+          "stale": true,
+          "weight": 7
+        },
+        {
+          "kind": "unknown",
+          "id": "epistemic:e333924afb67aacfedae",
+          "statement": "whether refresh_token receives subscription state after revalidation",
+          "stale": true,
+          "weight": 5
+        },
+        {
+          "kind": "stale-observation",
+          "id": "notify:996e974064ea229d23f1",
+          "statement": "auth/claims.py",
+          "weight": 5
+        }
+      ],
+      "unverified_critical_invariants": 0
+    },
+    "activity_seq": 210,
+    "agents": {
+      "agent:c26ec648023469392c6d": {
+        "status": "loop-risk",
+        "pending_invalidations": 0,
+        "leases": 0,
+        "private_residents": 0,
+        "loop": {
+          "risk": "high",
+          "score": 5,
+          "repeat_ratio": 0.5625,
+          "no_progress_streak": 9,
+          "same_operation_tail": 9,
+          "dominant": {
+            "kind": "tool.started",
+            "ref_id": "workspace.inspect",
+            "path": null,
+            "status": "running",
+            "count": 9
+          },
+          "window": 16,
+          "claim_boundary": "Visible Habitat operation repetition only; not access to private chain-of-thought."
+        }
+      },
+      "agent:9c8c6e9b13d5e1587bfb": {
+        "status": "active",
+        "pending_invalidations": 0,
+        "leases": 0,
+        "private_residents": 0,
+        "loop": {
+          "risk": "none",
+          "score": 0,
+          "repeat_ratio": 0.1429,
+          "no_progress_streak": 0,
+          "same_operation_tail": 1,
+          "dominant": {
+            "kind": "agent.connected",
+            "ref_id": null,
+            "path": null,
+            "status": "active",
+            "count": 1
+          },
+          "window": 7,
+          "claim_boundary": "Visible Habitat operation repetition only; not access to private chain-of-thought."
+        }
+      },
+      "agent:3047edf8f60fd9175529": {
+        "status": "stale",
+        "pending_invalidations": 1,
+        "leases": 0,
+        "private_residents": 6,
+        "loop": {
+          "risk": "low",
+          "score": 1,
+          "repeat_ratio": 0.2222,
+          "no_progress_streak": 1,
+          "same_operation_tail": 1,
+          "dominant": {
+            "kind": "context.page-fault",
+            "ref_id": "sym:940853360262fd4fb4f7",
+            "path": "auth/claims.py",
+            "status": "paged",
+            "count": 2
+          },
+          "window": 9,
+          "claim_boundary": "Visible Habitat operation repetition only; not access to private chain-of-thought."
+        }
+      }
+    }
+  },
+  "world_health": {
+    "revision": "rev:d709cf1b05abaf3ceb88",
+    "agent_id": null,
+    "status": "critical",
+    "blockers": [
+      {
+        "kind": "pending-agent-invalidation",
+        "count": 1
+      },
+      {
+        "kind": "stale-counterfactual-verification",
+        "count": 1
+      },
+      {
+        "kind": "failed-counterfactual-verification",
+        "count": 1
+      },
+      {
+        "kind": "epistemic-pressure",
+        "level": "high",
+        "score": 12
+      },
+      {
+        "kind": "context-thrash",
+        "ratio": 0.5
+      }
+    ],
+    "coordination": {
+      "pending_invalidations": 1,
+      "active_leases": 0
+    },
+    "counterfactuals": {
+      "open": 1,
+      "stale_verifications": 1,
+      "failed_verifications": 1
+    },
+    "invariants": {
+      "unverified_error_or_critical": 0
+    },
+    "active_evidence": 0,
+    "cognition": {
+      "revision": "rev:d709cf1b05abaf3ceb88",
+      "agent_id": null,
+      "loop": {
+        "risk": "low",
+        "score": 2,
+        "repeat_ratio": 0.225,
+        "no_progress_streak": 15,
+        "same_operation_tail": 1,
+        "dominant": {
+          "kind": "tool.started",
+          "ref_id": "workspace.inspect",
+          "path": null,
+          "status": "running",
+          "count": 9
+        },
+        "window": 40,
+        "claim_boundary": "Visible Habitat operation repetition only; not access to private chain-of-thought."
+      },
+      "epistemic_pressure": {
+        "score": 12,
+        "level": "high",
+        "blockers": [
+          {
+            "kind": "contradiction",
+            "id": "epistemic:9bbbb653b0f6e757c314",
+            "statement": "static input exists but fresh runtime state has not been demonstrated",
+            "stale": true,
+            "weight": 7
+          },
+          {
+            "kind": "unknown",
+            "id": "epistemic:e333924afb67aacfedae",
+            "statement": "whether refresh_token receives subscription state after revalidation",
+            "stale": true,
+            "weight": 5
+          }
+        ],
+        "unverified_critical_invariants": 0
+      },
+      "context": {
+        "faults": 2,
+        "unique_pages": 1,
+        "duplicate_faults": 1,
+        "refetch_ratio": 0.5,
+        "agent_visible_source_bytes": 206,
+        "backend_authority_bytes_read": 940,
+        "io_amplification": 4.5631
+      },
+      "memory_echoes_suppressed_recently": 1,
+      "status": "degraded",
+      "claim_boundary": "Operational/cognitive health from explicit Habitat telemetry; does not inspect private model reasoning."
+    },
+    "claim_boundary": "Operational world-health aggregation from explicit Habitat state; not a proof that the program or agent plan is correct."
+  },
+  "verifier_cognition_health": {
+    "revision": "rev:d709cf1b05abaf3ceb88",
+    "agent_id": "agent:c26ec648023469392c6d",
+    "loop": {
+      "risk": "high",
+      "score": 5,
+      "repeat_ratio": 0.5625,
+      "no_progress_streak": 9,
+      "same_operation_tail": 9,
+      "dominant": {
+        "kind": "tool.started",
+        "ref_id": "workspace.inspect",
+        "path": null,
+        "status": "running",
+        "count": 9
+      },
+      "window": 16,
+      "claim_boundary": "Visible Habitat operation repetition only; not access to private chain-of-thought."
+    },
+    "epistemic_pressure": {
+      "score": 0,
+      "level": "low",
+      "blockers": [],
+      "unverified_critical_invariants": 0
+    },
+    "context": {
+      "faults": 2,
+      "unique_pages": 1,
+      "duplicate_faults": 1,
+      "refetch_ratio": 0.5,
+      "agent_visible_source_bytes": 206,
+      "backend_authority_bytes_read": 940,
+      "io_amplification": 4.5631
+    },
+    "memory_echoes_suppressed_recently": 0,
+    "status": "degraded",
+    "claim_boundary": "Operational/cognitive health from explicit Habitat telemetry; does not inspect private model reasoning."
+  },
+  "context_efficiency": {
+    "handle": "ctx:1c0dc31fb3a866f76638",
+    "compiled_revision": "rev:1f975a9f363bdc321828",
+    "current_revision": "rev:d709cf1b05abaf3ceb88",
+    "fault_count": 2,
+    "unique_fetched_objects": 1,
+    "unique_page_faults": 1,
+    "duplicate_page_faults": 1,
+    "refetch_ratio": 0.5,
+    "exact_source_bytes": 206,
+    "agent_visible_source_bytes": 206,
+    "backend_authority_bytes_read": 940,
+    "authority_io_amplification": 4.5631,
+    "used_objects": [],
+    "unhelpful_objects": [],
+    "unrated_objects": [
+      "sym:940853360262fd4fb4f7"
+    ],
+    "utilization_ratio": 0.0,
+    "rated_ratio": 0.0,
+    "source_bytes_per_used_object": null,
+    "measurement_boundary": "exact source bytes/page faults and explicit feedback; bytes are not tokens and unrated is not equivalent to useless"
+  },
+  "memory_echo_suppressed": true,
+  "dap_replay_ingested": 0,
+  "telemetry_secret_absent": true,
+  "bad_world": {
+    "verification_status": "failed",
+    "promotion_blocked": true
+  },
+  "good_world": {
+    "verification_status": "passed",
+    "promoted": "world:ed4054df3d031ff7741b",
+    "canonical_verification": "passed"
+  },
+  "runtime_support": {
+    "effect_counts": {
+      "weak": 24,
+      "strong": 8
+    },
+    "dataflow_counts": {
+      "weak": 26,
+      "strong": 11
+    }
+  },
+  "read_only_post_status": 405,
+  "ui_runtime": {
+    "available": true,
+    "assertion_passed": true
+  },
+  "screenshot": {
+    "captured": true,
+    "path": "OBSERVATORY-alpha13.png",
+    "bytes": 879463,
+    "source": "live-snapshot-offline-render",
+    "dimensions": {
+      "w": 1920,
+      "h": 1080
+    }
+  },
+  "claim_boundary": "Alpha13 resilience/cinematic demo uses explicit Habitat cognitive artifacts and admitted world events. Loop signals inspect visible operation repetition only; runtime support is correlation, not causality; Observatory is read-only and does not expose private chain-of-thought."
+}

@@ -1,0 +1,152 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "nolane.habitat/runtime-ui-surface/v1alpha1",
+  "type": "object",
+  "required": [
+    "session_id",
+    "mode",
+    "target",
+    "elements",
+    "aria_snapshot",
+    "layout_diagnostics",
+    "events",
+    "delta",
+    "limitations"
+  ],
+  "properties": {
+    "session_id": {
+      "type": "string"
+    },
+    "mode": {
+      "const": "runtime-browser-semantic"
+    },
+    "target": {
+      "type": "string"
+    },
+    "target_path": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "url": {
+      "type": "string"
+    },
+    "title": {
+      "type": "string"
+    },
+    "elements": {
+      "type": "array",
+      "items": {
+        "type": "object"
+      }
+    },
+    "aria_snapshot": {
+      "type": "string"
+    },
+    "layout_diagnostics": {
+      "type": "array"
+    },
+    "events": {
+      "type": "object"
+    },
+    "delta": {
+      "type": "object"
+    },
+    "screenshot_path": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "limitations": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "observer_frame_path": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "observer_frame_seq": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "observer_frame_at": {
+      "type": [
+        "number",
+        "null"
+      ]
+    },
+    "observer_frame_source": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "observer_stream": {
+      "type": "object",
+      "properties": {
+        "mode": {
+          "type": "string"
+        },
+        "active": {
+          "type": "boolean"
+        },
+        "epoch": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "seq": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "started_at": {
+          "type": [
+            "number",
+            "null"
+          ]
+        },
+        "last_frame_at": {
+          "type": [
+            "number",
+            "null"
+          ]
+        },
+        "error": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "ack_errors": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "poll_hint_ms": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "frame_retention": {
+          "type": "integer",
+          "minimum": 1
+        }
+      },
+      "additionalProperties": true
+    },
+    "action_receipt": {
+      "type": "object"
+    },
+    "security": {
+      "type": "object"
+    },
+    "policy_decision": {
+      "type": "object"
+    }
+  }
+}

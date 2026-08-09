@@ -1,0 +1,69 @@
+{
+  "$id": "nolane.habitat/transaction/v1alpha1",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "properties": {
+    "base_revision": {
+      "type": "string"
+    },
+    "changed_paths": {
+      "items": {
+        "type": "string"
+      },
+      "type": "array"
+    },
+    "committed_revision": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "id": {
+      "pattern": "^tx:",
+      "type": "string"
+    },
+    "operations": {
+      "items": {
+        "type": "object"
+      },
+      "type": "array"
+    },
+    "preview": {
+      "items": {
+        "type": "object"
+      },
+      "type": "array"
+    },
+    "rebased_from_revision": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "rebased_onto_revision": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "semantic_diff": {
+      "type": "object"
+    },
+    "status": {
+      "enum": [
+        "staged",
+        "committed",
+        "rolled-back"
+      ]
+    }
+  },
+  "required": [
+    "id",
+    "base_revision",
+    "status",
+    "operations",
+    "changed_paths",
+    "preview",
+    "semantic_diff"
+  ],
+  "type": "object"
+}

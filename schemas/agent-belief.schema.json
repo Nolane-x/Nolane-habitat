@@ -1,0 +1,18 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://nolane.local/habitat/schemas/agent-belief.schema.json",
+  "title": "Habitat Agent-Specific Hypothesis Belief",
+  "type": "object",
+  "required": ["agent_id", "hypothesis_id", "stance", "confidence", "base_revision"],
+  "properties": {
+    "agent_id": {"type": "string"},
+    "hypothesis_id": {"type": "string"},
+    "stance": {"enum": ["support", "oppose", "uncertain"]},
+    "confidence": {"type": "number", "minimum": 0, "maximum": 1},
+    "rationale": {"type": ["string", "null"]},
+    "base_revision": {"type": "string"},
+    "revision_drift": {"type": "boolean"},
+    "claim_boundary": {"type": "string"}
+  },
+  "additionalProperties": true
+}

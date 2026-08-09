@@ -1,0 +1,15 @@
+{
+  "release": "0.1.0-alpha.13",
+  "capabilities": {
+    "runtime_history_append_only": {"status": "admitted", "evidence": "alpha13 runtime Store + replay regressions"},
+    "dap_replay": {"status": "conditional", "condition": "stable session/process/episode/agent identity plus sequence available"},
+    "counterfactual_verified_promotion": {"status": "admitted", "rule": "verified worlds must be fresh and passed"},
+    "telemetry_hygiene": {"status": "admitted-bounded", "limits": "redaction/depth/list/dict/string bounds; not a universal DLP engine"},
+    "cognitive_loop_health": {"status": "admitted-heuristic", "private_chain_of_thought": false},
+    "context_thrash_accounting": {"status": "admitted", "metrics": ["duplicate_page_faults", "refetch_ratio", "authority_io_amplification"]},
+    "observer_reconnect": {"status": "admitted", "mechanism": "Last-Event-ID + retention gap + resnapshot"},
+    "observer_lod": {"status": "admitted-bounded", "silent_omission": false},
+    "runtime_support_correlation": {"status": "admitted", "causal_proof": false},
+    "full_external_snapshot": {"status": "open", "reason": "backend snapshot token not yet available"}
+  }
+}

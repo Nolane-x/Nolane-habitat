@@ -1,0 +1,14 @@
+{
+  "$schema":"https://json-schema.org/draft/2020-12/schema",
+  "$id":"nolane.habitat/dataflow-twin/v1alpha13",
+  "type":"object",
+  "required":["revision","flows","count","claim_boundary"],
+  "properties":{
+    "revision":{"type":"string"},"count":{"type":"integer","minimum":0},"kind_counts":{"type":"object"},"runtime_support_counts":{"type":"object"},
+    "flows":{"type":"array","items":{"type":"object","required":["id","path","kind","source","target","trust","runtime_support"],"properties":{
+      "id":{"type":"string"},"path":{"type":"string"},"kind":{"type":"string"},"source":{"type":"string"},"target":{"type":"string"},"trust":{"enum":["exact","semantic","parser","derived","heuristic"]},
+      "observed_runtime_refs":{"type":"array"},"runtime_support":{"type":"object","required":["grade","observed","runtime_refs","runtime_ref_count","claim_boundary"]}
+    },"additionalProperties":true}},
+    "claim_boundary":{"type":"string"}
+  },"additionalProperties":true
+}

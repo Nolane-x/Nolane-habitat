@@ -1,0 +1,204 @@
+{
+  "release": "0.1.0-alpha.5",
+  "benchmark": "context-precision-plumbing-v2",
+  "fixture": {
+    "files": 202,
+    "noise_files": 200
+  },
+  "filesystem_full_scan": {
+    "credential": {
+      "files_read": 202,
+      "source_bytes_read": 8111,
+      "top_paths": [
+        "auth.py"
+      ]
+    },
+    "billing": {
+      "files_read": 202,
+      "source_bytes_read": 8111,
+      "top_paths": [
+        "billing.py"
+      ]
+    },
+    "no_gold": {
+      "files_read": 202,
+      "source_bytes_read": 8111,
+      "top_paths": []
+    }
+  },
+  "habitat": {
+    "credential": {
+      "paths": [
+        "auth.py",
+        "auth.py"
+      ],
+      "confidence": "high",
+      "abstain": false,
+      "source_bytes": 127,
+      "page_count": 1,
+      "trace": {
+        "trace_id": "trace:9dfc85499111df89d9fc",
+        "label": "credential",
+        "active": false,
+        "started_at": "2026-08-07T07:22:47.647150+00:00",
+        "stopped_at": "2026-08-07T07:22:47.673941+00:00",
+        "start_revision": "rev:58141cfe80683a5f813e",
+        "end_revision": "rev:58141cfe80683a5f813e",
+        "call_count": 2,
+        "ok_calls": 2,
+        "duration_ms": 23,
+        "request_bytes": 234,
+        "response_bytes": 2388,
+        "exact_source_bytes": 127,
+        "methods": {
+          "workspace.orient": 1,
+          "workspace.context.prefetch": 1
+        },
+        "calls": [
+          {
+            "seq": 1,
+            "trace_id": "trace:9dfc85499111df89d9fc",
+            "method": "workspace.orient",
+            "ok": 1,
+            "duration_ms": 20,
+            "request_bytes": 101,
+            "response_bytes": 1310,
+            "source_bytes": 0,
+            "revision": "rev:58141cfe80683a5f813e",
+            "recorded_at": "2026-08-07T07:22:47.669033+00:00"
+          },
+          {
+            "seq": 2,
+            "trace_id": "trace:9dfc85499111df89d9fc",
+            "method": "workspace.context.prefetch",
+            "ok": 1,
+            "duration_ms": 3,
+            "request_bytes": 133,
+            "response_bytes": 1078,
+            "source_bytes": 127,
+            "revision": "rev:58141cfe80683a5f813e",
+            "recorded_at": "2026-08-07T07:22:47.673096+00:00"
+          }
+        ]
+      },
+      "gold_path": "auth.py",
+      "gold_retrieved": true,
+      "noise_paths": []
+    },
+    "billing": {
+      "paths": [
+        "billing.py",
+        "billing.py"
+      ],
+      "confidence": "high",
+      "abstain": false,
+      "source_bytes": 92,
+      "page_count": 1,
+      "trace": {
+        "trace_id": "trace:685bed4816e72974fb7c",
+        "label": "billing",
+        "active": false,
+        "started_at": "2026-08-07T07:22:47.679191+00:00",
+        "stopped_at": "2026-08-07T07:22:47.702890+00:00",
+        "start_revision": "rev:58141cfe80683a5f813e",
+        "end_revision": "rev:58141cfe80683a5f813e",
+        "call_count": 2,
+        "ok_calls": 2,
+        "duration_ms": 20,
+        "request_bytes": 227,
+        "response_bytes": 2361,
+        "exact_source_bytes": 92,
+        "methods": {
+          "workspace.orient": 1,
+          "workspace.context.prefetch": 1
+        },
+        "calls": [
+          {
+            "seq": 3,
+            "trace_id": "trace:685bed4816e72974fb7c",
+            "method": "workspace.orient",
+            "ok": 1,
+            "duration_ms": 17,
+            "request_bytes": 94,
+            "response_bytes": 1305,
+            "source_bytes": 0,
+            "revision": "rev:58141cfe80683a5f813e",
+            "recorded_at": "2026-08-07T07:22:47.697965+00:00"
+          },
+          {
+            "seq": 4,
+            "trace_id": "trace:685bed4816e72974fb7c",
+            "method": "workspace.context.prefetch",
+            "ok": 1,
+            "duration_ms": 3,
+            "request_bytes": 133,
+            "response_bytes": 1056,
+            "source_bytes": 92,
+            "revision": "rev:58141cfe80683a5f813e",
+            "recorded_at": "2026-08-07T07:22:47.701996+00:00"
+          }
+        ]
+      },
+      "gold_path": "billing.py",
+      "gold_retrieved": true,
+      "noise_paths": []
+    },
+    "no_gold": {
+      "paths": [],
+      "confidence": "low",
+      "abstain": true,
+      "source_bytes": 0,
+      "page_count": 0,
+      "trace": {
+        "trace_id": "trace:941d11b7fe66d56dad25",
+        "label": "no_gold",
+        "active": false,
+        "started_at": "2026-08-07T07:22:47.705333+00:00",
+        "stopped_at": "2026-08-07T07:22:47.752586+00:00",
+        "start_revision": "rev:58141cfe80683a5f813e",
+        "end_revision": "rev:58141cfe80683a5f813e",
+        "call_count": 2,
+        "ok_calls": 2,
+        "duration_ms": 43,
+        "request_bytes": 238,
+        "response_bytes": 1244,
+        "exact_source_bytes": 0,
+        "methods": {
+          "workspace.orient": 1,
+          "workspace.context.prefetch": 1
+        },
+        "calls": [
+          {
+            "seq": 5,
+            "trace_id": "trace:941d11b7fe66d56dad25",
+            "method": "workspace.orient",
+            "ok": 1,
+            "duration_ms": 41,
+            "request_bytes": 105,
+            "response_bytes": 1018,
+            "source_bytes": 0,
+            "revision": "rev:58141cfe80683a5f813e",
+            "recorded_at": "2026-08-07T07:22:47.747755+00:00"
+          },
+          {
+            "seq": 6,
+            "trace_id": "trace:941d11b7fe66d56dad25",
+            "method": "workspace.context.prefetch",
+            "ok": 1,
+            "duration_ms": 2,
+            "request_bytes": 133,
+            "response_bytes": 226,
+            "source_bytes": 0,
+            "revision": "rev:58141cfe80683a5f813e",
+            "recorded_at": "2026-08-07T07:22:47.751728+00:00"
+          }
+        ]
+      },
+      "gold_path": null,
+      "gold_retrieved": null,
+      "noise_paths": []
+    }
+  },
+  "metrics_definition": "Deterministic retrieval/source-byte instrumentation with gold paths and a no-gold abstention case.",
+  "claim_boundary": "Not a same-model agent A/B. It supports only retrieval-plumbing claims, not token, reasoning, speed, or coding-success claims."
+}

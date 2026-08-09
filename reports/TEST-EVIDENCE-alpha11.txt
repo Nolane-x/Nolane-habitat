@@ -1,0 +1,35 @@
+Nolane Habitat 0.1.0-alpha.11 test evidence
+
+Exhaustive balanced shards:
+- alpha0-4: 66/66 PASS
+- alpha5-7: 38/38 PASS
+- alpha8-11: 68/68 PASS
+- core: 26/26 PASS
+TOTAL: 198/198 PASS
+failed=0 timeout=0 infra_error=0
+
+A combined matrix invocation was externally timed out before emitting a report. It is not counted as PASS or FAIL. The same complete selected module set was then run as four independently completed shards above.
+
+compileall: PASS
+quick-start / entrypoint smoke: PASS
+
+Observatory vertical demo:
+- agents: Claude Code, Codex
+- HTTP POST observer mutation attempt: 405
+- graph nodes/edges: 25/22
+- activity seq: 34
+- runtime events: 4
+- project memories: 3
+- exact source packet: 525 B
+- verification: passed
+- screenshot: {'captured': True, 'path': 'OBSERVATORY-alpha11.png', 'bytes': 323033, 'source': 'live-snapshot-offline-render'}
+
+Supplied AGI ZIP stress:
+- files: 251
+- symbols: 865
+- occurrences: 4343
+- ordinary warm hashed files: 0
+- deep scrub compiled/reused: 0/251
+- no-gold: confidence=low abstained=True source_bytes=0
+
+Claim boundary: mechanism/invariant evidence only. This does not establish AGI capability, token reduction, or coding-success superiority.

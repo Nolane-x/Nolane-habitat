@@ -1,0 +1,3 @@
+Command: python -m compileall -q habitat benchmarks tests
+Result: PASS (exit code 0)
+Note: compileall is silent under -q on success.

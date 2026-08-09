@@ -1,0 +1,12 @@
+{
+  "$schema":"https://json-schema.org/draft/2020-12/schema",
+  "$id":"nolane.habitat/context-page-plan/v1alpha6",
+  "type":"object","required":["handle","stale","revision","planned_pages","action","estimated_source_bytes"],
+  "properties":{
+    "handle":{"type":"string"},"stale":{"type":"boolean"},"revision":{"type":"string"},"planned_pages":{"type":"array","items":{"type":"object"}},
+    "action":{"enum":["fault-pages","no-useful-page","abstain-or-broaden-query","refresh-context"]},
+    "reason":{"type":"string"},"unsupported_concepts":{"type":"array","items":{"type":"string"}},
+    "estimated_source_bytes":{"type":"integer","minimum":0},"source_bytes_read":{"type":"integer","minimum":0},
+    "retrieval_confidence":{"type":["string","null"]},"page_ids":{"type":"array","items":{"type":"string"}},"planner_policy":{"type":"string"}
+  },"additionalProperties":true
+}

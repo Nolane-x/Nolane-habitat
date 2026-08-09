@@ -1,0 +1,12 @@
+{
+  "$schema":"https://json-schema.org/draft/2020-12/schema",
+  "$id":"nolane.habitat/context-refresh/v1alpha3",
+  "type":"object",
+  "required":["previous_handle","previous_revision","current_revision","context","delta"],
+  "properties":{
+    "previous_handle":{"type":"string"},"previous_revision":{"type":["string","null"]},"current_revision":{"type":"string"},
+    "context":{"type":"object"},
+    "delta":{"type":"object","required":["retained_object_ids","added_object_ids","removed_object_ids","missing_object_ids","changed_paths"]}
+  },
+  "additionalProperties":true
+}

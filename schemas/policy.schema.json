@@ -1,0 +1,16 @@
+{
+  "$schema":"https://json-schema.org/draft/2020-12/schema",
+  "$id":"nolane.habitat/policy/v1alpha9",
+  "type":"object",
+  "required":["schema","mode","source","execution","browser","structural_mutation","updated_at"],
+  "properties":{
+    "schema":{"const":1},
+    "mode":{"enum":["trusted-development","restricted","untrusted"]},
+    "source":{"type":"object"},
+    "execution":{"type":"object"},
+    "browser":{"type":"object"},
+    "structural_mutation":{"type":"object"},
+    "updated_at":{"type":["string","null"]}
+  },
+  "additionalProperties":false
+}

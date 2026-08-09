@@ -1,0 +1,6 @@
+{
+  "release":"0.1.0-alpha.8",
+  "admitted":["perception-integrity","sparse-source-io","episode-state-enforcement","local-wal-recovery","mutation-fidelity","source-ignore-policy","strict-protocol","bounded-execution-capture","environment-provenance","mcp-post-side-effect-status","hypothesis-experiment-cognition"],
+  "partial":["execution-security","uncertainty-calibration","multi-language-semantics","remote-backend-economics","retention-secret-governance","multi-agent-concurrency"],
+  "not_claimed":["AGI","same-model coding superiority","universal token savings","distributed ACID","full program causality","hostile repository safety"]
+}

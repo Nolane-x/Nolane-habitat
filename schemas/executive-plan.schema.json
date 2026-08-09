@@ -1,0 +1,64 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "nolane.habitat/executive-plan/v1alpha14",
+  "type": "object",
+  "required": [
+    "trajectory_id",
+    "revision",
+    "goal",
+    "strategy",
+    "hierarchy",
+    "cognition",
+    "next",
+    "completion_gate",
+    "claim_boundary",
+    "control",
+    "budget"
+  ],
+  "properties": {
+    "trajectory_id": {
+      "type": "string"
+    },
+    "revision": {
+      "type": "string"
+    },
+    "goal": {
+      "type": "string"
+    },
+    "strategy": {
+      "type": "object"
+    },
+    "hierarchy": {
+      "type": "object"
+    },
+    "cognition": {
+      "type": "object"
+    },
+    "next": {
+      "type": "object"
+    },
+    "completion_gate": {
+      "type": "object"
+    },
+    "claim_boundary": {
+      "type": "string"
+    },
+    "control": {
+      "type": "object",
+      "required": [
+        "allowed_next_phases",
+        "close_allowed"
+      ]
+    },
+    "budget": {
+      "type": "object",
+      "required": [
+        "limits",
+        "consumed",
+        "exhausted",
+        "reasons"
+      ]
+    }
+  },
+  "additionalProperties": true
+}

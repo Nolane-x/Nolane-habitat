@@ -1,0 +1,8 @@
+Nolane Habitat 0.1.0-alpha.12 source-tree regression evidence
+alpha0-4: 66/66 PASS
+alpha5-7: 38/38 PASS
+alpha8-12: 83/83 PASS
+core: 26/26 PASS
+TOTAL: 213/213 PASS
+compileall: PASS
+Note: one combined long orchestrator invocation was externally timed out; no incomplete invocation is counted as PASS.

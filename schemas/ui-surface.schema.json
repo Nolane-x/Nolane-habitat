@@ -1,0 +1,26 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "nolane.habitat/ui-surface/v1alpha1",
+  "type": "object",
+  "required": ["surface", "mode", "limitations", "elements"],
+  "properties": {
+    "surface": {"type": "string"},
+    "mode": {"const": "semantic-static-html"},
+    "limitations": {"type": "array", "items": {"type": "string"}},
+    "elements": {"type": "array", "items": {"$ref": "#/$defs/element"}}
+  },
+  "$defs": {
+    "element": {
+      "type": "object",
+      "required": ["id", "tag", "role", "attributes", "text"],
+      "properties": {
+        "id": {"type": "string"},
+        "tag": {"type": "string"},
+        "role": {"type": "string"},
+        "name": {"type": ["string", "null"]},
+        "attributes": {"type": "object", "additionalProperties": {"type": "string"}},
+        "text": {"type": "string"}
+      }
+    }
+  }
+}

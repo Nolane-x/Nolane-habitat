@@ -1,0 +1,94 @@
+{
+  "schema": 3,
+  "release": "0.1.0-alpha.11",
+  "mode": "exhaustive-balanced-shards",
+  "group_count": 4,
+  "known_test_count": 198,
+  "statuses": {
+    "passed": 4,
+    "failed": 0,
+    "timeout": 0,
+    "infra-error": 0
+  },
+  "sum_group_wall_ms": 84691.01,
+  "groups": [
+    {
+      "group": "alpha0-4",
+      "modules": [
+        "tests.test_adversarial",
+        "tests.test_alpha1_protocol",
+        "tests.test_alpha1_schema_contracts",
+        "tests.test_alpha1_semantics",
+        "tests.test_alpha2_schema_contracts",
+        "tests.test_alpha2_semantic_loop",
+        "tests.test_alpha3_live_workspace",
+        "tests.test_alpha3_schema_contracts",
+        "tests.test_alpha4_agent_residency",
+        "tests.test_alpha4_schema_contracts"
+      ],
+      "returncode": 0,
+      "status": "passed",
+      "stderr_tail": "----------------------------------------------------------------------\nRan 66 tests in 24.425s\n\nOK\n",
+      "stdout_tail": "",
+      "tests": 66,
+      "wall_ms": 26710.53
+    },
+    {
+      "group": "alpha5-7",
+      "modules": [
+        "tests.test_alpha5_deep_evolution",
+        "tests.test_alpha5_schema_contracts",
+        "tests.test_alpha6_backend_cognition",
+        "tests.test_alpha6_schema_contracts",
+        "tests.test_alpha7_deep_substrate",
+        "tests.test_alpha7_schema_contracts"
+      ],
+      "returncode": 0,
+      "status": "passed",
+      "stderr_tail": "----------------------------------------------------------------------\nRan 38 tests in 26.994s\n\nOK\n",
+      "stdout_tail": "",
+      "tests": 38,
+      "wall_ms": 28962.45
+    },
+    {
+      "group": "alpha8-11",
+      "modules": [
+        "tests.test_alpha8_integrity_cognition",
+        "tests.test_alpha9_benchmark_harness",
+        "tests.test_alpha9_policy_multiagent_git",
+        "tests.test_alpha9_schema_contracts",
+        "tests.test_alpha10_deep_evolution",
+        "tests.test_alpha11_observatory_runtime"
+      ],
+      "returncode": 0,
+      "status": "passed",
+      "stderr_tail": "----------------------------------------------------------------------\nRan 68 tests in 21.681s\n\nOK\n",
+      "stdout_tail": "",
+      "tests": 68,
+      "wall_ms": 23732.14
+    },
+    {
+      "group": "core",
+      "modules": [
+        "tests.test_capabilities",
+        "tests.test_compiler",
+        "tests.test_execution",
+        "tests.test_large_file_coverage",
+        "tests.test_protocol",
+        "tests.test_python_jedi",
+        "tests.test_schemas",
+        "tests.test_source_bridge",
+        "tests.test_storage",
+        "tests.test_workspace"
+      ],
+      "returncode": 0,
+      "status": "passed",
+      "stderr_tail": "----------------------------------------------------------------------\nRan 26 tests in 4.406s\n\nOK\n",
+      "stdout_tail": "",
+      "tests": 26,
+      "wall_ms": 5285.89
+    }
+  ],
+  "monolithic_probe": "A combined matrix invocation was externally timed out before a report was emitted; it is not counted as PASS or FAIL. Each exhaustive shard was then run independently and completed.",
+  "claim_boundary": "Every selected historical/core unittest module is executed across four independently completed process shards. This is release regression evidence; a separate monolithic long-lived-host probe can still expose provider lifecycle/pathological state."
+}

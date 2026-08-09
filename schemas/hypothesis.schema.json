@@ -1,0 +1,152 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "nolane.habitat/hypothesis/v1alpha8",
+  "type": "object",
+  "required": [
+    "id",
+    "task",
+    "statement",
+    "status",
+    "prior_confidence",
+    "current_confidence",
+    "base_revision",
+    "confidence_semantics",
+    "evidence",
+    "evidence_balance",
+    "experiments",
+    "current_revision",
+    "revision_drift"
+  ],
+  "properties": {
+    "id": {
+      "type": "string",
+      "pattern": "^hypothesis:"
+    },
+    "episode_id": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "task": {
+      "type": "string"
+    },
+    "statement": {
+      "type": "string",
+      "minLength": 1
+    },
+    "status": {
+      "enum": [
+        "active",
+        "supported",
+        "rejected",
+        "superseded"
+      ]
+    },
+    "prior_confidence": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 1
+    },
+    "current_confidence": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 1
+    },
+    "base_revision": {
+      "type": "string"
+    },
+    "created_at": {
+      "type": "string"
+    },
+    "updated_at": {
+      "type": "string"
+    },
+    "confidence_semantics": {
+      "type": "string"
+    },
+    "evidence": {
+      "type": "array",
+      "items": {
+        "type": "object"
+      }
+    },
+    "evidence_balance": {
+      "type": "object",
+      "required": [
+        "for_weight",
+        "against_weight",
+        "net"
+      ],
+      "properties": {
+        "for_weight": {
+          "type": "number"
+        },
+        "against_weight": {
+          "type": "number"
+        },
+        "net": {
+          "type": "number"
+        }
+      },
+      "additionalProperties": false
+    },
+    "experiments": {
+      "type": "array",
+      "items": {
+        "type": "object"
+      }
+    },
+    "current_revision": {
+      "type": "string"
+    },
+    "revision_drift": {
+      "type": "boolean"
+    },
+    "evidence_assessment": {
+      "type": "object",
+      "required": [
+        "assessment",
+        "support_strength",
+        "contradiction_strength",
+        "independent_source_groups",
+        "calibrated_probability",
+        "claim_boundary"
+      ],
+      "properties": {
+        "assessment": {
+          "type": "string"
+        },
+        "support_strength": {
+          "type": "number"
+        },
+        "contradiction_strength": {
+          "type": "number"
+        },
+        "signed_balance": {
+          "type": "number"
+        },
+        "independent_source_groups": {
+          "type": "integer"
+        },
+        "source_groups": {
+          "type": "object"
+        },
+        "inactive_evidence_ids": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "calibrated_probability": {
+          "const": false
+        },
+        "claim_boundary": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false
+    }
+  },
+  "additionalProperties": false
+}

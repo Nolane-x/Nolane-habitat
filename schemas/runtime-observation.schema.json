@@ -1,0 +1,12 @@
+{
+  "$schema":"https://json-schema.org/draft/2020-12/schema",
+  "$id":"nolane.habitat/runtime-observation/v1alpha11",
+  "type":"object",
+  "required":["id","kind","name","status","revision","started_at","attributes","source"],
+  "properties":{
+    "id":{"type":"string"},"trace_id":{"type":["string","null"]},"span_id":{"type":["string","null"]},"parent_span_id":{"type":["string","null"]},
+    "kind":{"type":"string"},"name":{"type":"string"},"status":{"type":"string"},"path":{"type":["string","null"]},"line":{"type":["integer","null"]},
+    "symbol_id":{"type":["string","null"]},"agent_id":{"type":["string","null"]},"episode_id":{"type":["string","null"]},"revision":{"type":"string"},
+    "started_at":{"type":"string"},"duration_ms":{"type":["number","null"]},"attributes":{"type":"object"},"source":{"enum":["opentelemetry","dap"]}
+  },"additionalProperties":false
+}

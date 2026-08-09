@@ -1,0 +1,12 @@
+{
+  "$schema":"https://json-schema.org/draft/2020-12/schema",
+  "$id":"nolane.habitat/uncertainty-assessment/v1alpha9",
+  "type":"object",
+  "required":["assessment","support_strength","contradiction_strength","signed_balance","independent_source_groups","source_groups","inactive_evidence_ids","calibrated_probability","claim_boundary"],
+  "properties":{
+    "assessment":{"enum":["insufficient","contested","supported","contradicted"]},
+    "support_strength":{"type":"number"},"contradiction_strength":{"type":"number"},"signed_balance":{"type":"number"},
+    "independent_source_groups":{"type":"integer","minimum":0},"source_groups":{"type":"object"},
+    "inactive_evidence_ids":{"type":"array","items":{"type":"string"}},"calibrated_probability":{"const":false},"claim_boundary":{"type":"string"}
+  },"additionalProperties":false
+}

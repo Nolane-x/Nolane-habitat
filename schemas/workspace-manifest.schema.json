@@ -1,0 +1,470 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "nolane.habitat/workspace-manifest/v1alpha8-compatible",
+  "type": "object",
+  "required": [
+    "schema",
+    "created_at",
+    "mode",
+    "source_root",
+    "source_authority",
+    "semantic_twin_role"
+  ],
+  "properties": {
+    "schema": {
+      "enum": [
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10
+      ]
+    },
+    "created_at": {
+      "type": "string"
+    },
+    "mode": {
+      "enum": [
+        "linked-folder",
+        "managed-zip",
+        "managed-file"
+      ]
+    },
+    "source_root": {
+      "type": "string"
+    },
+    "source_authority": {
+      "enum": [
+        "source-files",
+        "external-directory"
+      ]
+    },
+    "semantic_twin_role": {
+      "const": "derived-agent-representation"
+    },
+    "backend": {
+      "type": "object",
+      "required": [
+        "type",
+        "id",
+        "authoritative_root",
+        "materialized_root",
+        "execution_kind"
+      ],
+      "properties": {
+        "type": {
+          "enum": [
+            "local-filesystem",
+            "directory-mirror"
+          ]
+        },
+        "id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "authoritative_root": {
+          "type": "string"
+        },
+        "materialized_root": {
+          "type": "string"
+        },
+        "execution_kind": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false
+    },
+    "source_authority_provider": {
+      "type": "object",
+      "required": [
+        "type",
+        "id",
+        "authoritative_root",
+        "materialized_root"
+      ],
+      "properties": {
+        "type": {
+          "type": "string"
+        },
+        "id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "authoritative_root": {
+          "type": "string"
+        },
+        "materialized_root": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false
+    },
+    "execution_provider": {
+      "type": "object",
+      "required": [
+        "type",
+        "id",
+        "execution_root"
+      ],
+      "properties": {
+        "type": {
+          "type": "string"
+        },
+        "id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "execution_root": {
+          "type": "string"
+        },
+        "containment_profile": {
+          "enum": [
+            "trusted-local",
+            "network-contained"
+          ]
+        }
+      },
+      "additionalProperties": false
+    },
+    "source_policy": {
+      "type": "object",
+      "required": [
+        "respect_gitignore",
+        "respect_habitatignore",
+        "persistent_state_outside_source",
+        "hard_ignore_scope"
+      ],
+      "properties": {
+        "respect_gitignore": {
+          "type": "boolean"
+        },
+        "respect_habitatignore": {
+          "type": "boolean"
+        },
+        "persistent_state_outside_source": {
+          "const": true
+        },
+        "hard_ignore_scope": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false
+    },
+    "execution_policy": {
+      "type": "object",
+      "required": [
+        "profile",
+        "sandboxed",
+        "network_restricted",
+        "filesystem_restricted",
+        "warning"
+      ],
+      "properties": {
+        "profile": {
+          "type": "string"
+        },
+        "sandboxed": {
+          "type": "boolean"
+        },
+        "network_restricted": {
+          "type": "boolean"
+        },
+        "filesystem_restricted": {
+          "type": "boolean"
+        },
+        "warning": {
+          "type": "string"
+        },
+        "policy_file": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false
+    },
+    "observatory": {
+      "type": "object",
+      "required": [
+        "mode",
+        "auto_start_on_agent_server",
+        "auto_open_browser",
+        "bind",
+        "control_actions",
+        "reasoning_surface"
+      ],
+      "properties": {
+        "mode": {
+          "const": "observer-only"
+        },
+        "auto_start_on_agent_server": {
+          "type": "boolean"
+        },
+        "auto_open_browser": {
+          "type": "boolean"
+        },
+        "bind": {
+          "enum": [
+            "127.0.0.1",
+            "localhost",
+            "::1"
+          ]
+        },
+        "control_actions": {
+          "const": false
+        },
+        "reasoning_surface": {
+          "type": "string",
+          "minLength": 1
+        },
+        "visual_mode": {
+          "enum": [
+            "cinematic-realtime-world",
+            "cinematic-realtime-world-v2"
+          ]
+        },
+        "event_transport": {
+          "enum": [
+            "sse",
+            "sse-resumable"
+          ]
+        },
+        "auto_camera": {
+          "type": "boolean"
+        },
+        "snapshot_consistency": {
+          "enum": [
+            "sqlite-read-transaction"
+          ]
+        },
+        "adaptive_lod": {
+          "type": "boolean"
+        }
+      },
+      "additionalProperties": false
+    },
+    "world_model": {
+      "type": "object",
+      "required": [
+        "semantic_twin",
+        "effect_twin",
+        "runtime_twin",
+        "project_world",
+        "counterfactual_worlds",
+        "epistemic_runtime",
+        "cognitive_scheduler",
+        "claim_boundary"
+      ],
+      "properties": {
+        "semantic_twin": {
+          "const": true
+        },
+        "effect_twin": {
+          "const": true
+        },
+        "runtime_twin": {
+          "const": true
+        },
+        "project_world": {
+          "const": true
+        },
+        "counterfactual_worlds": {
+          "const": true
+        },
+        "epistemic_runtime": {
+          "const": true
+        },
+        "cognitive_scheduler": {
+          "const": true
+        },
+        "claim_boundary": {
+          "type": "string",
+          "minLength": 1
+        },
+        "executive_trajectory": {
+          "const": true
+        }
+      },
+      "additionalProperties": false
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "schema": {
+            "const": 3
+          }
+        }
+      },
+      "then": {
+        "required": [
+          "backend"
+        ]
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "schema": {
+            "const": 4
+          }
+        }
+      },
+      "then": {
+        "required": [
+          "backend",
+          "source_authority_provider",
+          "execution_provider"
+        ]
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "schema": {
+            "const": 5
+          }
+        }
+      },
+      "then": {
+        "required": [
+          "backend",
+          "source_authority_provider",
+          "execution_provider",
+          "source_policy",
+          "execution_policy"
+        ]
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "schema": {
+            "const": 6
+          }
+        }
+      },
+      "then": {
+        "required": [
+          "backend",
+          "source_authority_provider",
+          "execution_provider",
+          "source_policy",
+          "execution_policy"
+        ],
+        "properties": {
+          "execution_policy": {
+            "required": [
+              "policy_file"
+            ]
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "schema": {
+            "const": 7
+          }
+        }
+      },
+      "then": {
+        "required": [
+          "backend",
+          "source_authority_provider",
+          "execution_provider",
+          "source_policy",
+          "execution_policy",
+          "observatory"
+        ],
+        "properties": {
+          "execution_policy": {
+            "required": [
+              "policy_file"
+            ]
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "schema": {
+            "const": 8
+          }
+        }
+      },
+      "then": {
+        "required": [
+          "backend",
+          "source_authority_provider",
+          "execution_provider",
+          "source_policy",
+          "execution_policy",
+          "observatory",
+          "world_model"
+        ],
+        "properties": {
+          "execution_policy": {
+            "required": [
+              "policy_file"
+            ]
+          },
+          "observatory": {
+            "required": [
+              "visual_mode",
+              "event_transport",
+              "auto_camera"
+            ]
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "schema": {
+            "const": 10
+          }
+        }
+      },
+      "then": {
+        "required": [
+          "backend",
+          "source_authority_provider",
+          "execution_provider",
+          "source_policy",
+          "execution_policy",
+          "observatory",
+          "world_model"
+        ],
+        "properties": {
+          "execution_policy": {
+            "required": [
+              "policy_file"
+            ]
+          },
+          "observatory": {
+            "required": [
+              "visual_mode",
+              "event_transport",
+              "auto_camera",
+              "snapshot_consistency",
+              "adaptive_lod"
+            ]
+          },
+          "world_model": {
+            "required": [
+              "executive_trajectory"
+            ]
+          }
+        }
+      }
+    }
+  ],
+  "additionalProperties": false
+}

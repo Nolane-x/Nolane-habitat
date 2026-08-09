@@ -1,0 +1,49 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "nolane.habitat/context-feedback/v1alpha6",
+  "type": "object",
+  "required": [
+    "handle",
+    "revision",
+    "compiled_revision",
+    "task_terms",
+    "records",
+    "feedback_is_attention_prior_not_source_truth"
+  ],
+  "properties": {
+    "handle": {
+      "type": "string"
+    },
+    "revision": {
+      "type": "string"
+    },
+    "compiled_revision": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "task_terms": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "records": {
+      "type": "array",
+      "items": {
+        "type": "object"
+      }
+    },
+    "feedback_is_attention_prior_not_source_truth": {
+      "const": true
+    },
+    "agent_id": {
+      "type": [
+        "string",
+        "null"
+      ]
+    }
+  },
+  "additionalProperties": false
+}

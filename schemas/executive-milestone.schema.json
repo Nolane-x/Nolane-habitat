@@ -1,0 +1,20 @@
+{
+  "$schema":"https://json-schema.org/draft/2020-12/schema",
+  "$id":"nolane.habitat/executive-milestone/v1alpha14",
+  "type":"object",
+  "required":["id","trajectory_id","title","postcondition","status","priority","dependencies","base_revision"],
+  "properties":{
+    "id":{"type":"string","minLength":1},
+    "trajectory_id":{"type":"string","minLength":1},
+    "title":{"type":"string","minLength":1},
+    "postcondition":{"type":"string","minLength":1},
+    "status":{"enum":["pending","in_progress","passed","failed","skipped"]},
+    "priority":{"enum":["low","medium","high","critical"]},
+    "dependencies":{"type":"array","items":{"type":"string"},"uniqueItems":true},
+    "verifier_ref":{"type":["string","null"]},
+    "rollback":{"type":["string","null"]},
+    "base_revision":{"type":"string"},
+    "result":{"type":"object"}
+  },
+  "additionalProperties":true
+}

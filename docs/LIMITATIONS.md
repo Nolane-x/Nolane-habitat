@@ -1,0 +1,69 @@
+# Habitat 0.1.0-alpha.17 Limitations and Claim Boundary
+
+## Executive Trajectory is control architecture, not hidden reasoning
+Alpha.14 records observable work products: goals, milestones, phases, receipts, failures, strategy changes and completion gates. It does not request, store or expose a model's raw private chain-of-thought. A trajectory is therefore an auditable execution/control record, not a transcript of internal cognition.
+
+## Executive budgets are only partially metered
+Alpha.14 hard-enforces executive step count, failed-step count and strategy-switch count. Other budget fields may be declared and preserved, but token/tool/time/compute consumption is not yet measured by the Executive Trajectory itself; callers must not infer those meters from presence in the budget object.
+
+## Phase control is explicit and conservative
+Control-step phase skipping is rejected. Auxiliary milestone records can still be written without pretending to advance the control phase. Successful CLOSE requires a current successful control VERIFY followed by REFLECT/CONTINUE; failure/abandon uses a separate explicit stop path and does not claim successful completion.
+
+## Strategy switching is bounded
+The current classifier maps explicit symptoms such as stale observations, contradictions, verifier gaps, repeated failures and failed verification to a small strategy family. This is useful anti-stagnation control, but it is heuristic rather than a learned optimal meta-controller.
+
+## Verification is only as strong as the admitted oracle
+An admitted run/evidence/experiment artifact can establish that its represented verifier succeeded at the bound workspace revision. It cannot establish universal correctness outside that contract. High-impact domains need independent, domain-appropriate oracles and potentially multiple non-correlated verifiers.
+
+## Revision freshness is explicit, not magical
+Habitat-owned execution and verification receipts persist the `workspace_revision` observed at execution time. Revision-tagged verifier artifacts are rejected when stale and successful VERIFY events become stale after workspace revision changes. External systems with weak or missing revision provenance cannot gain stronger guarantees merely by being ingested into Habitat.
+
+## Assurance history is unbounded by UI projection limits
+Completion/hash verification reads the complete executive event chain. Callers may request bounded event projections for UI/inspection, but those limits are not reused by the assurance path; otherwise events after a display cap could escape integrity verification.
+
+## Completion gates can be conservative
+Open contradictions, stale agent notifications, missing critical invariant verifiers, milestone failures, dependency defects or trajectory-chain corruption block closure. This fail-closed behavior may require explicit cleanup/resolution even when a human believes the task is already finished.
+
+
+## AI Operator cursor is a semantic visualization, not OS mouse capture
+Alpha.15 derives cursor position from the target element rectangle observed in the real Playwright page. The Observatory animates a synthetic pointer toward that coordinate. This is intentionally deterministic and inspectable, but it is not a recording of an operating-system cursor or hidden model motor intent.
+
+## Operator frames are visual mirrors, not verification oracles
+Habitat can continuously mirror the controlled Chromium page through a loopback CDP WebSocket. Semantic/accessibility/runtime assertions still decide pass/fail; pixels never become verification evidence. Browser throttling, host policy or missing optional transport can reduce cadence, in which case the reported mode falls back to cooperative CDP or snapshots. This is not an OS-level remote desktop guarantee.
+
+## Localhost visibility follows the AI browser session
+If the agent opens a loopback URL, the Observatory mirrors the same browser page instead of constructing a second iframe state. Continuous mode uses a temporary DevTools endpoint bound to `127.0.0.1` with an exact WebSocket origin; project-page routes explicitly deny that privileged port. The endpoint exists only while the shared Chromium runtime is alive.
+
+## Typed-value visibility is privacy filtered
+Non-sensitive fill/press values may be shown to explain an action. Sensitive fields redact values and do not publish their length. Alpha.16/17 additionally scrubs ARIA snapshots, inline-handler text, console assignments, common bearer credentials and credential-bearing URL query/fragment values. Detection is still heuristic: applications should not place secrets into arbitrary labels or non-secret DOM text.
+
+## Observatory is intentionally not a control surface
+The realtime UI is for human spectators. It exposes no mutation HTTP verbs and no terminal/editor controls. Agent/control-plane operation must remain independent of browser/SSE availability.
+
+## Shared browser lifecycle is process-scoped but leased
+Browser engine reuse remains process-shared for efficiency, while each BrowserRuntime holds a lease. Closing the final lease drains Playwright immediately. An abrupt host kill can still bypass normal cleanup, so host-level shutdown remains best-effort and idempotent.
+
+
+## UI event capture is bounded
+Console and network events are bounded between observations. When a page emits more events than the buffer can retain, Habitat reports drop counts rather than pretending the returned tail is complete. This protects long-running sessions from unbounded observer memory while keeping the loss explicit.
+
+## Semantic UI handles are runtime identities, not project authority
+Habitat overwrites project-supplied `data-nolane-habitat-handle` values and allocates unique per-page identities. Duplicate DOM IDs/test IDs receive unique suffixes. Handles remain runtime/session-local and should not be persisted as cross-session source identities.
+
+## Runtime Twin is observed telemetry, not causal proof
+OpenTelemetry-shaped spans/logs/metrics and DAP events can be linked to source when provenance permits. Correlation and linkage are not proof of causality, and missing telemetry is not proof that behavior did not occur.
+
+## Semantic precision is uneven
+Python and TypeScript have the strongest shipped semantic lanes. Tree-sitter/LSP/SCIP are capability/provider surfaces, not universal compiler-grade precision for every language and framework.
+
+## Project Memory can be stale
+Memory records bind revision/provenance/evidence and can be invalidated or superseded. Recalling a memory never makes it canonical source truth. Alpha.14 intentionally preserves negative/failure memory rather than silently deleting unsuccessful paths.
+
+## Execution security remains provider dependent
+Policy/containment boundaries are inherited. A successful local capability probe is not a universal hostile-code security proof; alpha.17 does not claim Firecracker/microVM isolation on every host.
+
+## Performance and test process
+Some historical combined test matrices can exceed an external runner wall clock even when independent shards finish. Alpha.17 evidence should distinguish completed PASS/FAIL shards from runner timeouts rather than relabeling timeouts as successes.
+
+## Model-quality boundary
+Habitat supplies world-model, memory, planning, verification and coordination affordances. It does not establish that an arbitrary model becomes AGI or that coding success is superior to ordinary repository tooling without controlled same-model/scaffold/evaluator experiments.

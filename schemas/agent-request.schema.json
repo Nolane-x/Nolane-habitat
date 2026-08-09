@@ -1,0 +1,12 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "nolane.habitat/agent-request/v1alpha1",
+  "type": "object",
+  "required": ["method"],
+  "properties": {
+    "id": {},
+    "method": {"type": "string"},
+    "params": {"type": "object"}
+  },
+  "additionalProperties": false
+}

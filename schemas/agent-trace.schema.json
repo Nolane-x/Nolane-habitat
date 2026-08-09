@@ -1,0 +1,15 @@
+{
+  "$schema":"https://json-schema.org/draft/2020-12/schema",
+  "$id":"nolane.habitat/agent-trace/v1alpha4",
+  "type":"object",
+  "required":["trace_id","label","active","call_count","duration_ms","request_bytes","response_bytes","exact_source_bytes","methods","calls"],
+  "properties":{
+    "trace_id":{"type":"string"},"label":{"type":"string"},"active":{"type":"boolean"},
+    "call_count":{"type":"integer","minimum":0},"ok_calls":{"type":"integer","minimum":0},
+    "duration_ms":{"type":"integer","minimum":0},"request_bytes":{"type":"integer","minimum":0},
+    "response_bytes":{"type":"integer","minimum":0},"exact_source_bytes":{"type":"integer","minimum":0},
+    "methods":{"type":"object","additionalProperties":{"type":"integer","minimum":0}},
+    "calls":{"type":"array","items":{"type":"object","required":["method","ok","duration_ms","request_bytes","response_bytes","source_bytes"],"additionalProperties":true}}
+  },
+  "additionalProperties":true
+}

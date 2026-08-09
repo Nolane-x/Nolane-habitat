@@ -1,0 +1,855 @@
+{
+  "beliefs": {
+    "agent_A": {
+      "agent_id": "agent:103fd96ddadca1f798f7",
+      "base_revision": "rev:29f1c1736745acc9530f",
+      "claim_boundary": "Agent-specific belief annotation over a shared hypothesis; not verified world state and not a calibrated probability.",
+      "confidence": 0.72,
+      "hypothesis_id": "hypothesis:08526895bf21f0c4350b",
+      "rationale": "validation uses bool(user)",
+      "revision_drift": false,
+      "shared_hypothesis": {
+        "shared_confidence_annotation": 0.5,
+        "statement": "falsey-but-present users are rejected by credential validation",
+        "status": "active"
+      },
+      "stance": "support",
+      "updated_at": "2026-08-07T13:24:17.462494+00:00"
+    },
+    "agent_B": {
+      "agent_id": "agent:fe423f57bdfacadde383",
+      "base_revision": "rev:29f1c1736745acc9530f",
+      "claim_boundary": "Agent-specific belief annotation over a shared hypothesis; not verified world state and not a calibrated probability.",
+      "confidence": 0.45,
+      "hypothesis_id": "hypothesis:08526895bf21f0c4350b",
+      "rationale": "auth mode may also matter",
+      "revision_drift": false,
+      "shared_hypothesis": {
+        "shared_confidence_annotation": 0.5,
+        "statement": "falsey-but-present users are rejected by credential validation",
+        "status": "active"
+      },
+      "stance": "uncertain",
+      "updated_at": "2026-08-07T13:24:17.464606+00:00"
+    },
+    "shared": {
+      "base_revision": "rev:29f1c1736745acc9530f",
+      "confidence_semantics": "agent belief annotation; not calibrated probability",
+      "created_at": "2026-08-07T13:24:17.461128+00:00",
+      "current_confidence": 0.5,
+      "current_revision": "rev:e5aa79acd3065ab5edc1",
+      "episode_id": null,
+      "evidence": [],
+      "evidence_assessment": {
+        "assessment": "insufficient",
+        "calibrated_probability": false,
+        "claim_boundary": "Heuristic evidence fusion with diminishing returns per source group; not a calibrated probability and not causal proof.",
+        "contradiction_strength": 0,
+        "inactive_evidence_ids": [],
+        "independent_source_groups": 0,
+        "signed_balance": 0.0,
+        "source_groups": {},
+        "support_strength": 0
+      },
+      "evidence_balance": {
+        "against_weight": 0.0,
+        "for_weight": 0.0,
+        "net": 0.0
+      },
+      "experiments": [],
+      "id": "hypothesis:08526895bf21f0c4350b",
+      "prior_confidence": 0.5,
+      "revision_drift": true,
+      "statement": "falsey-but-present users are rejected by credential validation",
+      "status": "active",
+      "task": "falsey-but-present users are rejected by credential validation",
+      "updated_at": "2026-08-07T13:24:17.461128+00:00"
+    }
+  },
+  "claim_boundary": "End-to-end alpha.10 substrate/governance/cognition demo. It is not a model-quality, AGI, production-sandbox, or calibrated-probability benchmark.",
+  "context": {
+    "confidence": "high",
+    "handle": "ctx:53dcce9184e0fcfa4ca8",
+    "top_paths": [
+      "tests/test_auth.py",
+      "config.py",
+      "auth.py",
+      "auth.py",
+      "tests/test_auth.py"
+    ]
+  },
+  "coordination": {
+    "blocked_before_revalidation": {
+      "message": "agent cognition has pending source invalidation; selective revalidation required before commit: notify:9bb3dd1be7fc93af513b",
+      "type": "TransactionConflict"
+    },
+    "commit_status": "committed",
+    "rebased_from_revision": "rev:29f1c1736745acc9530f",
+    "rebased_onto_revision": "rev:0502303ea061a82f5e89",
+    "revalidated": {
+      "acked": true,
+      "action": "selective-revalidate",
+      "agent_id": "agent:103fd96ddadca1f798f7",
+      "claim_boundary": "world-state observation refreshed; caller must still re-judge any dependent plan or hypothesis",
+      "current_digest": "4e5a3f307cd821d5cf0dbf4568c48b8df51194bf49ed39be909a4af04a6bea3c",
+      "notification_id": "notify:9bb3dd1be7fc93af513b",
+      "path": "config.py",
+      "revision": "rev:0502303ea061a82f5e89"
+    }
+  },
+  "dependencies": {
+    "claim_boundary": "Lock-aware direct dependency cognition. It does not compute arbitrary transitive graphs or prove the installed runtime environment matches the lockfile.",
+    "direct_dependencies": [
+      {
+        "ecosystem": "npm",
+        "name": "lodash",
+        "resolved": false,
+        "scope": "runtime",
+        "source": "package.json",
+        "specifier": "^4.17.0"
+      }
+    ],
+    "locked_dependencies": [
+      {
+        "ecosystem": "npm",
+        "name": "lodash",
+        "source": "package-lock.json",
+        "version": "4.17.21"
+      }
+    ],
+    "lockfiles": [
+      "package-lock.json"
+    ],
+    "manifests": [
+      "package.json"
+    ],
+    "parse_errors": [],
+    "resolved_direct": [
+      {
+        "ecosystem": "npm",
+        "lock_source": "package-lock.json",
+        "locked_version": "4.17.21",
+        "name": "lodash",
+        "resolved": true,
+        "scope": "runtime",
+        "source": "package.json",
+        "specifier": "^4.17.0"
+      }
+    ],
+    "unlocked_direct": []
+  },
+  "git": {
+    "branches": {
+      "available": true,
+      "branches": [
+        {
+          "commit": "6dd8e5bfa5e80d5155af729c27c2d096ec4b752f",
+          "committed_at": "2026-08-07T13:24:15Z",
+          "name": "master",
+          "subject": "initial cognitive demo",
+          "tracking": null,
+          "upstream": null
+        }
+      ],
+      "claim_boundary": "Branch topology and tracking metadata only; remote freshness is not implied without an explicit fetch.",
+      "count": 1,
+      "current": "master"
+    },
+    "diff": {
+      "available": true,
+      "commit": null,
+      "diff": "diff --git a/auth.py b/auth.py\nindex 637ab3c..727089f 100644\n--- a/auth.py\n+++ b/auth.py\n@@ -1,2 +1,2 @@\n def validate_credentials(user):\n-    return bool(user)\n+    return user is not None\ndiff --git a/billing/rules.py b/billing/rules.py\nindex d308074..6f48065 100644\n--- a/billing/rules.py\n+++ b/billing/rules.py\n@@ -1 +1 @@\n-LIMIT = 100\n+LIMIT = 120\ndiff --git a/config.py b/config.py\nindex 794b261..7dba9ac 100644\n--- a/config.py\n+++ b/config.py\n@@ -1 +1 @@\n-AUTH_MODE = \"strict\"\n+AUTH_MODE = \"audited\"\n",
+      "path": null,
+      "total_bytes": 507,
+      "truncated": false
+    },
+    "impact": {
+      "authored_at": "2026-08-07T13:24:15Z",
+      "available": true,
+      "claim_boundary": "Commit-level file impact from Git history; semantic/runtime impact can extend beyond these paths.",
+      "commit": "6dd8e5bfa5e80d5155af729c27c2d096ec4b752f",
+      "file_count": 7,
+      "files": [
+        {
+          "path": "AGENTS.md",
+          "status": "A"
+        },
+        {
+          "path": "auth.py",
+          "status": "A"
+        },
+        {
+          "path": "billing/rules.py",
+          "status": "A"
+        },
+        {
+          "path": "config.py",
+          "status": "A"
+        },
+        {
+          "path": "package-lock.json",
+          "status": "A"
+        },
+        {
+          "path": "package.json",
+          "status": "A"
+        },
+        {
+          "path": "tests/test_auth.py",
+          "status": "A"
+        }
+      ],
+      "parents": [],
+      "subject": "initial cognitive demo"
+    },
+    "status": {
+      "available": true,
+      "branch": "master",
+      "changes": [
+        {
+          "path": "auth.py",
+          "xy": " M"
+        },
+        {
+          "path": "billing/rules.py",
+          "xy": " M"
+        },
+        {
+          "path": "config.py",
+          "xy": " M"
+        },
+        {
+          "path": "__pycache__/",
+          "xy": "??"
+        },
+        {
+          "path": "tests/__pycache__/",
+          "xy": "??"
+        }
+      ],
+      "dirty": true,
+      "head": "6dd8e5bfa5e80d5155af729c27c2d096ec4b752f"
+    }
+  },
+  "guidance": {
+    "automatic_context_injection": false,
+    "claim_boundary": "Guidance is discoverable scoped repository input, not verified truth and not automatically injected into every solver context.",
+    "count": 1,
+    "guidance": [
+      {
+        "auto_injected": false,
+        "digest": "768b42cb7359b25c3878b1bcc237eea3811ceeda4c928962cee4f8d70ef36e38",
+        "kind": "agents",
+        "path": "AGENTS.md",
+        "scope": ".",
+        "size": 41
+      }
+    ],
+    "revision": "rev:29f1c1736745acc9530f"
+  },
+  "invariant": {
+    "assessment": "linked-unverified",
+    "base_revision": "rev:e5aa79acd3065ab5edc1",
+    "claim_boundary": "Explicit project invariant registry and traceable links; Habitat does not infer invariant truth automatically from code structure.",
+    "contradiction_count": 0,
+    "created_at": "2026-08-07T13:24:19.804124+00:00",
+    "id": "invariant:fb09f3dd32fe90f72d91",
+    "links": [
+      {
+        "created_at": "2026-08-07T13:24:19.804935+00:00",
+        "details": {},
+        "invariant_id": "invariant:fb09f3dd32fe90f72d91",
+        "ref_id": "sym:b3f6914c8c2f3e63e3a2",
+        "ref_kind": "symbol",
+        "relation": "implements",
+        "revision": "rev:e5aa79acd3065ab5edc1",
+        "seq": 1
+      },
+      {
+        "created_at": "2026-08-07T13:24:19.806236+00:00",
+        "details": {},
+        "invariant_id": "invariant:fb09f3dd32fe90f72d91",
+        "ref_id": "tests/test_auth.py",
+        "ref_kind": "test",
+        "relation": "verifier",
+        "revision": "rev:e5aa79acd3065ab5edc1",
+        "seq": 2
+      }
+    ],
+    "metadata": {},
+    "severity": "critical",
+    "statement": "Credential validation must accept present user identities",
+    "status": "unverified",
+    "updated_at": "2026-08-07T13:24:19.804124+00:00",
+    "verifier_count": 1
+  },
+  "policy": {
+    "approved_commit": "committed",
+    "plan": {
+      "allowed_without_approval": false,
+      "approval_required": true,
+      "claim_boundary": "Policy preflight only; source digests, semantic anchors and transaction preconditions are validated again during staging/commit.",
+      "decisions": [
+        {
+          "action": "edit",
+          "allowed": false,
+          "approval_required": true,
+          "matched_rule": "source.approval",
+          "op": "replace_text",
+          "operation_index": 0,
+          "path": "billing/rules.py",
+          "reason": "path requires approval",
+          "risk": "high"
+        }
+      ],
+      "denied": false,
+      "operation_count": 1,
+      "revision": "rev:1ed4d209b755a57a7b15",
+      "risk": "high",
+      "side_effects": false
+    }
+  },
+  "release": "0.1.0-alpha.10",
+  "retention_dry_run": {
+    "claim_boundary": "Alpha.10 compaction bounds selected append-only operational history. It is not a legal-compliance retention engine and does not encrypt SQLite at rest.",
+    "deletable": {
+      "acked_notifications": 1,
+      "closed_agents": 0,
+      "context_faults": 0,
+      "resolved_evidence": 0,
+      "trace_calls": 0
+    },
+    "deleted": {
+      "acked_notifications": 0,
+      "closed_agents": 0,
+      "context_faults": 0,
+      "resolved_evidence": 0,
+      "trace_calls": 0
+    },
+    "dry_run": true,
+    "policy": {
+      "max_acked_notifications": 0,
+      "max_closed_agents": 1000,
+      "max_context_faults": 10000,
+      "max_resolved_evidence": 5000,
+      "max_trace_calls": 5000,
+      "vacuum": false
+    },
+    "protected_classes": [
+      "revisions",
+      "transactions",
+      "active evidence",
+      "open work episodes",
+      "active agents",
+      "pending notifications",
+      "hypotheses/experiments"
+    ],
+    "revision": "rev:e5aa79acd3065ab5edc1",
+    "state_permissions": {
+      "changed": [
+        {
+          "mode": "0700",
+          "path": "/tmp/habitat-a10-demo-g2n0w4p7/habitat"
+        },
+        {
+          "mode": "0600",
+          "path": "/tmp/habitat-a10-demo-g2n0w4p7/habitat/habitat.sqlite3"
+        },
+        {
+          "mode": "0600",
+          "path": "/tmp/habitat-a10-demo-g2n0w4p7/habitat/habitat.sqlite3-wal"
+        },
+        {
+          "mode": "0600",
+          "path": "/tmp/habitat-a10-demo-g2n0w4p7/habitat/habitat.sqlite3-shm"
+        },
+        {
+          "mode": "0600",
+          "path": "/tmp/habitat-a10-demo-g2n0w4p7/habitat/workspace.json"
+        },
+        {
+          "mode": "0600",
+          "path": "/tmp/habitat-a10-demo-g2n0w4p7/habitat/policy.json"
+        }
+      ],
+      "claim_boundary": "POSIX permission hardening reduces accidental local exposure; it is not encryption at rest or multi-user ACL policy.",
+      "unsupported": []
+    },
+    "totals": {
+      "acked_notifications": 1,
+      "closed_agents": 0,
+      "context_faults": 0,
+      "resolved_evidence": 0,
+      "trace_calls": 0
+    },
+    "would_delete": 1
+  },
+  "sandbox": {
+    "execution": {
+      "bubblewrap_probe": {
+        "available": false,
+        "executable": null,
+        "filesystem_confinement": false,
+        "network_confinement": false,
+        "reason": "bubblewrap executable not found"
+      },
+      "claim_boundary": "full_sandbox is true only for a provider that advertises filesystem + network confinement after host probing; it is not a proof against kernel/runtime vulnerabilities.",
+      "containment_profile": "trusted-local",
+      "filesystem_restricted": false,
+      "full_sandbox": false,
+      "host_probe": {
+        "claim_boundary": "Network/user namespace availability is partial containment; filesystem isolation is not provided by this provider.",
+        "filesystem_confinement_available": false,
+        "full_sandbox_available": false,
+        "network_namespace_available": true,
+        "reason": "user+network namespace available",
+        "unshare": "/usr/bin/unshare"
+      },
+      "network_restricted": false,
+      "provider": {
+        "capabilities": [
+          "discover",
+          "execute",
+          "trusted-local"
+        ],
+        "execution_root": "/tmp/habitat-a10-demo-g2n0w4p7/repo",
+        "kind": "local-process",
+        "provider_id": "executor:e35aa7bacc37f3398fb5"
+      },
+      "revision": "rev:29f1c1736745acc9530f"
+    },
+    "host": {
+      "bubblewrap": {
+        "available": false,
+        "executable": null,
+        "filesystem_confinement": false,
+        "network_confinement": false,
+        "reason": "bubblewrap executable not found"
+      },
+      "capabilities": [
+        {
+          "argv": [
+            "/opt/pyvenv/bin/python",
+            "-m",
+            "unittest",
+            "discover",
+            "-s",
+            "tests",
+            "-v"
+          ],
+          "availability_reason": "Python unittest via host-interpreter-fallback",
+          "available": true,
+          "confidence": "host-interpreter-fallback",
+          "id": "python.unittest",
+          "kind": "test",
+          "toolchain": {
+            "executable": "/opt/pyvenv/bin/python",
+            "version": "Python 3.13.5"
+          }
+        },
+        {
+          "argv": [
+            "/opt/pyvenv/bin/python",
+            "-m",
+            "pytest",
+            "-q"
+          ],
+          "availability_reason": "pytest importable in host-interpreter-fallback",
+          "available": true,
+          "confidence": "host-interpreter-fallback",
+          "id": "python.pytest",
+          "kind": "test",
+          "toolchain": {
+            "executable": "/opt/pyvenv/bin/python",
+            "version": "Python 3.13.5"
+          }
+        }
+      ],
+      "full_sandbox_available": false,
+      "recommended_untrusted_profile": null
+    },
+    "revision": "rev:29f1c1736745acc9530f"
+  },
+  "state_security": {
+    "claim_boundary": "File permissions and retention reduce exposure; Habitat state is not encrypted at rest and may contain sensitive diffs, backups, evidence, or logs.",
+    "encryption_at_rest": false,
+    "habitat_dir": "/tmp/habitat-a10-demo-g2n0w4p7/habitat",
+    "posix_mode": "0o600",
+    "retention": {
+      "plan": {
+        "claim_boundary": "Alpha.10 compaction bounds selected append-only operational history. It is not a legal-compliance retention engine and does not encrypt SQLite at rest.",
+        "deletable": {
+          "acked_notifications": 0,
+          "closed_agents": 0,
+          "context_faults": 0,
+          "resolved_evidence": 0,
+          "trace_calls": 0
+        },
+        "policy": {
+          "max_acked_notifications": 5000,
+          "max_closed_agents": 1000,
+          "max_context_faults": 10000,
+          "max_resolved_evidence": 5000,
+          "max_trace_calls": 5000,
+          "vacuum": false
+        },
+        "protected_classes": [
+          "revisions",
+          "transactions",
+          "active evidence",
+          "open work episodes",
+          "active agents",
+          "pending notifications",
+          "hypotheses/experiments"
+        ],
+        "totals": {
+          "acked_notifications": 0,
+          "closed_agents": 0,
+          "context_faults": 0,
+          "resolved_evidence": 0,
+          "trace_calls": 0
+        },
+        "would_delete": 0
+      },
+      "revision": "rev:29f1c1736745acc9530f",
+      "state_permissions": {
+        "changed": [
+          {
+            "mode": "0700",
+            "path": "/tmp/habitat-a10-demo-g2n0w4p7/habitat"
+          },
+          {
+            "mode": "0600",
+            "path": "/tmp/habitat-a10-demo-g2n0w4p7/habitat/habitat.sqlite3"
+          },
+          {
+            "mode": "0600",
+            "path": "/tmp/habitat-a10-demo-g2n0w4p7/habitat/habitat.sqlite3-wal"
+          },
+          {
+            "mode": "0600",
+            "path": "/tmp/habitat-a10-demo-g2n0w4p7/habitat/habitat.sqlite3-shm"
+          },
+          {
+            "mode": "0600",
+            "path": "/tmp/habitat-a10-demo-g2n0w4p7/habitat/workspace.json"
+          },
+          {
+            "mode": "0600",
+            "path": "/tmp/habitat-a10-demo-g2n0w4p7/habitat/policy.json"
+          }
+        ],
+        "claim_boundary": "POSIX permission hardening reduces accidental local exposure; it is not encryption at rest or multi-user ACL policy.",
+        "unsupported": []
+      }
+    },
+    "secret_redaction": "execution-output best-effort",
+    "state_db": "/tmp/habitat-a10-demo-g2n0w4p7/habitat/habitat.sqlite3"
+  },
+  "verification_status": "passed",
+  "world_after": {
+    "active_evidence": 0,
+    "agents": {
+      "active": 2
+    },
+    "backend": {
+      "authoritative_root": "/tmp/habitat-a10-demo-g2n0w4p7/repo",
+      "authority": "source-files",
+      "backend_id": "backend:55855018d14c86bf43a8",
+      "capabilities": [
+        "discover",
+        "execute",
+        "read",
+        "reconcile",
+        "trusted-local",
+        "watch",
+        "write"
+      ],
+      "execution_kind": "local-process",
+      "execution_provider": {
+        "capabilities": [
+          "discover",
+          "execute",
+          "trusted-local"
+        ],
+        "execution_root": "/tmp/habitat-a10-demo-g2n0w4p7/repo",
+        "kind": "local-process",
+        "provider_id": "executor:e35aa7bacc37f3398fb5"
+      },
+      "execution_provider_id": "executor:e35aa7bacc37f3398fb5",
+      "kind": "local-filesystem",
+      "materialized_root": "/tmp/habitat-a10-demo-g2n0w4p7/repo",
+      "semantic_materialization_role": "shared-source-view",
+      "semantic_twin_authority": false,
+      "source_authority": {
+        "authoritative_root": "/tmp/habitat-a10-demo-g2n0w4p7/repo",
+        "authority": "source-files",
+        "authority_id": "authority:ea9e740789d2852c8880",
+        "capabilities": [
+          "read",
+          "write",
+          "reconcile",
+          "watch"
+        ],
+        "kind": "local-filesystem",
+        "materialized_root": "/tmp/habitat-a10-demo-g2n0w4p7/repo",
+        "supports_native_watch": true
+      },
+      "source_authority_id": "authority:ea9e740789d2852c8880",
+      "substrate_composable": true,
+      "supports_native_watch": true
+    },
+    "claim_boundary": "Bounded world-state orientation assembled from admitted Habitat state, Git, policy, and direct/lock-aware dependency metadata; not a complete production/runtime world model.",
+    "dependencies": {
+      "direct": 1,
+      "locked": 1,
+      "unlocked_direct": 0
+    },
+    "execution_security": {
+      "bubblewrap_probe": {
+        "available": false,
+        "executable": null,
+        "filesystem_confinement": false,
+        "network_confinement": false,
+        "reason": "bubblewrap executable not found"
+      },
+      "claim_boundary": "full_sandbox is true only for a provider that advertises filesystem + network confinement after host probing; it is not a proof against kernel/runtime vulnerabilities.",
+      "containment_profile": "trusted-local",
+      "filesystem_restricted": false,
+      "full_sandbox": false,
+      "host_probe": {
+        "claim_boundary": "Network/user namespace availability is partial containment; filesystem isolation is not provided by this provider.",
+        "filesystem_confinement_available": false,
+        "full_sandbox_available": false,
+        "network_namespace_available": true,
+        "reason": "user+network namespace available",
+        "unshare": "/usr/bin/unshare"
+      },
+      "network_restricted": false,
+      "provider": {
+        "capabilities": [
+          "discover",
+          "execute",
+          "trusted-local"
+        ],
+        "execution_root": "/tmp/habitat-a10-demo-g2n0w4p7/repo",
+        "kind": "local-process",
+        "provider_id": "executor:e35aa7bacc37f3398fb5"
+      },
+      "revision": "rev:e5aa79acd3065ab5edc1"
+    },
+    "git": {
+      "available": true,
+      "branch": "master",
+      "changes": [
+        {
+          "path": "auth.py",
+          "xy": " M"
+        },
+        {
+          "path": "billing/rules.py",
+          "xy": " M"
+        },
+        {
+          "path": "config.py",
+          "xy": " M"
+        },
+        {
+          "path": "__pycache__/",
+          "xy": "??"
+        },
+        {
+          "path": "tests/__pycache__/",
+          "xy": "??"
+        }
+      ],
+      "dirty": true,
+      "head": "6dd8e5bfa5e80d5155af729c27c2d096ec4b752f"
+    },
+    "guidance_files": 1,
+    "invariants": {
+      "unverified": 1
+    },
+    "pending_coordination_notifications": 0,
+    "policy": {
+      "policy": {
+        "browser": {
+          "allow_external": false
+        },
+        "execution": {
+          "allow_kinds": [
+            "test",
+            "build",
+            "script",
+            "service"
+          ],
+          "approval_kinds": [],
+          "deny_capabilities": [],
+          "require_sandbox_for_untrusted": true
+        },
+        "mode": "trusted-development",
+        "schema": 1,
+        "source": {
+          "approval": [
+            "billing/**"
+          ],
+          "deny": [
+            ".git/**",
+            ".habitat/**"
+          ],
+          "edit": [
+            "**"
+          ],
+          "read": [
+            "**"
+          ]
+        },
+        "structural_mutation": {
+          "approval_required": false
+        },
+        "updated_at": "2026-08-07T13:24:19.786107+00:00"
+      },
+      "revision": "rev:e5aa79acd3065ab5edc1"
+    },
+    "revision": "rev:e5aa79acd3065ab5edc1"
+  },
+  "world_before": {
+    "active_evidence": 0,
+    "agents": {},
+    "backend": {
+      "authoritative_root": "/tmp/habitat-a10-demo-g2n0w4p7/repo",
+      "authority": "source-files",
+      "backend_id": "backend:55855018d14c86bf43a8",
+      "capabilities": [
+        "discover",
+        "execute",
+        "read",
+        "reconcile",
+        "trusted-local",
+        "watch",
+        "write"
+      ],
+      "execution_kind": "local-process",
+      "execution_provider": {
+        "capabilities": [
+          "discover",
+          "execute",
+          "trusted-local"
+        ],
+        "execution_root": "/tmp/habitat-a10-demo-g2n0w4p7/repo",
+        "kind": "local-process",
+        "provider_id": "executor:e35aa7bacc37f3398fb5"
+      },
+      "execution_provider_id": "executor:e35aa7bacc37f3398fb5",
+      "kind": "local-filesystem",
+      "materialized_root": "/tmp/habitat-a10-demo-g2n0w4p7/repo",
+      "semantic_materialization_role": "shared-source-view",
+      "semantic_twin_authority": false,
+      "source_authority": {
+        "authoritative_root": "/tmp/habitat-a10-demo-g2n0w4p7/repo",
+        "authority": "source-files",
+        "authority_id": "authority:ea9e740789d2852c8880",
+        "capabilities": [
+          "read",
+          "write",
+          "reconcile",
+          "watch"
+        ],
+        "kind": "local-filesystem",
+        "materialized_root": "/tmp/habitat-a10-demo-g2n0w4p7/repo",
+        "supports_native_watch": true
+      },
+      "source_authority_id": "authority:ea9e740789d2852c8880",
+      "substrate_composable": true,
+      "supports_native_watch": true
+    },
+    "claim_boundary": "Bounded world-state orientation assembled from admitted Habitat state, Git, policy, and direct/lock-aware dependency metadata; not a complete production/runtime world model.",
+    "dependencies": {
+      "direct": 1,
+      "locked": 1,
+      "unlocked_direct": 0
+    },
+    "execution_security": {
+      "bubblewrap_probe": {
+        "available": false,
+        "executable": null,
+        "filesystem_confinement": false,
+        "network_confinement": false,
+        "reason": "bubblewrap executable not found"
+      },
+      "claim_boundary": "full_sandbox is true only for a provider that advertises filesystem + network confinement after host probing; it is not a proof against kernel/runtime vulnerabilities.",
+      "containment_profile": "trusted-local",
+      "filesystem_restricted": false,
+      "full_sandbox": false,
+      "host_probe": {
+        "claim_boundary": "Network/user namespace availability is partial containment; filesystem isolation is not provided by this provider.",
+        "filesystem_confinement_available": false,
+        "full_sandbox_available": false,
+        "network_namespace_available": true,
+        "reason": "user+network namespace available",
+        "unshare": "/usr/bin/unshare"
+      },
+      "network_restricted": false,
+      "provider": {
+        "capabilities": [
+          "discover",
+          "execute",
+          "trusted-local"
+        ],
+        "execution_root": "/tmp/habitat-a10-demo-g2n0w4p7/repo",
+        "kind": "local-process",
+        "provider_id": "executor:e35aa7bacc37f3398fb5"
+      },
+      "revision": "rev:29f1c1736745acc9530f"
+    },
+    "git": {
+      "available": true,
+      "branch": "master",
+      "changes": [],
+      "dirty": false,
+      "head": "6dd8e5bfa5e80d5155af729c27c2d096ec4b752f"
+    },
+    "guidance_files": 1,
+    "invariants": {},
+    "pending_coordination_notifications": 0,
+    "policy": {
+      "policy": {
+        "browser": {
+          "allow_external": false
+        },
+        "execution": {
+          "allow_kinds": [
+            "test",
+            "build",
+            "script",
+            "service"
+          ],
+          "approval_kinds": [],
+          "deny_capabilities": [],
+          "require_sandbox_for_untrusted": true
+        },
+        "mode": "trusted-development",
+        "schema": 1,
+        "source": {
+          "approval": [],
+          "deny": [
+            ".git/**",
+            ".habitat/**"
+          ],
+          "edit": [
+            "**"
+          ],
+          "read": [
+            "**"
+          ]
+        },
+        "structural_mutation": {
+          "approval_required": false
+        },
+        "updated_at": "2026-08-07T13:24:15.844120+00:00"
+      },
+      "revision": "rev:29f1c1736745acc9530f"
+    },
+    "revision": "rev:29f1c1736745acc9530f"
+  }
+}

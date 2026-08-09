@@ -1,0 +1,480 @@
+{
+  "entered": {
+    "workspace": "/tmp/tmp5wf4xs_o/hab",
+    "source_root": "/tmp/tmp5wf4xs_o/project",
+    "mode": "linked-folder",
+    "revision": "rev:7b9a4d6943f118dee07f",
+    "file_count": 5,
+    "symbol_count": 8,
+    "diagnostic_count": 0,
+    "languages": {
+      "python": 0.4,
+      "javascript": 0.2,
+      "html": 0.2,
+      "css": 0.2
+    },
+    "capabilities": [
+      {
+        "id": "python.unittest",
+        "kind": "test",
+        "argv": [
+          "/opt/pyvenv/bin/python",
+          "-m",
+          "unittest",
+          "discover",
+          "-s",
+          "tests",
+          "-v"
+        ],
+        "confidence": "project-structure",
+        "available": true,
+        "availability_reason": "Python stdlib unittest is available in the active interpreter",
+        "toolchain": {
+          "executable": "/opt/pyvenv/bin/python",
+          "version": "Python 3.13.5"
+        }
+      },
+      {
+        "id": "python.pytest",
+        "kind": "test",
+        "argv": [
+          "/opt/pyvenv/bin/python",
+          "-m",
+          "pytest",
+          "-q"
+        ],
+        "confidence": "host-probe",
+        "available": true,
+        "availability_reason": "pytest importable in active interpreter",
+        "toolchain": {
+          "executable": "/opt/pyvenv/bin/python",
+          "version": "Python 3.13.5"
+        }
+      }
+    ],
+    "semantic_providers": {
+      "python-ast": {
+        "available": true,
+        "trust_ceiling": "exact"
+      },
+      "typescript-compiler-api": {
+        "available": true,
+        "reason": "TypeScript compiler API resolved by Node",
+        "trust_ceiling": "parser"
+      },
+      "java": {
+        "available": true,
+        "provider": "regex-fallback",
+        "trust_ceiling": "heuristic"
+      },
+      "runtime-browser": {
+        "available": true,
+        "reason": "Playwright + system Chromium available",
+        "browser": "/usr/bin/chromium"
+      }
+    },
+    "index_health": {
+      "truncated_text_files": 0,
+      "incomplete_parse_files": 0,
+      "indexed_bytes": 585,
+      "source_bytes": 585
+    },
+    "principles": {
+      "source_authority": "source files",
+      "semantic_twin": "derived and provenance-bound",
+      "terminal": "not an agent primitive; raw process output is fallback evidence",
+      "ui": "semantic runtime state first; pixels optional secondary oracle"
+    }
+  },
+  "context": {
+    "task": "fix credential validation implementation and verify tests",
+    "revision": "rev:7b9a4d6943f118dee07f",
+    "objects": [
+      {
+        "object_id": "sym:b3f6914c8c2f3e63e3a2",
+        "object_type": "symbol",
+        "relevance": 1.0,
+        "reason": "task-to-symbol structural match",
+        "path": "auth.py",
+        "source_range": [
+          1,
+          2
+        ],
+        "lane": "symbol",
+        "trust": "exact"
+      },
+      {
+        "object_id": "sym:763d432a1310dd896b56",
+        "object_type": "symbol",
+        "relevance": 0.6866666666666666,
+        "reason": "task-to-symbol structural match",
+        "path": "tests/test_auth.py",
+        "source_range": [
+          4,
+          4
+        ],
+        "lane": "symbol",
+        "trust": "exact"
+      },
+      {
+        "object_id": "sym:1f73691ff13668545038",
+        "object_type": "symbol",
+        "relevance": 0.32,
+        "reason": "task-to-symbol structural match",
+        "path": "tests/test_auth.py",
+        "source_range": [
+          3,
+          4
+        ],
+        "lane": "symbol",
+        "trust": "exact"
+      },
+      {
+        "object_id": "file:a99307c61c3c55875b5b",
+        "object_type": "file",
+        "relevance": 0.24,
+        "reason": "test-file lane",
+        "path": "tests/test_auth.py",
+        "source_range": null,
+        "lane": "test",
+        "trust": "derived"
+      },
+      {
+        "object_id": "file:dbcf43432c07570656f9",
+        "object_type": "file",
+        "relevance": 0.1808,
+        "reason": "dependency expansion:imports trust:exact",
+        "path": "auth.py",
+        "source_range": null,
+        "lane": "graph",
+        "trust": "exact"
+      }
+    ],
+    "unknowns": [],
+    "omitted_candidates": 0,
+    "budget": 8,
+    "task_class": "implementation",
+    "handle": "ctx:b6a7035d7e8100c9953b",
+    "lane_counts": {
+      "symbol": 3,
+      "test": 1,
+      "graph": 1
+    }
+  },
+  "inspected": {
+    "id": "sym:b3f6914c8c2f3e63e3a2",
+    "file_id": "file:dbcf43432c07570656f9",
+    "path": "auth.py",
+    "name": "validate_credentials",
+    "qualified_name": "validate_credentials",
+    "kind": "function",
+    "language": "python",
+    "start_line": 1,
+    "end_line": 2,
+    "signature": "def validate_credentials(email, password)",
+    "summary": null,
+    "trust": "exact",
+    "source_anchor": {
+      "path": "auth.py",
+      "start_line": 1,
+      "end_line": 2,
+      "digest": "4f60b772b6c2188aaf05dc680fc3e50863d3bbe451d35fd55421f779695c8b7b",
+      "revision": "rev:7b9a4d6943f118dee07f"
+    },
+    "relations": [
+      {
+        "source_id": "sym:763d432a1310dd896b56",
+        "target_id": "sym:b3f6914c8c2f3e63e3a2",
+        "kind": "calls",
+        "trust": "parser",
+        "evidence": "line 4"
+      }
+    ],
+    "diagnostics": [],
+    "source": "def validate_credentials(email, password):\n    return password == \"secret\"",
+    "source_authority": "exact source bytes decoded as UTF-8 with replacement"
+  },
+  "staged": {
+    "id": "tx:7bbebb6df43d705e7850",
+    "preview": [
+      {
+        "path": "auth.py",
+        "changed": true,
+        "unified_diff": "--- a/auth.py\n+++ b/auth.py\n@@ -1,2 +1,3 @@\n def validate_credentials(email, password):\n+    \"\"\"Validate the demo credential.\"\"\"\n     return password == \"secret\"\n",
+        "diff_truncated": false
+      }
+    ]
+  },
+  "committed": {
+    "id": "tx:7bbebb6df43d705e7850",
+    "base_revision": "rev:7b9a4d6943f118dee07f",
+    "status": "committed",
+    "operations": [
+      {
+        "op": "replace_symbol_source",
+        "symbol_id": "sym:b3f6914c8c2f3e63e3a2",
+        "new_source": "def validate_credentials(email, password):\n    \"\"\"Validate the demo credential.\"\"\"\n    return password == \"secret\"",
+        "path": "auth.py",
+        "start_line": 1,
+        "end_line": 2,
+        "expected_digest": "4f60b772b6c2188aaf05dc680fc3e50863d3bbe451d35fd55421f779695c8b7b",
+        "expected_source": "def validate_credentials(email, password):\n    return password == \"secret\"",
+        "symbol_trust": "exact"
+      }
+    ],
+    "changed_paths": [
+      "auth.py"
+    ],
+    "committed_revision": "rev:94a8b1922d7fe416bd9d",
+    "preview": [
+      {
+        "path": "auth.py",
+        "changed": true,
+        "unified_diff": "--- a/auth.py\n+++ b/auth.py\n@@ -1,2 +1,3 @@\n def validate_credentials(email, password):\n+    \"\"\"Validate the demo credential.\"\"\"\n     return password == \"secret\"\n",
+        "diff_truncated": false
+      }
+    ],
+    "semantic_diff": {
+      "auth.py": {
+        "added_symbol_ids": [],
+        "removed_symbol_ids": []
+      }
+    }
+  },
+  "verification": {
+    "revision": "rev:94a8b1922d7fe416bd9d",
+    "changed_paths": [
+      "auth.py"
+    ],
+    "linked_test_files": [
+      "tests/test_auth.py"
+    ],
+    "test_capabilities": [
+      {
+        "id": "python.unittest",
+        "kind": "test",
+        "argv": [
+          "/opt/pyvenv/bin/python",
+          "-m",
+          "unittest",
+          "discover",
+          "-s",
+          "tests",
+          "-v"
+        ],
+        "confidence": "project-structure",
+        "available": true,
+        "availability_reason": "Python stdlib unittest is available in the active interpreter",
+        "toolchain": {
+          "executable": "/opt/pyvenv/bin/python",
+          "version": "Python 3.13.5"
+        }
+      },
+      {
+        "id": "python.pytest",
+        "kind": "test",
+        "argv": [
+          "/opt/pyvenv/bin/python",
+          "-m",
+          "pytest",
+          "-q"
+        ],
+        "confidence": "host-probe",
+        "available": true,
+        "availability_reason": "pytest importable in active interpreter",
+        "toolchain": {
+          "executable": "/opt/pyvenv/bin/python",
+          "version": "Python 3.13.5"
+        }
+      }
+    ],
+    "minimality": "linked tests are structural candidates; current execution capabilities may still run a broader suite",
+    "unknowns": []
+  },
+  "test_run": {
+    "id": "run:049e35ab1801665a0c3e",
+    "capability": "python.unittest",
+    "argv": [
+      "/opt/pyvenv/bin/python",
+      "-m",
+      "unittest",
+      "discover",
+      "-s",
+      "tests",
+      "-v"
+    ],
+    "cwd": "/tmp/tmp5wf4xs_o/project",
+    "exit_code": 0,
+    "timed_out": false,
+    "duration_ms": 612,
+    "stdout": "",
+    "stderr": "test_valid (test_auth.T.test_valid) ... ok\n\n----------------------------------------------------------------------\nRan 1 test in 0.000s\n\nOK\n",
+    "stdout_truncated": false,
+    "stderr_truncated": false,
+    "changed_paths": [],
+    "structured": {
+      "kind": "test",
+      "framework": "unittest",
+      "status": "passed",
+      "total": 1,
+      "passed": 1,
+      "failed": 0,
+      "errors": 0,
+      "skipped": 0,
+      "failed_tests": []
+    }
+  },
+  "ui_open": {
+    "session_id": "ui-session:6b1f02490ebc2572fd96",
+    "mode": "runtime-browser-semantic",
+    "aria_snapshot": "- text: Name\n- textbox \"Name\"\n- button \"Go\"\n- status",
+    "events": {
+      "console": [
+        {
+          "type": "warning",
+          "text": "A parser-blocking, cross site (i.e. different eTLD+1) script, http://habitat.local/app.js, is invoked via document.write. The network request for this script MAY be blocked by the browser in this or a future page load due to poor network connectivity. If blocked in this page load, it will be confirmed in a subsequent console message. See https://www.chromestatus.com/feature/5718547946799104 for more details."
+        },
+        {
+          "type": "warning",
+          "text": "A parser-blocking, cross site (i.e. different eTLD+1) script, http://habitat.local/app.js, is invoked via document.write. The network request for this script MAY be blocked by the browser in this or a future page load due to poor network connectivity. If blocked in this page load, it will be confirmed in a subsequent console message. See https://www.chromestatus.com/feature/5718547946799104 for more details."
+        }
+      ],
+      "network": [
+        {
+          "method": "GET",
+          "url": "http://habitat.local/style.css",
+          "status": 200
+        },
+        {
+          "method": "GET",
+          "url": "http://habitat.local/app.js",
+          "status": 200
+        }
+      ]
+    },
+    "element_count": 4
+  },
+  "ui_after": {
+    "delta": {
+      "added": [],
+      "removed": [],
+      "changed": [
+        {
+          "handle": "ui:id:out",
+          "changes": {
+            "name": {
+              "before": null,
+              "after": "Hello Nolane"
+            },
+            "text": {
+              "before": "",
+              "after": "Hello Nolane"
+            },
+            "visible": {
+              "before": false,
+              "after": true
+            },
+            "rect": {
+              "before": {
+                "x": 8,
+                "y": 35,
+                "width": 1424,
+                "height": 0
+              },
+              "after": {
+                "x": 8,
+                "y": 35,
+                "width": 1424,
+                "height": 18
+              }
+            }
+          }
+        }
+      ]
+    },
+    "out": {
+      "handle": "ui:id:out",
+      "tag": "div",
+      "role": "status",
+      "name": "Hello Nolane",
+      "text": "Hello Nolane",
+      "attrs": {
+        "id": "out",
+        "role": "status"
+      },
+      "visible": true,
+      "enabled": true,
+      "value": null,
+      "checked": null,
+      "rect": {
+        "x": 8,
+        "y": 35,
+        "width": 1424,
+        "height": 18
+      },
+      "style": {
+        "display": "block",
+        "visibility": "visible",
+        "position": "static",
+        "overflowX": "visible",
+        "overflowY": "visible"
+      },
+      "source_hints": [
+        {
+          "object_id": "ui:8c6102b37c7a28eb5273",
+          "path": "index.html",
+          "line": 1,
+          "relation": "same-dom-id",
+          "trust": "parser"
+        }
+      ]
+    }
+  },
+  "checkpoint": {
+    "id": "session:7251ded81a2b1cf01af9",
+    "task": "continue demo task",
+    "revision": "rev:94a8b1922d7fe416bd9d",
+    "resident_objects": [
+      {
+        "object_id": "sym:b3f6914c8c2f3e63e3a2",
+        "path": "auth.py",
+        "digest": "4e7cabbdc7316bc9ca00b4017f6cee71d016905002a8872b61e2193963f2d537",
+        "kind": "symbol"
+      }
+    ],
+    "notes": null,
+    "created_at": "2026-08-07T04:26:06.955922+00:00"
+  },
+  "resume": {
+    "session_id": "session:7251ded81a2b1cf01af9",
+    "task": "continue demo task",
+    "checkpoint_revision": "rev:94a8b1922d7fe416bd9d",
+    "current_revision": "rev:94a8b1922d7fe416bd9d",
+    "fresh_objects": [
+      {
+        "object_id": "sym:b3f6914c8c2f3e63e3a2",
+        "path": "auth.py",
+        "digest": "4e7cabbdc7316bc9ca00b4017f6cee71d016905002a8872b61e2193963f2d537",
+        "kind": "symbol"
+      }
+    ],
+    "stale_objects": [],
+    "missing_objects": [],
+    "reorient_recommended": false,
+    "notes": null
+  },
+  "warm_refresh": {
+    "revision": "rev:94a8b1922d7fe416bd9d",
+    "changed_paths": [],
+    "unchanged": true,
+    "compiled_files": 0,
+    "reused_files": 5,
+    "providers": {
+      "python-ast": 2,
+      "html-id-parser": 1,
+      "css-rule-heuristic": 1,
+      "typescript-compiler-api": 1
+    }
+  },
+  "claim_boundary": "Executable vertical-slice evidence only; no LLM token/task-success claim."
+}

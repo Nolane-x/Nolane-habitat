@@ -1,0 +1,135 @@
+{
+  "release": "0.1.0-alpha.3",
+  "benchmark": "navigation-plumbing-ab-v1",
+  "fixture": {
+    "noise_files": 120,
+    "project_files": 124,
+    "source_bytes": 12219
+  },
+  "habitat_cold_ingest_ms": 250.659,
+  "cases": [
+    {
+      "id": "credential",
+      "task": "fix credential validation in login behavior",
+      "filesystem": {
+        "target_found": true,
+        "top_paths": [
+          "auth.py",
+          "service.py"
+        ],
+        "files_read": 124,
+        "source_bytes_read": 12219,
+        "navigation_operations": 125,
+        "elapsed_ms": 1.582,
+        "baseline_definition": "deterministic full-text filesystem scan; not an LLM agent",
+        "target_symbol": "validate_credentials"
+      },
+      "habitat": {
+        "target_found": true,
+        "target_object_id": "sym:b3f6914c8c2f3e63e3a2",
+        "selected_paths": [
+          "auth.py",
+          "service.py",
+          "auth.py",
+          "service.py",
+          "billing.py",
+          "noise_000.py",
+          "noise_001.py",
+          "noise_002.py",
+          "noise_003.py",
+          "noise_004.py"
+        ],
+        "exact_source_bytes_requested": 132,
+        "context_packet_bytes": 2522,
+        "agent_api_calls": 2,
+        "orient_ms": 17.365,
+        "inspected_object_ids": [
+          "sym:b3f6914c8c2f3e63e3a2"
+        ],
+        "target_symbol": "validate_credentials"
+      }
+    },
+    {
+      "id": "billing",
+      "task": "find invoice tax calculation in billing",
+      "filesystem": {
+        "target_found": true,
+        "top_paths": [
+          "billing.py",
+          "service.py"
+        ],
+        "files_read": 124,
+        "source_bytes_read": 12219,
+        "navigation_operations": 125,
+        "elapsed_ms": 1.505,
+        "baseline_definition": "deterministic full-text filesystem scan; not an LLM agent",
+        "target_symbol": "calculate_invoice_tax"
+      },
+      "habitat": {
+        "target_found": true,
+        "target_object_id": "sym:bea01053806dd1c161ee",
+        "selected_paths": [
+          "billing.py",
+          "billing.py",
+          "service.py",
+          "auth.py"
+        ],
+        "exact_source_bytes_requested": 107,
+        "context_packet_bytes": 1026,
+        "agent_api_calls": 2,
+        "orient_ms": 14.432,
+        "inspected_object_ids": [
+          "sym:bea01053806dd1c161ee"
+        ],
+        "target_symbol": "calculate_invoice_tax"
+      }
+    },
+    {
+      "id": "avatar",
+      "task": "fix profile avatar url normalization",
+      "filesystem": {
+        "target_found": true,
+        "top_paths": [
+          "profile.py",
+          "service.py"
+        ],
+        "files_read": 124,
+        "source_bytes_read": 12219,
+        "navigation_operations": 125,
+        "elapsed_ms": 1.453,
+        "baseline_definition": "deterministic full-text filesystem scan; not an LLM agent",
+        "target_symbol": "normalize_avatar_url"
+      },
+      "habitat": {
+        "target_found": true,
+        "target_object_id": "sym:93ae3f21db410d175bde",
+        "selected_paths": [
+          "profile.py",
+          "profile.py",
+          "service.py",
+          "service.py",
+          "auth.py",
+          "billing.py",
+          "noise_000.py",
+          "noise_001.py",
+          "noise_002.py",
+          "noise_003.py"
+        ],
+        "exact_source_bytes_requested": 100,
+        "context_packet_bytes": 2452,
+        "agent_api_calls": 2,
+        "orient_ms": 15.918,
+        "inspected_object_ids": [
+          "sym:93ae3f21db410d175bde"
+        ],
+        "target_symbol": "normalize_avatar_url"
+      }
+    }
+  ],
+  "all_targets_found_by_both": true,
+  "interpretation": {
+    "valid": "Compares deterministic per-task filesystem scanning with warm Habitat orientation on the same synthetic source tree.",
+    "invalid": "Does not measure an LLM, token usage, coding-task success, reasoning quality, or universal speedup. Habitat cold ingest is disclosed separately and filesystem tooling could use better indexes than this baseline."
+  },
+  "claim_boundary": "Plumbing benchmark only. A same-model external agent A/B harness is still required before any AI-efficiency claim."
+}

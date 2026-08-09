@@ -1,0 +1,15 @@
+{
+  "$schema":"https://json-schema.org/draft/2020-12/schema",
+  "$id":"nolane.habitat/context-residency/v1alpha4",
+  "type":"object",
+  "required":["revision","config","count","state_counts","objects"],
+  "properties":{
+    "revision":{"type":"string"},
+    "config":{"type":"object","required":["max_objects","max_source_bytes"],"properties":{"max_objects":{"type":"integer","minimum":1},"max_source_bytes":{"type":"integer","minimum":0}},"additionalProperties":true},
+    "count":{"type":"integer","minimum":0},
+    "source_bytes_estimate":{"type":"integer","minimum":0},
+    "state_counts":{"type":"object","required":["fresh","stale","missing"],"properties":{"fresh":{"type":"integer","minimum":0},"stale":{"type":"integer","minimum":0},"missing":{"type":"integer","minimum":0}},"additionalProperties":false},
+    "objects":{"type":"array","items":{"type":"object","required":["object_id","kind","path","state","pinned"],"properties":{"object_id":{"type":"string"},"kind":{"type":"string"},"path":{"type":"string"},"state":{"enum":["fresh","stale","missing"]},"pinned":{"type":["integer","boolean"]}},"additionalProperties":true}}
+  },
+  "additionalProperties":true
+}

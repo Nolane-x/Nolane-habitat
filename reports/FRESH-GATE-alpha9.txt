@@ -1,0 +1,7 @@
+......................
+----------------------------------------------------------------------
+Ran 22 tests in 6.478s
+
+OK
+COUNT 22
+SHUTDOWN {'closed': ['typescript-language-services', 'jedi-project-cache', 'shared-browser-engine'], 'errors': [], 'idempotent': True, 'shutdown_count': 1}

@@ -1,0 +1,12 @@
+{
+  "$schema":"https://json-schema.org/draft/2020-12/schema",
+  "$id":"nolane.habitat/epistemic-item/v1alpha11",
+  "type":"object",
+  "required":["id","kind","statement","status","scope","base_revision","created_at","updated_at"],
+  "properties":{
+    "id":{"type":"string"},"kind":{"enum":["fact","assumption","unknown","contradiction","constraint","prediction"]},"statement":{"type":"string","minLength":1},
+    "status":{"type":"string"},"confidence":{"type":["number","null"],"minimum":0,"maximum":1},"scope":{"type":"string"},"agent_id":{"type":["string","null"]},
+    "episode_id":{"type":["string","null"]},"base_revision":{"type":"string"},"provenance":{"type":"object"},"invalidation_conditions":{"type":"array"},
+    "created_at":{"type":"string"},"updated_at":{"type":"string"}
+  },"additionalProperties":true
+}

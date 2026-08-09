@@ -1,0 +1,22 @@
+Nolane Habitat 0.1.0-alpha.9 test evidence
+
+Historical + alpha.9 source-tree admission before final documentation/package metadata edits:
+- Exhaustive shards: 162 tests PASS.
+- Monolithic unittest discovery: external wall-clock timeout occurred without an assertion failure before cutoff; it is not counted as PASS.
+
+Release-identity correction:
+- A packaging drift was found: pyproject.toml still said 0.1.0a8 while VERSION/runtime said alpha.9.
+- pyproject.toml corrected to 0.1.0a9.
+- release-identity regression added.
+- tests.test_alpha9_schema_contracts: 2/2 PASS.
+
+Fresh final-code gate after that correction:
+- alpha.9 benchmark/policy/schema + execution/protocol/storage/workspace: 22/22 PASS.
+- compileall habitat + benchmarks: PASS.
+
+Host-lifecycle verification:
+- module-isolated runners explicitly call shutdown_runtime_services(); observed global TS/Jedi/browser services drain idempotently.
+- long combined invocations can still exceed the external tool runner wall clock; this is recorded as release-tooling latency variance, not a test success.
+
+Discovered test count after the release-identity regression: 163.
+Claim boundary: no monolithic 163/163 PASS is claimed for alpha.9 final packaging because the external combined runner is not stable enough to complete that form of the gate. Historical exhaustive-shard coverage plus fresh changed-surface gates are the admitted evidence.

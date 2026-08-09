@@ -1,0 +1,689 @@
+{
+  "version": "0.1.0-alpha.12",
+  "revision": "rev:d059aa55a83060740306",
+  "observatory": {
+    "running": true,
+    "url": "http://127.0.0.1:42253/",
+    "read_only": true,
+    "host": "127.0.0.1",
+    "port": 42253
+  },
+  "health": {
+    "ok": true,
+    "read_only": true,
+    "revision": "rev:d059aa55a83060740306",
+    "url": "http://127.0.0.1:42253/"
+  },
+  "read_only_post_status": 405,
+  "agents": [
+    {
+      "id": "agent:cb335013d409a0a0dd2f",
+      "name": "Verifier Agent",
+      "status": "active",
+      "created_at": "2026-08-07T16:15:56.274901+00:00",
+      "updated_at": "2026-08-07T16:15:56.274901+00:00",
+      "metadata": {
+        "role": "verifier",
+        "surface": "direct",
+        "task": "Prove the selected world"
+      },
+      "task": "Prove the selected world"
+    },
+    {
+      "id": "agent:9e64220982f129a88ba4",
+      "name": "Claude Code",
+      "status": "active",
+      "created_at": "2026-08-07T16:15:56.273666+00:00",
+      "updated_at": "2026-08-07T16:15:56.273666+00:00",
+      "metadata": {
+        "role": "skeptic",
+        "surface": "mcp",
+        "task": "Challenge the auth hypothesis"
+      },
+      "task": "Challenge the auth hypothesis"
+    },
+    {
+      "id": "agent:789369c93d2add87bfcc",
+      "name": "Codex",
+      "status": "active",
+      "created_at": "2026-08-07T16:15:56.272274+00:00",
+      "updated_at": "2026-08-07T16:15:56.272274+00:00",
+      "metadata": {
+        "role": "implementer",
+        "surface": "mcp",
+        "task": "Fix expired subscription permissions"
+      },
+      "task": "Fix expired subscription permissions"
+    }
+  ],
+  "graph": {
+    "nodes": 150,
+    "edges": 126
+  },
+  "visual_metrics": {
+    "graph_nodes": 150,
+    "graph_edges": 126,
+    "effects": 49,
+    "dataflows": 55,
+    "runtime_topology_nodes": 16,
+    "world_entities": 18,
+    "counterfactual_worlds": 2
+  },
+  "activity_seq": 56,
+  "project_world": {
+    "nodes": 18,
+    "edges": 10,
+    "providers": {
+      "github-workflow-heuristic": 1,
+      "compose-heuristic": 1,
+      "sql-heuristic": 1,
+      "openapi": 1,
+      "package-json": 1
+    }
+  },
+  "effect_twin": {
+    "count": 32,
+    "kind_counts": {
+      "reads": 23,
+      "returns": 4,
+      "sanitizes": 1,
+      "writes": 3,
+      "env-read": 1
+    }
+  },
+  "dataflow_twin": {
+    "count": 37,
+    "kind_counts": {
+      "return-flow": 16,
+      "argument-to-call": 9,
+      "assigns": 9,
+      "call-result": 2,
+      "condition-flow": 1
+    }
+  },
+  "runtime_topology": {
+    "nodes": 16,
+    "edges": 15
+  },
+  "counterfactual_compare": {
+    "revision": "rev:02a7c0bd5a806b88f0b9",
+    "worlds": [
+      {
+        "id": "world:64e3589c9195e7eb80da",
+        "label": "WORLD A · harden claim elevation",
+        "base_revision": "rev:02a7c0bd5a806b88f0b9",
+        "change_count": 1
+      },
+      {
+        "id": "world:ce313526f8ec43ae879a",
+        "label": "WORLD B · explicit refresh gate",
+        "base_revision": "rev:02a7c0bd5a806b88f0b9",
+        "change_count": 1
+      }
+    ],
+    "path_matrix": [
+      {
+        "path": "auth/claims.py",
+        "worlds": {
+          "world:64e3589c9195e7eb80da": "92b8f9fc51e5fb70b375adf4f4c2089d5327a0e4947c4f9e6a03968e1068fd78",
+          "world:ce313526f8ec43ae879a": "9680f05dd09dc15bb6a1faa0386e36838daeca0e108b0a40b1eff4c801f83fa4"
+        }
+      }
+    ],
+    "evaluations": [
+      {
+        "revision": "rev:02a7c0bd5a806b88f0b9",
+        "world_id": "world:64e3589c9195e7eb80da",
+        "base_revision": "rev:02a7c0bd5a806b88f0b9",
+        "revision_drift": false,
+        "paths": [
+          {
+            "path": "auth/claims.py",
+            "op": "replace_text",
+            "language": "python",
+            "provider": "python-ast",
+            "symbols": 3,
+            "diagnostics": 0,
+            "parse_complete": true,
+            "effects": 29,
+            "dataflows": 28,
+            "effect_provider": "python-ast-effects",
+            "dataflow_provider": "python-ast-dataflow",
+            "effect_kinds": {
+              "returns": 3,
+              "reads": 21,
+              "writes": 3,
+              "sanitizes": 1,
+              "env-read": 1
+            },
+            "dataflow_kinds": {
+              "return-flow": 13,
+              "argument-to-call": 5,
+              "call-result": 1,
+              "assigns": 9
+            }
+          }
+        ],
+        "diagnostics": [],
+        "canonical_changed": false,
+        "claim_boundary": "Counterfactual compilation plus isolated Effect/Dataflow analysis validates changed overlay files at provider-local scope; it is not full-project runtime verification or causal proof."
+      },
+      {
+        "revision": "rev:02a7c0bd5a806b88f0b9",
+        "world_id": "world:ce313526f8ec43ae879a",
+        "base_revision": "rev:02a7c0bd5a806b88f0b9",
+        "revision_drift": false,
+        "paths": [
+          {
+            "path": "auth/claims.py",
+            "op": "replace_text",
+            "language": "python",
+            "provider": "python-ast",
+            "symbols": 3,
+            "diagnostics": 0,
+            "parse_complete": true,
+            "effects": 32,
+            "dataflows": 37,
+            "effect_provider": "python-ast-effects",
+            "dataflow_provider": "python-ast-dataflow",
+            "effect_kinds": {
+              "returns": 4,
+              "reads": 23,
+              "writes": 3,
+              "sanitizes": 1,
+              "env-read": 1
+            },
+            "dataflow_kinds": {
+              "return-flow": 16,
+              "argument-to-call": 9,
+              "call-result": 2,
+              "assigns": 9,
+              "condition-flow": 1
+            }
+          }
+        ],
+        "diagnostics": [],
+        "canonical_changed": false,
+        "claim_boundary": "Counterfactual compilation plus isolated Effect/Dataflow analysis validates changed overlay files at provider-local scope; it is not full-project runtime verification or causal proof."
+      }
+    ],
+    "claim_boundary": "Compares explicit patch overlays and local compile evidence; does not decide which alternative is behaviorally correct."
+  },
+  "promoted_world": "world:ce313526f8ec43ae879a",
+  "verification_status": "passed",
+  "ui_runtime": {
+    "available": true,
+    "assertion_passed": true
+  },
+  "cognitive_plan": {
+    "revision": "rev:d059aa55a83060740306",
+    "agent_id": "agent:789369c93d2add87bfcc",
+    "episode_id": "episode:4e03ea04f8b6ca4e964f",
+    "operations": [
+      {
+        "operation": "selective-revalidate",
+        "reason": "Observed world changed at auth/claims.py; current plan may be stale.",
+        "expected_information_gain": "high",
+        "decision_sensitivity": "critical",
+        "cost": "low",
+        "score": 16,
+        "ref_id": "notify:eb1f5aa969b4ea89a971",
+        "gate": "must-resolve-before-consequential-commit"
+      },
+      {
+        "operation": "acquire-independent-evidence",
+        "reason": "Live hypotheses have no active admitted evidence.",
+        "expected_information_gain": "high",
+        "decision_sensitivity": "high",
+        "cost": "medium",
+        "score": 13,
+        "ref_id": "hypothesis:093ca25cd4f746c4f52b",
+        "gate": null
+      },
+      {
+        "operation": "plan-discriminating-experiment",
+        "reason": "Multiple live hypotheses remain without an active discriminator.",
+        "expected_information_gain": "high",
+        "decision_sensitivity": "high",
+        "cost": "medium",
+        "score": 13,
+        "ref_id": "hypothesis:093ca25cd4f746c4f52b",
+        "gate": null
+      },
+      {
+        "operation": "probe-unknown",
+        "reason": "whether the refresh path receives subscription state after revalidation",
+        "expected_information_gain": "medium",
+        "decision_sensitivity": "high",
+        "cost": "medium",
+        "score": 10,
+        "ref_id": "epistemic:3ef30bc17a738d84ad4e",
+        "gate": null
+      }
+    ],
+    "next": {
+      "operation": "selective-revalidate",
+      "reason": "Observed world changed at auth/claims.py; current plan may be stale.",
+      "expected_information_gain": "high",
+      "decision_sensitivity": "critical",
+      "cost": "low",
+      "score": 16,
+      "ref_id": "notify:eb1f5aa969b4ea89a971",
+      "gate": "must-resolve-before-consequential-commit"
+    },
+    "epistemic_debt": {
+      "score": 5,
+      "open_items": 1,
+      "pending_invalidations": 1
+    },
+    "stop_policy": {
+      "can_converge": false,
+      "rule": "Converge only when critical contradictions/stale cognition are cleared and the remaining next operation has low expected decision value relative to cost."
+    },
+    "claim_boundary": "Ordinal value-of-information scheduling over explicit Habitat state; not calibrated expected utility and not hidden chain-of-thought."
+  },
+  "world_summary": {
+    "revision": "rev:d059aa55a83060740306",
+    "backend": {
+      "backend_id": "backend:aa79ab888acaf26070ed",
+      "kind": "local-filesystem",
+      "authority": "source-files",
+      "authoritative_root": "/tmp/tmp27tve_hg/project",
+      "materialized_root": "/tmp/tmp27tve_hg/project",
+      "execution_kind": "local-process",
+      "supports_native_watch": true,
+      "capabilities": [
+        "discover",
+        "execute",
+        "read",
+        "reconcile",
+        "trusted-local",
+        "watch",
+        "write"
+      ],
+      "source_authority_id": "authority:53e7c938398bf6a20a18",
+      "execution_provider_id": "executor:d68d8651cf34f1238822",
+      "source_authority": {
+        "authority_id": "authority:53e7c938398bf6a20a18",
+        "kind": "local-filesystem",
+        "authority": "source-files",
+        "authoritative_root": "/tmp/tmp27tve_hg/project",
+        "materialized_root": "/tmp/tmp27tve_hg/project",
+        "supports_native_watch": true,
+        "capabilities": [
+          "read",
+          "write",
+          "reconcile",
+          "watch"
+        ]
+      },
+      "execution_provider": {
+        "provider_id": "executor:d68d8651cf34f1238822",
+        "kind": "local-process",
+        "execution_root": "/tmp/tmp27tve_hg/project",
+        "capabilities": [
+          "discover",
+          "execute",
+          "trusted-local"
+        ]
+      },
+      "semantic_twin_authority": false,
+      "semantic_materialization_role": "shared-source-view",
+      "substrate_composable": true
+    },
+    "policy": {
+      "revision": "rev:d059aa55a83060740306",
+      "policy": {
+        "browser": {
+          "allow_external": false
+        },
+        "execution": {
+          "allow_kinds": [
+            "test",
+            "build",
+            "script",
+            "service"
+          ],
+          "approval_kinds": [],
+          "deny_capabilities": [],
+          "require_sandbox_for_untrusted": true
+        },
+        "mode": "trusted-development",
+        "schema": 1,
+        "source": {
+          "approval": [],
+          "deny": [
+            ".git/**",
+            ".habitat/**"
+          ],
+          "edit": [
+            "**"
+          ],
+          "read": [
+            "**"
+          ]
+        },
+        "structural_mutation": {
+          "approval_required": false
+        },
+        "updated_at": "2026-08-07T16:15:55.257569+00:00"
+      }
+    },
+    "execution_security": {
+      "revision": "rev:d059aa55a83060740306",
+      "provider": {
+        "provider_id": "executor:d68d8651cf34f1238822",
+        "kind": "local-process",
+        "execution_root": "/tmp/tmp27tve_hg/project",
+        "capabilities": [
+          "discover",
+          "execute",
+          "trusted-local"
+        ]
+      },
+      "containment_profile": "trusted-local",
+      "host_probe": {
+        "network_namespace_available": true,
+        "filesystem_confinement_available": false,
+        "full_sandbox_available": false,
+        "unshare": "/usr/bin/unshare",
+        "reason": "user+network namespace available",
+        "claim_boundary": "Network/user namespace availability is partial containment; filesystem isolation is not provided by this provider."
+      },
+      "bubblewrap_probe": {
+        "available": false,
+        "executable": null,
+        "filesystem_confinement": false,
+        "network_confinement": false,
+        "reason": "bubblewrap executable not found"
+      },
+      "full_sandbox": false,
+      "filesystem_restricted": false,
+      "network_restricted": false,
+      "claim_boundary": "full_sandbox is true only for a provider that advertises filesystem + network confinement after host probing; it is not a proof against kernel/runtime vulnerabilities."
+    },
+    "git": {
+      "available": false,
+      "reason": "not-a-git-worktree"
+    },
+    "dependencies": {
+      "direct": 2,
+      "locked": 0,
+      "unlocked_direct": 2
+    },
+    "active_evidence": 0,
+    "agents": {
+      "active": 3
+    },
+    "pending_coordination_notifications": 1,
+    "invariants": {
+      "unverified": 1
+    },
+    "guidance_files": 1,
+    "effect_facts": 32,
+    "dataflow_facts": 37,
+    "runtime_observations": 6,
+    "counterfactual_worlds": {
+      "open": 1,
+      "promoted": 1
+    },
+    "epistemic_open": {
+      "unknown": 1
+    },
+    "project_world": {
+      "nodes": [
+        {
+          "id": "world:cb0cb5bce2bb222aac90",
+          "type": "ci-workflow",
+          "label": "ci.yml",
+          "path": ".github/workflows/ci.yml",
+          "trust": "heuristic",
+          "metadata": {}
+        },
+        {
+          "id": "world:8af15a047727e4ffe2e2",
+          "type": "ci-job",
+          "label": "test",
+          "path": ".github/workflows/ci.yml",
+          "trust": "heuristic",
+          "metadata": {}
+        },
+        {
+          "id": "world:c413cc7a2de516a5a875",
+          "type": "ci-job",
+          "label": "build",
+          "path": ".github/workflows/ci.yml",
+          "trust": "heuristic",
+          "metadata": {}
+        },
+        {
+          "id": "world:7cb3ad9a8cebac0bb4c6",
+          "type": "ci-job",
+          "label": "security",
+          "path": ".github/workflows/ci.yml",
+          "trust": "heuristic",
+          "metadata": {}
+        },
+        {
+          "id": "world:c3ffe74b441e1c5e8f8c",
+          "type": "service",
+          "label": "web",
+          "path": "docker-compose.yml",
+          "trust": "heuristic",
+          "metadata": {
+            "source": "compose"
+          }
+        },
+        {
+          "id": "world:5e33129d2987148d2ef1",
+          "type": "service",
+          "label": "api",
+          "path": "docker-compose.yml",
+          "trust": "heuristic",
+          "metadata": {
+            "source": "compose"
+          }
+        },
+        {
+          "id": "world:e89b6331fb9575a91b14",
+          "type": "service",
+          "label": "db",
+          "path": "docker-compose.yml",
+          "trust": "heuristic",
+          "metadata": {
+            "source": "compose"
+          }
+        },
+        {
+          "id": "world:897718ece366147eace7",
+          "type": "service",
+          "label": "redis",
+          "path": "docker-compose.yml",
+          "trust": "heuristic",
+          "metadata": {
+            "source": "compose"
+          }
+        },
+        {
+          "id": "world:2340c1a3c47675aeedfb",
+          "type": "db-migration",
+          "label": "001_users.sql",
+          "path": "migrations/001_users.sql",
+          "trust": "heuristic",
+          "metadata": {}
+        },
+        {
+          "id": "world:1d08a1f99a21d2bd8b3b",
+          "type": "db-table",
+          "label": "users",
+          "path": "migrations/001_users.sql",
+          "trust": "heuristic",
+          "metadata": {}
+        },
+        {
+          "id": "world:4020260ce0f73f80fb7c",
+          "type": "api-spec",
+          "label": "openapi.json",
+          "path": "openapi.json",
+          "trust": "parser",
+          "metadata": {}
+        },
+        {
+          "id": "world:2adde08048b056d49292",
+          "type": "api-route",
+          "label": "/token/refresh",
+          "path": "openapi.json",
+          "trust": "parser",
+          "metadata": {}
+        },
+        {
+          "id": "world:88d1d55ce1762f60c255",
+          "type": "api-operation",
+          "label": "POST /token/refresh",
+          "path": "openapi.json",
+          "trust": "parser",
+          "metadata": {}
+        },
+        {
+          "id": "world:be6819d81224ce73dce8",
+          "type": "api-route",
+          "label": "/subscriptions/{id}",
+          "path": "openapi.json",
+          "trust": "parser",
+          "metadata": {}
+        },
+        {
+          "id": "world:ba0932f37896cba8077d",
+          "type": "api-operation",
+          "label": "GET /subscriptions/{id}",
+          "path": "openapi.json",
+          "trust": "parser",
+          "metadata": {}
+        },
+        {
+          "id": "world:43684451e9579b6c6583",
+          "type": "package",
+          "label": "nolane-demo",
+          "path": "package.json",
+          "trust": "parser",
+          "metadata": {}
+        },
+        {
+          "id": "world:891debd8f52703b44b29",
+          "type": "build-task",
+          "label": "test",
+          "path": "package.json",
+          "trust": "parser",
+          "metadata": {
+            "command": "python -m unittest"
+          }
+        },
+        {
+          "id": "world:7973e1551ba92f35ac1e",
+          "type": "build-task",
+          "label": "build",
+          "path": "package.json",
+          "trust": "parser",
+          "metadata": {
+            "command": "vite"
+          }
+        }
+      ],
+      "edges": [
+        {
+          "source": "world:cb0cb5bce2bb222aac90",
+          "target": "world:8af15a047727e4ffe2e2",
+          "kind": "contains",
+          "trust": "heuristic",
+          "evidence": "workflow line 2"
+        },
+        {
+          "source": "world:cb0cb5bce2bb222aac90",
+          "target": "world:c413cc7a2de516a5a875",
+          "kind": "contains",
+          "trust": "heuristic",
+          "evidence": "workflow line 4"
+        },
+        {
+          "source": "world:cb0cb5bce2bb222aac90",
+          "target": "world:7cb3ad9a8cebac0bb4c6",
+          "kind": "contains",
+          "trust": "heuristic",
+          "evidence": "workflow line 6"
+        },
+        {
+          "source": "world:2340c1a3c47675aeedfb",
+          "target": "world:1d08a1f99a21d2bd8b3b",
+          "kind": "creates",
+          "trust": "heuristic",
+          "evidence": "SQL CREATE TABLE"
+        },
+        {
+          "source": "world:4020260ce0f73f80fb7c",
+          "target": "world:2adde08048b056d49292",
+          "kind": "declares",
+          "trust": "parser",
+          "evidence": "OpenAPI paths"
+        },
+        {
+          "source": "world:2adde08048b056d49292",
+          "target": "world:88d1d55ce1762f60c255",
+          "kind": "operation",
+          "trust": "parser",
+          "evidence": "OpenAPI operation"
+        },
+        {
+          "source": "world:4020260ce0f73f80fb7c",
+          "target": "world:be6819d81224ce73dce8",
+          "kind": "declares",
+          "trust": "parser",
+          "evidence": "OpenAPI paths"
+        },
+        {
+          "source": "world:be6819d81224ce73dce8",
+          "target": "world:ba0932f37896cba8077d",
+          "kind": "operation",
+          "trust": "parser",
+          "evidence": "OpenAPI operation"
+        },
+        {
+          "source": "world:43684451e9579b6c6583",
+          "target": "world:891debd8f52703b44b29",
+          "kind": "exposes-task",
+          "trust": "parser",
+          "evidence": "package.json scripts"
+        },
+        {
+          "source": "world:43684451e9579b6c6583",
+          "target": "world:7973e1551ba92f35ac1e",
+          "kind": "exposes-task",
+          "trust": "parser",
+          "evidence": "package.json scripts"
+        }
+      ],
+      "providers": {
+        "github-workflow-heuristic": 1,
+        "compose-heuristic": 1,
+        "sql-heuristic": 1,
+        "openapi": 1,
+        "package-json": 1
+      },
+      "files_examined": 5,
+      "claim_boundary": "Project World parses selected repository manifests/configuration into bounded typed entities. Heuristic YAML/SQL relations are orientation evidence, not complete deployment/runtime truth.",
+      "revision": "rev:d059aa55a83060740306"
+    },
+    "claim_boundary": "Bounded world-state orientation assembled from admitted Habitat state, Git, policy, dependency metadata, static effect evidence, runtime observations, counterfactual worlds, and selected project manifests; not a complete production/runtime or causal world model."
+  },
+  "source_packet_bytes": 927,
+  "screenshot": {
+    "captured": true,
+    "path": "OBSERVATORY-alpha12.png",
+    "bytes": 764426,
+    "source": "live-snapshot-offline-render",
+    "dimensions": {
+      "w": 1920,
+      "h": 1080
+    }
+  },
+  "claim_boundary": "Cinematic observer is fed by admitted Habitat state/events. Static effects/dataflow, observed runtime topology, and counterfactual compile evidence remain distinct evidence classes; UI exposes no raw private chain-of-thought or human control plane."
+}

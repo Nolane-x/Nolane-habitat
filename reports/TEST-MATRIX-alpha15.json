@@ -1,0 +1,49 @@
+{
+  "schema": 3,
+  "release": "0.1.0-alpha.15",
+  "inventory_tests": 260,
+  "passed_tests": 260,
+  "failed_tests": 0,
+  "timeouts_counted_as_pass": 0,
+  "evidence_mode": "independently completed unittest module/class shards; resource-heavy alpha5 deep suite split by class boundary; sample project tested separately",
+  "groups": [
+    {
+      "group": "alpha0-4",
+      "tests": 66,
+      "status": "passed"
+    },
+    {
+      "group": "alpha5-7",
+      "tests": 38,
+      "status": "passed",
+      "note": "alpha5 deep evolution split across class/process boundaries; all 15 unique tests passed"
+    },
+    {
+      "group": "alpha8-10",
+      "tests": 56,
+      "status": "passed"
+    },
+    {
+      "group": "alpha11-15",
+      "tests": 72,
+      "status": "passed"
+    },
+    {
+      "group": "core",
+      "tests": 26,
+      "status": "passed"
+    },
+    {
+      "group": "sample-project",
+      "tests": 2,
+      "status": "passed"
+    }
+  ],
+  "static": {
+    "python_compileall": "passed",
+    "observatory_js_node_check": "passed",
+    "json_schemas": 56,
+    "json_schema_parse": "passed"
+  },
+  "claim_boundary": "Only completed, zero-failure process shards are counted. A combined long-lived provider/browser host that printed passing assertions but did not exit cleanly was not used as admission evidence."
+}

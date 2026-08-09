@@ -1,0 +1,82 @@
+{
+  "release": "0.1.0-alpha.12",
+  "charter": "Deepen Habitat world cognition and make the read-only human Observatory feel like a living AI machine world without turning it into a fake terminal or human control plane.",
+  "beliefs": [
+    {
+      "belief": "A cinematic UI is valuable only if animation binds to real Habitat entities/events.",
+      "rivals": [
+        "Use decorative fake terminal streams",
+        "Build a conventional dashboard"
+      ],
+      "decision": "Use event-driven topology pulses/tracers/camera; ambient motion may be decorative but operational events are not fabricated."
+    },
+    {
+      "belief": "Static call/import graphs are insufficient for a project world.",
+      "rivals": [
+        "Keep expanding one semantic relation graph"
+      ],
+      "decision": "Separate Effect, Dataflow, Runtime and Project World evidence planes with distinct trust/claim boundaries."
+    },
+    {
+      "belief": "Alternative patches should be evaluated before canonical promotion.",
+      "rivals": [
+        "Edit canonical source and rollback repeatedly"
+      ],
+      "decision": "Add revision-bound counterfactual overlays, isolated compile/effect/dataflow evaluation and disposable-copy verification."
+    },
+    {
+      "belief": "Canvas2D is sufficient at current bounded graph scale.",
+      "rivals": [
+        "Add WebGL/Sigma/Pixi immediately"
+      ],
+      "decision": "Keep zero-build self-contained Canvas2D until measured scale/frame pressure justifies GPU renderer."
+    }
+  ],
+  "failure_probes": [
+    {
+      "finding": "multi-agent notification UNIQUE collision",
+      "class": "core",
+      "correction": "dedupe observations per agent/path and bind notification identity to cause transaction/revision",
+      "verified_by": "alpha12 multi-observation regression"
+    },
+    {
+      "finding": "Python AugAssign dataflow metadata bound into trust field on supplied AGI corpus",
+      "class": "core",
+      "correction": "keyword-bind metadata and add AugAssign regression",
+      "verified_by": "213-test matrix + supplied-corpus stress"
+    },
+    {
+      "finding": "stress report read effects/dataflow from wrong snapshot keys and reported zero",
+      "class": "evidence-harness",
+      "correction": "use effects/flows snapshot keys; compare world summary counts",
+      "verified_by": "29,012 effect + 35,809 dataflow facts on rerun"
+    },
+    {
+      "finding": "historical manual shard invoked obsolete module names",
+      "class": "release-harness",
+      "correction": "derive current module list and rerun actual shards",
+      "verified_by": "66/38/83/26 completed shards"
+    },
+    {
+      "finding": "combined matrix orchestration remains host-sensitive despite identical shards passing independently",
+      "class": "tooling/lifecycle",
+      "correction": "process-isolated shard evidence; temp-file logs/process groups; do not relabel combined timeout",
+      "verified_by": "four independent matrix reports"
+    },
+    {
+      "finding": "fresh Chromium loopback screenshot path falls back on this host",
+      "class": "release-environment",
+      "correction": "render exact already-fetched live snapshot using production assets and label screenshot source",
+      "verified_by": "live-snapshot-offline-render"
+    }
+  ],
+  "admission_gates": {
+    "tests": "213/213 across four completed shards",
+    "compileall": "PASS",
+    "live_observatory_schema": "PASS",
+    "world_summary_schema": "PASS",
+    "cinematic_demo": "PASS",
+    "supplied_agi_stress": "PASS"
+  },
+  "claim_boundary": "Methodology/evidence trace only. It does not establish AGI capability, whole-program causality, universal language semantics, hostile-code safety, or model-quality superiority."
+}

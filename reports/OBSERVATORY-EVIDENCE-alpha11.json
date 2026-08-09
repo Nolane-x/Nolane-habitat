@@ -1,0 +1,337 @@
+{
+  "version": "0.1.0-alpha.11",
+  "revision": "rev:c78f88f74a6e1ce78d2e",
+  "observatory": {
+    "running": true,
+    "url": "http://127.0.0.1:40869/",
+    "read_only": true,
+    "host": "127.0.0.1",
+    "port": 40869
+  },
+  "health": {
+    "ok": true,
+    "read_only": true,
+    "revision": "rev:c78f88f74a6e1ce78d2e",
+    "url": "http://127.0.0.1:40869/"
+  },
+  "read_only_post_status": 405,
+  "agent_count": 2,
+  "agent_names": [
+    "Claude Code",
+    "Codex"
+  ],
+  "graph_nodes": 25,
+  "graph_edges": 22,
+  "activity_seq": 34,
+  "hypotheses": 2,
+  "epistemic_items": 2,
+  "runtime_events": 4,
+  "project_memories": 3,
+  "context_memory": {
+    "residents": [
+      {
+        "agent_id": "agent:c4302fc553d8a65b678b",
+        "object_id": "sym:940853360262fd4fb4f7",
+        "kind": "symbol",
+        "path": "auth/claims.py",
+        "admitted_revision": "rev:a404fe19b9bc2b8bc2ed",
+        "source_digest": "2d3a3f2133ee511655dfbda9026855dc760c8a6d4b9e58d5a19f63522e658301",
+        "relevance": 0.8842845714285714,
+        "pinned": 1,
+        "access_count": 1,
+        "last_access_seq": 6,
+        "admitted_at": "2026-08-07T15:01:43.657179+00:00",
+        "last_touched_at": "2026-08-07T15:01:43.657185+00:00"
+      },
+      {
+        "agent_id": "agent:c4302fc553d8a65b678b",
+        "object_id": "sym:46f68082cc98b9ba70b6",
+        "kind": "symbol",
+        "path": "tests/test_auth.py",
+        "admitted_revision": "rev:a404fe19b9bc2b8bc2ed",
+        "source_digest": "f96da8f0b9b7524d918c60fca865fdbd2057a89f4f4e1590eec07b61435aed80",
+        "relevance": 0.8714495390476189,
+        "pinned": 0,
+        "access_count": 1,
+        "last_access_seq": 6,
+        "admitted_at": "2026-08-07T15:01:43.664446+00:00",
+        "last_touched_at": "2026-08-07T15:01:43.664455+00:00"
+      },
+      {
+        "agent_id": "agent:c4302fc553d8a65b678b",
+        "object_id": "file:a99307c61c3c55875b5b",
+        "kind": "file",
+        "path": "tests/test_auth.py",
+        "admitted_revision": "rev:a404fe19b9bc2b8bc2ed",
+        "source_digest": "f96da8f0b9b7524d918c60fca865fdbd2057a89f4f4e1590eec07b61435aed80",
+        "relevance": 0.7630478171428572,
+        "pinned": 0,
+        "access_count": 1,
+        "last_access_seq": 6,
+        "admitted_at": "2026-08-07T15:01:43.665097+00:00",
+        "last_touched_at": "2026-08-07T15:01:43.665103+00:00"
+      },
+      {
+        "agent_id": "agent:c4302fc553d8a65b678b",
+        "object_id": "sym:a43b1f1f80fa06904c04",
+        "kind": "symbol",
+        "path": "auth/claims.py",
+        "admitted_revision": "rev:a404fe19b9bc2b8bc2ed",
+        "source_digest": "2d3a3f2133ee511655dfbda9026855dc760c8a6d4b9e58d5a19f63522e658301",
+        "relevance": 0.6459588571428572,
+        "pinned": 0,
+        "access_count": 1,
+        "last_access_seq": 6,
+        "admitted_at": "2026-08-07T15:01:43.665632+00:00",
+        "last_touched_at": "2026-08-07T15:01:43.665637+00:00"
+      },
+      {
+        "agent_id": "agent:c4302fc553d8a65b678b",
+        "object_id": "file:025c1bd1e8e3d3b2e92b",
+        "kind": "file",
+        "path": "auth/claims.py",
+        "admitted_revision": "rev:a404fe19b9bc2b8bc2ed",
+        "source_digest": "2d3a3f2133ee511655dfbda9026855dc760c8a6d4b9e58d5a19f63522e658301",
+        "relevance": 0.6390312618605714,
+        "pinned": 0,
+        "access_count": 1,
+        "last_access_seq": 6,
+        "admitted_at": "2026-08-07T15:01:43.666143+00:00",
+        "last_touched_at": "2026-08-07T15:01:43.666147+00:00"
+      }
+    ],
+    "agent_visible_source_bytes": 525,
+    "authority_bytes_read": 786
+  },
+  "source_packet_bytes": 525,
+  "verification_status": "passed",
+  "changed_paths": [
+    "auth/claims.py"
+  ],
+  "cognitive_next": {
+    "revision": "rev:c78f88f74a6e1ce78d2e",
+    "agent_id": "agent:c4302fc553d8a65b678b",
+    "episode_id": "episode:8c4c2906cea8d4167e78",
+    "next": {
+      "operation": "discriminate-contradiction",
+      "reason": "static flow accepts subscription state but no runtime observation proves freshness",
+      "expected_information_gain": "high",
+      "cost": "medium",
+      "ref_id": "epistemic:bdd1b12db6bd7d0fbba3"
+    },
+    "epistemic_debt": {
+      "score": 5,
+      "contradictions": 1,
+      "unknowns": 1,
+      "assumptions": 0,
+      "pending_invalidations": 0
+    },
+    "stop_policy": {
+      "can_converge": false,
+      "rule": "Do not converge while high-severity contradictions or known stale cognition remain unresolved."
+    },
+    "claim_boundary": "Metacognitive scheduling heuristic based on explicit Habitat state, not hidden model chain-of-thought or calibrated value-of-information probability."
+  },
+  "semantic_fabric": {
+    "fabric_version": 1,
+    "root": "/tmp/tmp3w1a0ami/project",
+    "providers": [
+      {
+        "id": "syntax.tree-sitter",
+        "layer": "syntax",
+        "available": false,
+        "precision": "parser",
+        "capabilities": [
+          "incremental-parse",
+          "syntax-tree",
+          "error-tolerant-parse"
+        ],
+        "reason": "Tree-sitter runtime not installed on this host",
+        "command": null,
+        "version": null
+      },
+      {
+        "id": "index.scip",
+        "layer": "precomputed-semantic-index",
+        "available": false,
+        "precision": "semantic",
+        "capabilities": [
+          "occurrences",
+          "symbols",
+          "definitions",
+          "references"
+        ],
+        "reason": "No SCIP command/index detected",
+        "command": null,
+        "version": null
+      },
+      {
+        "id": "lsp.python",
+        "layer": "language-semantic-service",
+        "available": false,
+        "precision": "semantic",
+        "capabilities": [
+          "definition",
+          "references",
+          "diagnostics",
+          "hover",
+          "capability-negotiation"
+        ],
+        "reason": "language server not detected",
+        "command": null,
+        "version": null
+      },
+      {
+        "id": "lsp.typescript",
+        "layer": "language-semantic-service",
+        "available": false,
+        "precision": "semantic",
+        "capabilities": [
+          "definition",
+          "references",
+          "diagnostics",
+          "hover",
+          "capability-negotiation"
+        ],
+        "reason": "language server not detected",
+        "command": null,
+        "version": null
+      },
+      {
+        "id": "lsp.rust",
+        "layer": "language-semantic-service",
+        "available": false,
+        "precision": "semantic",
+        "capabilities": [
+          "definition",
+          "references",
+          "diagnostics",
+          "hover",
+          "capability-negotiation"
+        ],
+        "reason": "language server not detected",
+        "command": null,
+        "version": null
+      },
+      {
+        "id": "lsp.go",
+        "layer": "language-semantic-service",
+        "available": false,
+        "precision": "semantic",
+        "capabilities": [
+          "definition",
+          "references",
+          "diagnostics",
+          "hover",
+          "capability-negotiation"
+        ],
+        "reason": "language server not detected",
+        "command": null,
+        "version": null
+      },
+      {
+        "id": "lsp.c-cpp",
+        "layer": "language-semantic-service",
+        "available": true,
+        "precision": "semantic",
+        "capabilities": [
+          "definition",
+          "references",
+          "diagnostics",
+          "hover",
+          "capability-negotiation"
+        ],
+        "reason": "language server detected",
+        "command": "/usr/local/swift/usr/bin/clangd",
+        "version": "clangd version 17.0.0 (https://github.com/swiftlang/llvm-project.git 10999b6d034fe318f3d56c83bddb6572593a8bb0)"
+      },
+      {
+        "id": "lsp.java",
+        "layer": "language-semantic-service",
+        "available": false,
+        "precision": "semantic",
+        "capabilities": [
+          "definition",
+          "references",
+          "diagnostics",
+          "hover",
+          "capability-negotiation"
+        ],
+        "reason": "language server not detected",
+        "command": null,
+        "version": null
+      },
+      {
+        "id": "lsp.csharp",
+        "layer": "language-semantic-service",
+        "available": false,
+        "precision": "semantic",
+        "capabilities": [
+          "definition",
+          "references",
+          "diagnostics",
+          "hover",
+          "capability-negotiation"
+        ],
+        "reason": "language server not detected",
+        "command": null,
+        "version": null
+      },
+      {
+        "id": "lsp.kotlin",
+        "layer": "language-semantic-service",
+        "available": false,
+        "precision": "semantic",
+        "capabilities": [
+          "definition",
+          "references",
+          "diagnostics",
+          "hover",
+          "capability-negotiation"
+        ],
+        "reason": "language server not detected",
+        "command": null,
+        "version": null
+      },
+      {
+        "id": "lsp.swift",
+        "layer": "language-semantic-service",
+        "available": true,
+        "precision": "semantic",
+        "capabilities": [
+          "definition",
+          "references",
+          "diagnostics",
+          "hover",
+          "capability-negotiation"
+        ],
+        "reason": "language server detected",
+        "command": "/usr/local/swift/usr/bin/sourcekit-lsp",
+        "version": "Error: Unknown option '--version'"
+      }
+    ],
+    "available_count": 2,
+    "scip_indexes": [],
+    "agent_abstraction": {
+      "provider_independent_objects": [
+        "symbol",
+        "type",
+        "call",
+        "implements",
+        "reads",
+        "writes",
+        "throws",
+        "dataflow"
+      ],
+      "rule": "Agents consume Habitat semantic objects and trust/provenance; concrete parser/LSP/SCIP names are diagnostics, not required reasoning vocabulary."
+    },
+    "claim_boundary": "Capability discovery only. Tree-sitter/LSP/SCIP are not claimed active unless the corresponding provider is detected and admitted."
+  },
+  "screenshot": {
+    "captured": true,
+    "path": "OBSERVATORY-alpha11.png",
+    "bytes": 333911,
+    "source": "live-snapshot-offline-render"
+  },
+  "claim_boundary": "Observer-only realtime projection of Habitat state and action summaries. It does not expose raw private model chain-of-thought and is not a human control plane."
+}

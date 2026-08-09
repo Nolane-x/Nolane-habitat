@@ -1,0 +1,121 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "nolane.habitat/exploration-regions/v1alpha7",
+  "type": "object",
+  "required": [
+    "task",
+    "revision",
+    "context_handle",
+    "retrieval_confidence",
+    "abstained",
+    "regions",
+    "region_count",
+    "line_budget",
+    "lines_selected",
+    "source_bytes_read"
+  ],
+  "properties": {
+    "task": {
+      "type": "string"
+    },
+    "revision": {
+      "type": "string"
+    },
+    "context_handle": {
+      "type": "string"
+    },
+    "retrieval_confidence": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "concept_coverage": {},
+    "abstained": {
+      "type": "boolean"
+    },
+    "regions": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "object_id",
+          "path",
+          "start_line",
+          "end_line",
+          "line_count",
+          "kind",
+          "trust",
+          "score",
+          "virtual_region"
+        ],
+        "properties": {
+          "object_id": {
+            "type": "string"
+          },
+          "path": {
+            "type": "string"
+          },
+          "start_line": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "end_line": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "line_count": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "partial": {
+            "type": "boolean"
+          },
+          "kind": {
+            "type": "string"
+          },
+          "trust": {
+            "type": "string"
+          },
+          "score": {
+            "type": "number"
+          },
+          "lane": {},
+          "reason": {},
+          "virtual_region": {
+            "type": "string"
+          }
+        },
+        "additionalProperties": false
+      }
+    },
+    "region_count": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "line_budget": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "lines_selected": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "source_bytes_read": {
+      "const": 0
+    },
+    "whole_file_dump": {
+      "type": "boolean"
+    },
+    "ranking_scope": {
+      "type": "string"
+    },
+    "truncated_by_line_budget": {
+      "type": "boolean"
+    },
+    "reason": {
+      "type": "string"
+    }
+  },
+  "additionalProperties": false
+}

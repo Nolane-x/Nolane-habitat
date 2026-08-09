@@ -1,0 +1,15 @@
+Nolane Habitat 0.1.0-alpha.13 — source-tree regression evidence
+
+alpha0-4:   66 / 66 PASS
+alpha5-7:   38 / 38 PASS
+alpha8-10:  56 / 56 PASS
+alpha11-13: 54 / 54 PASS
+core:       26 / 26 PASS
+TOTAL:     240 / 240 PASS
+
+compileall: PASS
+53 JSON schema files: parse PASS
+Observatory app.js: node --check PASS
+MCP compact catalog: 12 tools
+
+Only completed process runs are counted. A long combined alpha8-13 invocation hit an external wall-clock limit after reaching alpha.13 and is not counted either way.

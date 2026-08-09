@@ -1,0 +1,35 @@
+NOLANE HABITAT 0.1.0-alpha.10 — TEST EVIDENCE
+
+Balanced isolated regression matrix
+-----------------------------------
+Known test count: 186
+Groups: 4
+Passed groups: 4
+Failed groups: 0
+Timeout groups: 0
+Infra-error groups: 0
+Sum of isolated shard wall time: 71278.56 ms
+
+Shard details:
+- alpha0-4: status=passed tests=66 wall_ms=23360.42
+- alpha5-7: status=passed tests=38 wall_ms=26034.87
+- alpha8-10: status=passed tests=56 wall_ms=17339.21
+- core: status=passed tests=26 wall_ms=4540.69
+
+Additional gates
+----------------
+- compileall: PASS
+- direct README quick-start create/enter/orient: PASS
+- A/B harness schema/comparability contract smoke: PASS (mock contract only; no product-quality claim)
+- monolithic long-lived discovery: NOT ADMITTED as PASS; remains a separate lifecycle/performance diagnostic surface.
+- four-shard concurrent run: host-sensitive attempt timed out; sequential isolated shards above are the admitted regression evidence.
+
+Empirical corpus
+----------------
+- supplied AGI ZIP files=251 symbols=865 occurrences=4351
+- ordinary warm reconcile hashed_files=0
+- explicit deep refresh compiled=0 reused=251 hashed=251 hash_bytes=88271461
+- no-gold confidence=low abstained=True source_bytes=0
+- current host full_sandbox=False
+
+Claim boundary: passing mechanisms/invariants do not establish that Habitat improves an external coding model.

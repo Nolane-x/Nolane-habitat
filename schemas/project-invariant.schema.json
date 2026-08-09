@@ -1,0 +1,20 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://nolane.local/habitat/schemas/project-invariant.schema.json",
+  "title": "Habitat Project Invariant",
+  "type": "object",
+  "required": ["id", "statement", "severity", "status", "base_revision"],
+  "properties": {
+    "id": {"type": "string"},
+    "statement": {"type": "string", "minLength": 1},
+    "severity": {"enum": ["info", "warning", "error", "critical"]},
+    "status": {"enum": ["unverified", "verified", "violated", "contested", "retired"]},
+    "base_revision": {"type": "string"},
+    "links": {"type": "array", "items": {"type": "object"}},
+    "verifier_count": {"type": "integer", "minimum": 0},
+    "contradiction_count": {"type": "integer", "minimum": 0},
+    "assessment": {"type": "string"},
+    "claim_boundary": {"type": "string"}
+  },
+  "additionalProperties": true
+}

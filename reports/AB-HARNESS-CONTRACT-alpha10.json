@@ -1,0 +1,152 @@
+{
+  "claim_boundary": "This harness standardizes paired execution and accounting. Strong evidence is admitted only when every run reports one consistent model_id and scaffold_id and an independent evaluator is configured; agent self-reported success alone is never sufficient.",
+  "comparability": {
+    "independent_evaluator": true,
+    "reasons": [],
+    "same_model_observed": true,
+    "same_scaffold_observed": true,
+    "strong_evidence_ready": true
+  },
+  "contract_smoke": true,
+  "evaluator_required_for_strong_evidence": true,
+  "independent_evaluator_used": true,
+  "note": "Mock agent/evaluator exercise schema/comparability only; this is not a Habitat-vs-filesystem performance result.",
+  "observed_model_ids": [
+    "mock-same-model"
+  ],
+  "observed_scaffold_ids": [
+    "mock-same-scaffold"
+  ],
+  "paired_summary": {
+    "filesystem_success_wins": 0,
+    "habitat_success_wins": 0,
+    "mean_input_token_delta": 0.0,
+    "mean_tool_call_delta": 0.0,
+    "mean_wall_ms_delta": 12.0,
+    "pair_count": 2,
+    "pairs": [
+      {
+        "filesystem_success": true,
+        "habitat_success": true,
+        "input_token_delta": 0,
+        "repetition": 0,
+        "success_delta": 0,
+        "task_id": "contract-smoke",
+        "tool_call_delta": 0,
+        "wall_ms_delta": 23
+      },
+      {
+        "filesystem_success": true,
+        "habitat_success": true,
+        "input_token_delta": 0,
+        "repetition": 1,
+        "success_delta": 0,
+        "task_id": "contract-smoke",
+        "tool_call_delta": 0,
+        "wall_ms_delta": 1
+      }
+    ],
+    "ties": 2
+  },
+  "product_quality_evidence": false,
+  "repetitions": 2,
+  "runs": [
+    {
+      "agent_claimed_success": true,
+      "arm": "habitat",
+      "changed_paths": [],
+      "diff_bytes": 0,
+      "diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "evaluation": {
+        "evaluator_id": "mock-independent-contract-evaluator",
+        "ok": true,
+        "score": 1.0,
+        "success": true
+      },
+      "input_tokens": 10,
+      "model_id": "mock-same-model",
+      "observed_wall_ms": 629,
+      "output_tokens": 5,
+      "repetition": 0,
+      "scaffold_id": "mock-same-scaffold",
+      "success": true,
+      "task_id": "contract-smoke",
+      "tool_calls": 1,
+      "wall_ms": 3
+    },
+    {
+      "agent_claimed_success": true,
+      "arm": "filesystem",
+      "changed_paths": [],
+      "diff_bytes": 0,
+      "diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "evaluation": {
+        "evaluator_id": "mock-independent-contract-evaluator",
+        "ok": true,
+        "score": 1.0,
+        "success": true
+      },
+      "input_tokens": 10,
+      "model_id": "mock-same-model",
+      "observed_wall_ms": 606,
+      "output_tokens": 5,
+      "repetition": 0,
+      "scaffold_id": "mock-same-scaffold",
+      "success": true,
+      "task_id": "contract-smoke",
+      "tool_calls": 1,
+      "wall_ms": 3
+    },
+    {
+      "agent_claimed_success": true,
+      "arm": "filesystem",
+      "changed_paths": [],
+      "diff_bytes": 0,
+      "diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "evaluation": {
+        "evaluator_id": "mock-independent-contract-evaluator",
+        "ok": true,
+        "score": 1.0,
+        "success": true
+      },
+      "input_tokens": 10,
+      "model_id": "mock-same-model",
+      "observed_wall_ms": 512,
+      "output_tokens": 5,
+      "repetition": 1,
+      "scaffold_id": "mock-same-scaffold",
+      "success": true,
+      "task_id": "contract-smoke",
+      "tool_calls": 1,
+      "wall_ms": 3
+    },
+    {
+      "agent_claimed_success": true,
+      "arm": "habitat",
+      "changed_paths": [],
+      "diff_bytes": 0,
+      "diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "evaluation": {
+        "evaluator_id": "mock-independent-contract-evaluator",
+        "ok": true,
+        "score": 1.0,
+        "success": true
+      },
+      "input_tokens": 10,
+      "model_id": "mock-same-model",
+      "observed_wall_ms": 513,
+      "output_tokens": 5,
+      "repetition": 1,
+      "scaffold_id": "mock-same-scaffold",
+      "success": true,
+      "task_id": "contract-smoke",
+      "tool_calls": 1,
+      "wall_ms": 3
+    }
+  ],
+  "same_model_required": true,
+  "same_scaffold_required": true,
+  "schema": 3,
+  "seed": 10,
+  "tasks": 1
+}

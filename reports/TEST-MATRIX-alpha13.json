@@ -1,0 +1,18 @@
+{
+  "release": "0.1.0-alpha.13",
+  "source_tree": {
+    "total_tests": 240,
+    "passed": 240,
+    "failed": 0,
+    "shards": [
+      {"name": "alpha0-4", "tests": 66, "passed": 66, "seconds": 22.130},
+      {"name": "alpha5-7", "tests": 38, "passed": 38, "seconds": 25.383},
+      {"name": "alpha8-10", "tests": 56, "passed": 56, "seconds": 18.882},
+      {"name": "alpha11-13", "tests": 54, "passed": 54, "seconds": 25.351},
+      {"name": "core", "tests": 26, "passed": 26, "seconds": 4.180}
+    ],
+    "completed_process_evidence_only": true,
+    "combined_alpha8_13_attempt": "external wall-clock timeout after entering alpha.13; not counted as pass or fail"
+  },
+  "claim_boundary": "Process shards are used because long combined provider/browser lifecycles are host-sensitive. Every counted shard exited 0; incomplete combined invocations are not counted."
+}

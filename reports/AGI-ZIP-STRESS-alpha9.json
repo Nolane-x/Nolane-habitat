@@ -1,0 +1,536 @@
+{
+  "release": "0.1.0-alpha.9",
+  "corpus": "Nolane-AGI-Cognitive-System-4.0.0(1).zip",
+  "cold_ingest_ms": 16759.57,
+  "warm_refresh_ms": 347.35,
+  "file_count": 251,
+  "symbol_count": 865,
+  "occurrence_count": 4351,
+  "providers_cold": {
+    "revision": "rev:fbb21936eea07a6d3f11",
+    "providers": {
+      "python-ast": {
+        "available": true,
+        "scope": "file syntax + project import/call linkage",
+        "trust_ceiling": "semantic"
+      },
+      "python-jedi": {
+        "available": true,
+        "reason": "Jedi static semantic engine available",
+        "version": "0.20.0",
+        "scope": "static cross-file Python goto/call resolution with persistent per-source semantic partitions and a bounded 4-project Jedi LRU",
+        "trust_ceiling": "semantic",
+        "live_session": {
+          "running": true,
+          "root": "/tmp/tmpygqcb7il/habitat/managed-source/nolane-agi-cognitive-system",
+          "persistent_session": true,
+          "cache_policy": "bounded-lru",
+          "cached_projects": 1,
+          "max_cached_projects": 4,
+          "close_required_for_boundedness": false
+        },
+        "files": 78,
+        "relations": 2610,
+        "occurrences": 2662,
+        "calls_examined": 8118,
+        "unresolved_calls": 5456,
+        "ambiguous_calls": 0,
+        "file_errors": 0,
+        "cache_hit": false,
+        "domain_digest": "2542852175280c1814f0a325d06a958797175f377af5b27d9c72539f312454f2",
+        "api_surface_digest": "ccbc51a66bc6cde3ada83d4d2ffc83cf9a08f11354650498af74daa122efe7bc",
+        "partitions_total": 78,
+        "partitions_reused": 0,
+        "partitions_recomputed": 78,
+        "project_session_reused": false,
+        "persistent_session": true,
+        "project_cache_policy": "bounded-lru",
+        "project_execution": false
+      },
+      "typescript-program": {
+        "available": true,
+        "reason": "TypeScript compiler API resolved by Node",
+        "scope": "persistent TypeScript LanguageService/TypeChecker with dirty-source traversal partitions",
+        "trust_ceiling": "semantic",
+        "live_session": {
+          "running": false,
+          "root": "/tmp/tmpygqcb7il/habitat/managed-source/nolane-agi-cognitive-system"
+        }
+      },
+      "tree-sitter": {
+        "available": false,
+        "reason": "Python tree-sitter bindings are not bundled; optional provider contract reserved",
+        "trust_ceiling": "parser"
+      },
+      "scip": {
+        "available": false,
+        "reason": "external SCIP indexer/CLI required for precise index ingestion",
+        "trust_ceiling": "semantic"
+      },
+      "lsp": {
+        "available": false,
+        "reason": "external language server required",
+        "trust_ceiling": "semantic"
+      },
+      "java": {
+        "available": true,
+        "provider": "regex-fallback",
+        "reason": "javac is intentionally not executed during ingestion",
+        "trust_ceiling": "heuristic"
+      }
+    },
+    "policy": "missing precise providers are explicit capability gaps; Habitat does not relabel fallback output as precise"
+  },
+  "providers_warm": {
+    "revision": "rev:fbb21936eea07a6d3f11",
+    "providers": {
+      "python-ast": {
+        "available": true,
+        "scope": "file syntax + project import/call linkage",
+        "trust_ceiling": "semantic"
+      },
+      "python-jedi": {
+        "available": true,
+        "reason": "Jedi static semantic engine available",
+        "version": "0.20.0",
+        "scope": "static cross-file Python goto/call resolution with persistent per-source semantic partitions and a bounded 4-project Jedi LRU",
+        "trust_ceiling": "semantic",
+        "live_session": {
+          "running": true,
+          "root": "/tmp/tmpygqcb7il/habitat/managed-source/nolane-agi-cognitive-system",
+          "persistent_session": true,
+          "cache_policy": "bounded-lru",
+          "cached_projects": 1,
+          "max_cached_projects": 4,
+          "close_required_for_boundedness": false
+        },
+        "files": 78,
+        "relations": 2610,
+        "occurrences": 2662,
+        "calls_examined": 8118,
+        "unresolved_calls": 5456,
+        "ambiguous_calls": 0,
+        "file_errors": 0,
+        "cache_hit": true,
+        "domain_digest": "2542852175280c1814f0a325d06a958797175f377af5b27d9c72539f312454f2",
+        "api_surface_digest": "ccbc51a66bc6cde3ada83d4d2ffc83cf9a08f11354650498af74daa122efe7bc",
+        "partitions_total": 78,
+        "partitions_reused": 78,
+        "partitions_recomputed": 0,
+        "project_session_reused": true,
+        "persistent_session": true,
+        "project_cache_policy": "bounded-lru",
+        "project_execution": false
+      },
+      "typescript-program": {
+        "available": true,
+        "reason": "TypeScript compiler API resolved by Node",
+        "scope": "persistent TypeScript LanguageService/TypeChecker with dirty-source traversal partitions",
+        "trust_ceiling": "semantic",
+        "live_session": {
+          "running": false,
+          "root": "/tmp/tmpygqcb7il/habitat/managed-source/nolane-agi-cognitive-system"
+        }
+      },
+      "tree-sitter": {
+        "available": false,
+        "reason": "Python tree-sitter bindings are not bundled; optional provider contract reserved",
+        "trust_ceiling": "parser"
+      },
+      "scip": {
+        "available": false,
+        "reason": "external SCIP indexer/CLI required for precise index ingestion",
+        "trust_ceiling": "semantic"
+      },
+      "lsp": {
+        "available": false,
+        "reason": "external language server required",
+        "trust_ceiling": "semantic"
+      },
+      "java": {
+        "available": true,
+        "provider": "regex-fallback",
+        "reason": "javac is intentionally not executed during ingestion",
+        "trust_ceiling": "heuristic"
+      }
+    },
+    "policy": "missing precise providers are explicit capability gaps; Habitat does not relabel fallback output as precise"
+  },
+  "ordinary_reconcile": {
+    "revision": "rev:fbb21936eea07a6d3f11",
+    "changed_paths": [],
+    "unchanged": true,
+    "check": "size+mtime+ctime+inode",
+    "hashed_files": 0,
+    "refresh_mode": "integrity-assisted-metadata",
+    "backend_sync": {
+      "changed_paths": [],
+      "deleted_paths": [],
+      "hydrated_paths": [],
+      "authoritative_bytes_read": 0,
+      "authoritative_bytes_written": 0,
+      "mode": "shared-authority",
+      "paths_considered": 0,
+      "listing_mode": "none"
+    },
+    "perception_integrity": "os-change-fingerprint; use refresh() for cryptographic full verification"
+  },
+  "ordinary_reconcile_ms": 29.2,
+  "deep_refresh": {
+    "revision": "rev:fbb21936eea07a6d3f11",
+    "changed_paths": [],
+    "unchanged": true,
+    "compiled_files": 0,
+    "reused_files": 251,
+    "hashed_files": 251,
+    "refresh_mode": "deep",
+    "providers": {
+      "builtin": 173,
+      "python-ast": 78
+    },
+    "project_semantics": {
+      "base-resolver": {
+        "cache_hit": true,
+        "domain_digest": "3a43508d107cc3f698e68be0e2a30d20db4ccc76a990ac9347055b250dd0a743",
+        "relations": 2887,
+        "partitioned": true,
+        "partitions_total": 78,
+        "partitions_reused": 78,
+        "partitions_recomputed": 0,
+        "stale_partitions_removed": 0,
+        "dirty_paths": [],
+        "partition_sample": [
+          {
+            "path": "adapters/shared/gate_hook.py",
+            "cache_hit": true,
+            "relations": 79
+          },
+          {
+            "path": "command.py",
+            "cache_hit": true,
+            "relations": 2
+          },
+          {
+            "path": "install.py",
+            "cache_hit": true,
+            "relations": 9
+          },
+          {
+            "path": "kernel/__init__.py",
+            "cache_hit": true,
+            "relations": 2
+          },
+          {
+            "path": "kernel/agi_policy.py",
+            "cache_hit": true,
+            "relations": 17
+          },
+          {
+            "path": "kernel/agi_state.py",
+            "cache_hit": true,
+            "relations": 34
+          },
+          {
+            "path": "kernel/attestation.py",
+            "cache_hit": true,
+            "relations": 10
+          },
+          {
+            "path": "kernel/audit.py",
+            "cache_hit": true,
+            "relations": 170
+          },
+          {
+            "path": "kernel/benchmark.py",
+            "cache_hit": true,
+            "relations": 21
+          },
+          {
+            "path": "kernel/capability.py",
+            "cache_hit": true,
+            "relations": 31
+          },
+          {
+            "path": "kernel/cli.py",
+            "cache_hit": true,
+            "relations": 285
+          },
+          {
+            "path": "kernel/cognition_gate.py",
+            "cache_hit": true,
+            "relations": 31
+          },
+          {
+            "path": "kernel/cognition_model.py",
+            "cache_hit": true,
+            "relations": 29
+          },
+          {
+            "path": "kernel/cognitive_trajectory.py",
+            "cache_hit": true,
+            "relations": 23
+          },
+          {
+            "path": "kernel/composer.py",
+            "cache_hit": true,
+            "relations": 32
+          },
+          {
+            "path": "kernel/errors.py",
+            "cache_hit": true,
+            "relations": 3
+          },
+          {
+            "path": "kernel/evaluation.py",
+            "cache_hit": true,
+            "relations": 12
+          },
+          {
+            "path": "kernel/executive.py",
+            "cache_hit": true,
+            "relations": 16
+          },
+          {
+            "path": "kernel/gate.py",
+            "cache_hit": true,
+            "relations": 44
+          },
+          {
+            "path": "kernel/invalidation.py",
+            "cache_hit": true,
+            "relations": 1
+          },
+          {
+            "path": "kernel/knowledge.py",
+            "cache_hit": true,
+            "relations": 57
+          },
+          {
+            "path": "kernel/knowledge_graph.py",
+            "cache_hit": true,
+            "relations": 71
+          },
+          {
+            "path": "kernel/learning.py",
+            "cache_hit": true,
+            "relations": 10
+          },
+          {
+            "path": "kernel/ledger.py",
+            "cache_hit": true,
+            "relations": 6
+          },
+          {
+            "path": "kernel/memory.py",
+            "cache_hit": true,
+            "relations": 29
+          },
+          {
+            "path": "kernel/memory_service.py",
+            "cache_hit": true,
+            "relations": 25
+          },
+          {
+            "path": "kernel/meta_reasoning.py",
+            "cache_hit": true,
+            "relations": 8
+          },
+          {
+            "path": "kernel/model.py",
+            "cache_hit": true,
+            "relations": 27
+          },
+          {
+            "path": "kernel/policy.py",
+            "cache_hit": true,
+            "relations": 9
+          },
+          {
+            "path": "kernel/retrieval.py",
+            "cache_hit": true,
+            "relations": 31
+          },
+          {
+            "path": "kernel/semantic_proof.py",
+            "cache_hit": true,
+            "relations": 23
+          },
+          {
+            "path": "kernel/session_gate.py",
+            "cache_hit": true,
+            "relations": 25
+          },
+          {
+            "path": "kernel/skill_audit.py",
+            "cache_hit": true,
+            "relations": 3
+          },
+          {
+            "path": "kernel/skill_runtime.py",
+            "cache_hit": true,
+            "relations": 93
+          },
+          {
+            "path": "kernel/tool_broker.py",
+            "cache_hit": true,
+            "relations": 8
+          },
+          {
+            "path": "kernel/trajectory.py",
+            "cache_hit": true,
+            "relations": 26
+          },
+          {
+            "path": "package.py",
+            "cache_hit": true,
+            "relations": 33
+          },
+          {
+            "path": "tests/test_adapters.py",
+            "cache_hit": true,
+            "relations": 53
+          },
+          {
+            "path": "tests/test_adversarial.py",
+            "cache_hit": true,
+            "relations": 72
+          },
+          {
+            "path": "tests/test_agi_adapters.py",
+            "cache_hit": true,
+            "relations": 99
+          }
+        ]
+      },
+      "python-jedi": {
+        "available": true,
+        "reason": "Jedi static semantic engine available",
+        "version": "0.20.0",
+        "files": 78,
+        "relations": 2610,
+        "occurrences": 2662,
+        "calls_examined": 8118,
+        "unresolved_calls": 5456,
+        "ambiguous_calls": 0,
+        "file_errors": 0,
+        "cache_hit": true,
+        "domain_digest": "2542852175280c1814f0a325d06a958797175f377af5b27d9c72539f312454f2",
+        "api_surface_digest": "ccbc51a66bc6cde3ada83d4d2ffc83cf9a08f11354650498af74daa122efe7bc",
+        "partitions_total": 78,
+        "partitions_reused": 78,
+        "partitions_recomputed": 0,
+        "project_session_reused": true,
+        "persistent_session": true,
+        "project_cache_policy": "bounded-lru",
+        "trust_ceiling": "semantic",
+        "project_execution": false
+      },
+      "typescript-project": {
+        "available": true,
+        "reason": "no JS/TS files",
+        "files": 0,
+        "relations": 0,
+        "occurrences": 0,
+        "cache_hit": true,
+        "partitions_total": 0,
+        "partitions_reused": 0,
+        "partitions_recomputed": 0,
+        "program_invoked": false
+      },
+      "cache": {
+        "reused": true,
+        "provider_domain_reuse": {
+          "base": true,
+          "python_jedi": true,
+          "typescript": true
+        },
+        "compatibility_gate_drift": false
+      }
+    },
+    "project_semantic_cache_hit": true,
+    "occurrence_count": 4351,
+    "graph_delta": {
+      "relations": {
+        "inserted": 0,
+        "updated": 0,
+        "deleted": 0,
+        "unchanged": 2774,
+        "total": 2774
+      },
+      "occurrences": {
+        "inserted": 0,
+        "updated": 0,
+        "deleted": 0,
+        "unchanged": 4351,
+        "total": 4351
+      }
+    },
+    "backend_sync": {
+      "changed_paths": [],
+      "deleted_paths": [],
+      "hydrated_paths": [],
+      "authoritative_bytes_read": 0,
+      "authoritative_bytes_written": 0,
+      "mode": "shared-authority",
+      "paths_considered": 0,
+      "listing_mode": "none"
+    },
+    "workspace_listing_mode": "full-enumeration",
+    "paths_considered": 251,
+    "io_accounting": {
+      "backend_authority_bytes_read": 0,
+      "hash_bytes_read": 88271461,
+      "compiler_input_bytes_minimum": 0,
+      "index_bytes_written": 0,
+      "note": "compiler_input_bytes_minimum counts admitted file bytes once; individual providers may internally rescan"
+    }
+  },
+  "explorer": {
+    "confidence": "medium",
+    "region_count": 4,
+    "lines_selected": 80,
+    "paths": [
+      "kernel/semantic_proof.py",
+      "tests/test_gate.py",
+      "tests/test_semantic_proof.py",
+      "kernel/semantic_proof.py"
+    ],
+    "source_bytes_read": 0,
+    "agent_visible_source_bytes": 6608,
+    "backend_authority_bytes_read": 23119,
+    "efficiency": {
+      "handle": "ctx:69056b2b076dfafcedb6",
+      "compiled_revision": "rev:fbb21936eea07a6d3f11",
+      "current_revision": "rev:fbb21936eea07a6d3f11",
+      "fault_count": 4,
+      "unique_fetched_objects": 4,
+      "exact_source_bytes": 6608,
+      "agent_visible_source_bytes": 6608,
+      "backend_authority_bytes_read": 23119,
+      "used_objects": [],
+      "unhelpful_objects": [],
+      "unrated_objects": [
+        "sym:071bd3fc9da791270413",
+        "sym:6f16a2283f6f331db960",
+        "sym:7173b165390eb5a809cd",
+        "sym:e0399d1dd6fd049c6efc"
+      ],
+      "utilization_ratio": 0.0,
+      "rated_ratio": 0.0,
+      "source_bytes_per_used_object": null,
+      "measurement_boundary": "exact source bytes/page faults and explicit feedback; bytes are not tokens and unrated is not equivalent to useless"
+    }
+  },
+  "no_gold": {
+    "confidence": "low",
+    "abstained": true,
+    "region_count": 0,
+    "source_bytes_read": 0
+  },
+  "unicode_query": {
+    "confidence": "high",
+    "abstained": false,
+    "region_count": 3
+  },
+  "claim_boundary": "Measures deterministic alpha.9 integrity/index/compiler/explorer/I-O plumbing on supplied corpus; not an LLM/token/AGI benchmark. Authority I/O and model-visible source bytes are separate metrics."
+}

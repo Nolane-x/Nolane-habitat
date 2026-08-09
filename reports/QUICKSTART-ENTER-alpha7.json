@@ -1,0 +1,149 @@
+{
+  "workspace": "/tmp/a7-qs/habitat",
+  "source_root": "/tmp/a7-qs/project",
+  "mode": "linked-folder",
+  "revision": "rev:bf67d3810bd83b6b432d",
+  "file_count": 1,
+  "symbol_count": 1,
+  "diagnostic_count": 0,
+  "occurrence_count": 1,
+  "event_cursor": 2,
+  "languages": {
+    "python": 1.0
+  },
+  "capabilities": [],
+  "backend": {
+    "backend_id": "backend:1d62ddc7d258586c3acb",
+    "kind": "local-filesystem",
+    "authority": "source-files",
+    "authoritative_root": "/tmp/a7-qs/project",
+    "materialized_root": "/tmp/a7-qs/project",
+    "execution_kind": "local-process",
+    "supports_native_watch": true,
+    "capabilities": [
+      "discover",
+      "execute",
+      "read",
+      "reconcile",
+      "watch",
+      "write"
+    ],
+    "source_authority_id": "authority:be080b239c1807697187",
+    "execution_provider_id": "executor:08702d354991dea735b0",
+    "source_authority": {
+      "authority_id": "authority:be080b239c1807697187",
+      "kind": "local-filesystem",
+      "authority": "source-files",
+      "authoritative_root": "/tmp/a7-qs/project",
+      "materialized_root": "/tmp/a7-qs/project",
+      "supports_native_watch": true,
+      "capabilities": [
+        "read",
+        "write",
+        "reconcile",
+        "watch"
+      ]
+    },
+    "execution_provider": {
+      "provider_id": "executor:08702d354991dea735b0",
+      "kind": "local-process",
+      "execution_root": "/tmp/a7-qs/project",
+      "capabilities": [
+        "discover",
+        "execute"
+      ]
+    },
+    "semantic_twin_authority": false,
+    "semantic_materialization_role": "shared-source-view",
+    "substrate_composable": true
+  },
+  "semantic_providers": {
+    "python-ast": {
+      "available": true,
+      "trust_ceiling": "semantic",
+      "project_linking": true
+    },
+    "python-jedi": {
+      "available": true,
+      "reason": "Jedi static semantic engine available",
+      "version": "0.20.0",
+      "trust_ceiling": "semantic",
+      "project_linking": true,
+      "files": 1,
+      "relations": 0,
+      "occurrences": 0,
+      "calls_examined": 1,
+      "unresolved_calls": 1,
+      "ambiguous_calls": 0,
+      "file_errors": 0,
+      "cache_hit": false,
+      "domain_digest": "768681eda1d44d4725cbe305c8921954d2e9020a7a706dcd354eb17f372e23c3",
+      "api_surface_digest": "81ce214bab563eaac29c40b325ac4049c706aba861ed21d612172915b761a8f8",
+      "partitions_total": 1,
+      "partitions_reused": 0,
+      "partitions_recomputed": 1,
+      "project_session_reused": false,
+      "persistent_session": true,
+      "project_cache_policy": "bounded-lru",
+      "project_execution": false
+    },
+    "typescript-compiler-api": {
+      "available": true,
+      "reason": "TypeScript compiler API resolved by Node",
+      "trust_ceiling": "semantic",
+      "project_linking": true
+    },
+    "java": {
+      "available": true,
+      "provider": "regex-fallback",
+      "trust_ceiling": "heuristic"
+    },
+    "runtime-browser": {
+      "available": true,
+      "reason": "Playwright + system Chromium available",
+      "browser": "/usr/bin/chromium"
+    }
+  },
+  "index_health": {
+    "truncated_text_files": 0,
+    "incomplete_parse_files": 0,
+    "indexed_bytes": 48,
+    "source_bytes": 48
+  },
+  "live_workspace": {
+    "ordinary_sync": "metadata candidates -> targeted content hash -> incremental semantic admission",
+    "mutation_integrity": "deep content hash before stage/commit/rollback",
+    "watcher": {
+      "running": false,
+      "revision": "rev:bf67d3810bd83b6b432d"
+    },
+    "context_refresh": true,
+    "context_materialization": "bounded symbol-body packet; no automatic whole-file dump",
+    "context_residency": {
+      "revision": "rev:bf67d3810bd83b6b432d",
+      "config": {
+        "max_objects": 32,
+        "max_source_bytes": 120000
+      },
+      "count": 0,
+      "source_bytes_estimate": 0,
+      "state_counts": {
+        "fresh": 0,
+        "stale": 0,
+        "missing": 0
+      },
+      "objects": []
+    },
+    "virtual_context_memory": true,
+    "content_addressed_state": "Merkle snapshots derived from already-hashed canonical files; no source copy",
+    "active_evidence": 0,
+    "semantic_rename": "Python/Jedi precision lane; fail-closed outside proven provider boundary"
+  },
+  "principles": {
+    "source_authority": "source files",
+    "semantic_twin": "derived and provenance-bound",
+    "terminal": "not an agent primitive; raw process output is fallback evidence",
+    "ui": "semantic runtime state first; pixels optional secondary oracle",
+    "context": "orientation and bounded exact-source packets; retrieved metadata is not authority"
+  }
+}

@@ -1,0 +1,140 @@
+{
+  "claim_boundary": "All 281 collected tests were executed on the final runtime/source code through completed process-bounded runs. The tests were not admitted from a monolithic host; each recorded run returned success. Documentation/report additions after the matrix do not alter runtime behavior.",
+  "date": "2026-08-08",
+  "notes": [
+    "A prior module-matrix outer runner wall-clock timeout was treated as non-evidence and not counted.",
+    "The intermittent atomic-write fd race found during rerun was fixed before the admitted 281/281 final-source matrix."
+  ],
+  "release": "0.1.0-alpha.17",
+  "static": {
+    "json_schemas_parsed": 56,
+    "observatory_js_node_check": "passed",
+    "python_compileall": "passed",
+    "text_nul_files": 0
+  },
+  "stress": {
+    "atomic_write_concurrency": {
+      "rounds": 100,
+      "status": "passed",
+      "writers_per_round": 32
+    }
+  },
+  "test_inventory": {
+    "collected": 281,
+    "failed": 0,
+    "groups": [
+      {
+        "name": "alpha17-stability",
+        "passed": 9
+      },
+      {
+        "name": "alpha16-nearlive",
+        "passed": 12
+      },
+      {
+        "name": "alpha15-operator",
+        "passed": 3
+      },
+      {
+        "name": "alpha14-executive",
+        "passed": 15
+      },
+      {
+        "name": "alpha13-resilience",
+        "passed": 27
+      },
+      {
+        "name": "alpha12-cinematic-world",
+        "passed": 11
+      },
+      {
+        "name": "alpha12-observatory",
+        "passed": 4
+      },
+      {
+        "name": "alpha11-observatory",
+        "passed": 12
+      },
+      {
+        "name": "source-bridge",
+        "passed": 6
+      },
+      {
+        "name": "workspace-protocol-schemas",
+        "passed": 10
+      },
+      {
+        "name": "alpha10",
+        "passed": 23
+      },
+      {
+        "name": "alpha8",
+        "passed": 22
+      },
+      {
+        "name": "alpha9",
+        "passed": 11
+      },
+      {
+        "name": "alpha7",
+        "passed": 10
+      },
+      {
+        "name": "alpha6",
+        "passed": 11
+      },
+      {
+        "name": "alpha5-deep",
+        "passed": 15
+      },
+      {
+        "name": "alpha5-schema",
+        "passed": 2
+      },
+      {
+        "name": "alpha1-semantics",
+        "passed": 13
+      },
+      {
+        "name": "alpha2",
+        "passed": 16
+      },
+      {
+        "name": "alpha3",
+        "passed": 14
+      },
+      {
+        "name": "alpha4",
+        "passed": 17
+      },
+      {
+        "name": "adversarial-alpha1-contracts",
+        "passed": 6
+      },
+      {
+        "name": "remaining-core",
+        "passed": 10
+      },
+      {
+        "name": "sample-project",
+        "passed": 2
+      }
+    ],
+    "passed": 281,
+    "timeouts_admitted_as_pass": 0
+  },
+  "wheel_smoke": {
+    "browser_action": "passed",
+    "import_version": "0.1.0-alpha.17",
+    "install": "passed",
+    "observatory_assets": "passed",
+    "orient_query": "passed",
+    "post_close": {
+      "browser_started": false,
+      "raw_streams": 0,
+      "shared_users": 0
+    },
+    "stream_mode_observed": "cdp-websocket-live",
+    "wheel": "artifacts/nolane_habitat-0.1.0a17-py3-none-any.whl"
+  }
+}

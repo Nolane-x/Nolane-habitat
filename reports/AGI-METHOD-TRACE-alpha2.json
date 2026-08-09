@@ -1,0 +1,58 @@
+{
+  "release": "0.1.0-alpha.2",
+  "method": "Nolane AGI-inspired falsifiable implementation loop",
+  "charter": {
+    "objective": "Make an ordinary project easier for an AI agent to inhabit through a provenance-bound semantic twin while canonical files remain normal and authoritative.",
+    "hard_constraints": [
+      "No project-code execution during ingestion",
+      "No generic shell primitive in the agent protocol",
+      "No semantic precision upgrade without provider evidence",
+      "Consequential mutations require source-bound read-back/preflight",
+      "Missing providers remain explicit capability gaps",
+      "Engineering measurements are not promoted to token/task-success/AGI claims"
+    ]
+  },
+  "belief_updates": [
+    {
+      "belief": "File digest alone is sufficient compile-cache identity",
+      "status": "rejected",
+      "observation": "Compiler/provider artifacts can change while source bytes remain unchanged",
+      "change": "Added compiler-cache and provider/toolchain fingerprints plus legacy-cache migration probe"
+    },
+    {
+      "belief": "Per-file cache reuse is enough to make cross-file semantics precise",
+      "status": "rejected",
+      "observation": "Duplicate-name calls remained ambiguous without project semantic resolution",
+      "change": "Added Python project linker and TypeScript Program+TypeChecker semantics"
+    },
+    {
+      "belief": "Adding a correct semantic graph edge is enough for context quality",
+      "status": "rejected",
+      "observation": "Lexical duplicate could remain over-ranked and graph cycles could self-reinforce",
+      "change": "Context V3 reranks with semantic evidence, distinct-root reinforcement, cycle protection and production-root expansion"
+    },
+    {
+      "belief": "Browser provider lifecycle is validated by isolated UI tests",
+      "status": "rejected",
+      "observation": "Full suite exposed Playwright sync-driver collision across workspaces",
+      "change": "Process-shared browser engine with workspace-scoped contexts"
+    },
+    {
+      "belief": "Benchmark scripts running in the development environment proves release reproducibility",
+      "status": "rejected",
+      "observation": "Direct benchmark execution failed due to import-root assumptions",
+      "change": "Self-bootstrapping benchmark scripts and extracted-release execution gate"
+    }
+  ],
+  "admission_gates": [
+    "57-test development suite",
+    "vertical end-to-end demo",
+    "supplied AGI ZIP stress corpus",
+    "self-audit with failed rounds preserved",
+    "final archive integrity",
+    "manifest verification",
+    "clean extracted test suite",
+    "clean extracted demo"
+  ],
+  "claim_boundary": "Alpha.2 demonstrates bounded semantic/incremental/runtime plumbing on included fixtures. It does not demonstrate universal repository understanding, reduced LLM tokens, AGI capability or production isolation."
+}

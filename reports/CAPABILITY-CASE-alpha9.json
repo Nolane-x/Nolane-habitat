@@ -1,0 +1,28 @@
+{
+  "release": "0.1.0-alpha.9",
+  "admitted": {
+    "policy_engine": "bounded local operator governance",
+    "network_containment": "partial Linux user/network namespace + rlimits/env scrub; not filesystem sandbox",
+    "agent_scoped_cognition": "per-agent utility/session",
+    "multi_agent_mutation": "local path leases + transaction ownership",
+    "git_cognition": "status/history/blame/line provenance",
+    "dependency_cognition": "direct manifest + lockfile presence",
+    "uncertainty_fusion": "correlation-aware heuristic evidence balance",
+    "ab_harness": "executable orchestration contract, no model/evaluator/result"
+  },
+  "not_admitted": [
+    "hostile-code sandbox safety",
+    "distributed multi-agent correctness",
+    "transitive dependency reasoning",
+    "calibrated probability",
+    "same-model coding superiority",
+    "AGI capability"
+  ],
+  "evidence": [
+    "alpha9 adversarial tests",
+    "vertical demo",
+    "supplied AGI ZIP stress",
+    "A/B harness contract smoke",
+    "schema/package identity regression"
+  ]
+}

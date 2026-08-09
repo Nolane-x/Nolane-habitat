@@ -1,0 +1,233 @@
+{
+  "release": "0.1.0-alpha.6",
+  "benchmark": "context-precision-plumbing-v3",
+  "fixture": {
+    "files": 202,
+    "noise_files": 200
+  },
+  "filesystem_full_scan": {
+    "credential": {
+      "files_read": 202,
+      "source_bytes_read": 8111,
+      "top_paths": [
+        "auth.py"
+      ]
+    },
+    "billing": {
+      "files_read": 202,
+      "source_bytes_read": 8111,
+      "top_paths": [
+        "billing.py"
+      ]
+    },
+    "no_gold": {
+      "files_read": 202,
+      "source_bytes_read": 8111,
+      "top_paths": []
+    }
+  },
+  "habitat": {
+    "credential": {
+      "paths": [
+        "auth.py",
+        "auth.py"
+      ],
+      "confidence": "high",
+      "abstain": false,
+      "plan_action": "fault-pages",
+      "source_bytes": 127,
+      "page_count": 1,
+      "trace": {
+        "trace_id": "trace:36d74efe9a2f6f93aefa",
+        "label": "credential",
+        "active": false,
+        "started_at": "2026-08-07T09:49:05.774863+00:00",
+        "stopped_at": "2026-08-07T09:49:05.808588+00:00",
+        "start_revision": "rev:cac6af37f7483d7ec124",
+        "end_revision": "rev:cac6af37f7483d7ec124",
+        "call_count": 3,
+        "ok_calls": 3,
+        "duration_ms": 29,
+        "request_bytes": 396,
+        "response_bytes": 3365,
+        "exact_source_bytes": 127,
+        "methods": {
+          "workspace.orient": 1,
+          "workspace.context.plan_next": 1,
+          "workspace.context.fetch": 1
+        },
+        "calls": [
+          {
+            "seq": 1,
+            "trace_id": "trace:36d74efe9a2f6f93aefa",
+            "method": "workspace.orient",
+            "ok": 1,
+            "duration_ms": 23,
+            "request_bytes": 101,
+            "response_bytes": 1389,
+            "source_bytes": 0,
+            "revision": "rev:cac6af37f7483d7ec124",
+            "recorded_at": "2026-08-07T09:49:05.800063+00:00"
+          },
+          {
+            "seq": 2,
+            "trace_id": "trace:36d74efe9a2f6f93aefa",
+            "method": "workspace.context.plan_next",
+            "ok": 1,
+            "duration_ms": 3,
+            "request_bytes": 137,
+            "response_bytes": 1005,
+            "source_bytes": 0,
+            "revision": "rev:cac6af37f7483d7ec124",
+            "recorded_at": "2026-08-07T09:49:05.803828+00:00"
+          },
+          {
+            "seq": 3,
+            "trace_id": "trace:36d74efe9a2f6f93aefa",
+            "method": "workspace.context.fetch",
+            "ok": 1,
+            "duration_ms": 3,
+            "request_bytes": 158,
+            "response_bytes": 971,
+            "source_bytes": 127,
+            "revision": "rev:cac6af37f7483d7ec124",
+            "recorded_at": "2026-08-07T09:49:05.807655+00:00"
+          }
+        ]
+      },
+      "gold_path": "auth.py",
+      "gold_retrieved": true,
+      "noise_paths": []
+    },
+    "billing": {
+      "paths": [
+        "billing.py",
+        "billing.py"
+      ],
+      "confidence": "high",
+      "abstain": false,
+      "plan_action": "fault-pages",
+      "source_bytes": 92,
+      "page_count": 1,
+      "trace": {
+        "trace_id": "trace:a4f604b472a669947d5c",
+        "label": "billing",
+        "active": false,
+        "started_at": "2026-08-07T09:49:05.817903+00:00",
+        "stopped_at": "2026-08-07T09:49:05.845949+00:00",
+        "start_revision": "rev:cac6af37f7483d7ec124",
+        "end_revision": "rev:cac6af37f7483d7ec124",
+        "call_count": 3,
+        "ok_calls": 3,
+        "duration_ms": 25,
+        "request_bytes": 389,
+        "response_bytes": 3355,
+        "exact_source_bytes": 92,
+        "methods": {
+          "workspace.orient": 1,
+          "workspace.context.plan_next": 1,
+          "workspace.context.fetch": 1
+        },
+        "calls": [
+          {
+            "seq": 4,
+            "trace_id": "trace:a4f604b472a669947d5c",
+            "method": "workspace.orient",
+            "ok": 1,
+            "duration_ms": 19,
+            "request_bytes": 94,
+            "response_bytes": 1384,
+            "source_bytes": 0,
+            "revision": "rev:cac6af37f7483d7ec124",
+            "recorded_at": "2026-08-07T09:49:05.837602+00:00"
+          },
+          {
+            "seq": 5,
+            "trace_id": "trace:a4f604b472a669947d5c",
+            "method": "workspace.context.plan_next",
+            "ok": 1,
+            "duration_ms": 3,
+            "request_bytes": 137,
+            "response_bytes": 1022,
+            "source_bytes": 0,
+            "revision": "rev:cac6af37f7483d7ec124",
+            "recorded_at": "2026-08-07T09:49:05.841283+00:00"
+          },
+          {
+            "seq": 6,
+            "trace_id": "trace:a4f604b472a669947d5c",
+            "method": "workspace.context.fetch",
+            "ok": 1,
+            "duration_ms": 3,
+            "request_bytes": 158,
+            "response_bytes": 949,
+            "source_bytes": 92,
+            "revision": "rev:cac6af37f7483d7ec124",
+            "recorded_at": "2026-08-07T09:49:05.845293+00:00"
+          }
+        ]
+      },
+      "gold_path": "billing.py",
+      "gold_retrieved": true,
+      "noise_paths": []
+    },
+    "no_gold": {
+      "paths": [],
+      "confidence": "low",
+      "abstain": true,
+      "plan_action": "abstain-or-broaden-query",
+      "source_bytes": 0,
+      "page_count": 0,
+      "trace": {
+        "trace_id": "trace:ad4dc3541cb1a190c4b7",
+        "label": "no_gold",
+        "active": false,
+        "started_at": "2026-08-07T09:49:05.848319+00:00",
+        "stopped_at": "2026-08-07T09:49:05.897004+00:00",
+        "start_revision": "rev:cac6af37f7483d7ec124",
+        "end_revision": "rev:cac6af37f7483d7ec124",
+        "call_count": 2,
+        "ok_calls": 2,
+        "duration_ms": 46,
+        "request_bytes": 242,
+        "response_bytes": 1499,
+        "exact_source_bytes": 0,
+        "methods": {
+          "workspace.orient": 1,
+          "workspace.context.plan_next": 1
+        },
+        "calls": [
+          {
+            "seq": 7,
+            "trace_id": "trace:ad4dc3541cb1a190c4b7",
+            "method": "workspace.orient",
+            "ok": 1,
+            "duration_ms": 43,
+            "request_bytes": 105,
+            "response_bytes": 1097,
+            "source_bytes": 0,
+            "revision": "rev:cac6af37f7483d7ec124",
+            "recorded_at": "2026-08-07T09:49:05.892689+00:00"
+          },
+          {
+            "seq": 8,
+            "trace_id": "trace:ad4dc3541cb1a190c4b7",
+            "method": "workspace.context.plan_next",
+            "ok": 1,
+            "duration_ms": 3,
+            "request_bytes": 137,
+            "response_bytes": 402,
+            "source_bytes": 0,
+            "revision": "rev:cac6af37f7483d7ec124",
+            "recorded_at": "2026-08-07T09:49:05.896352+00:00"
+          }
+        ]
+      },
+      "gold_path": null,
+      "gold_retrieved": null,
+      "noise_paths": []
+    }
+  },
+  "metrics_definition": "Deterministic retrieval/source-byte instrumentation with gold paths and a no-gold abstention case.",
+  "claim_boundary": "Not a same-model agent A/B. It supports only retrieval/planner plumbing claims, not token, reasoning, speed, or coding-success claims."
+}

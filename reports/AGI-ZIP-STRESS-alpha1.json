@@ -1,0 +1,298 @@
+{
+  "source": "/mnt/data/Nolane-AGI-Cognitive-System-4.0.0(1).zip",
+  "cold_ingest_seconds": 0.6542915999998513,
+  "warm_refresh_seconds": 0.14127496599985534,
+  "warm_refresh": {
+    "revision": "rev:133a4c4953564dbb3b44",
+    "changed_paths": [],
+    "unchanged": true,
+    "compiled_files": 0,
+    "reused_files": 251,
+    "providers": {
+      "builtin": 173,
+      "python-ast": 78
+    }
+  },
+  "workspace": {
+    "file_count": 251,
+    "symbol_count": 865,
+    "diagnostic_count": 0,
+    "index_health": {
+      "truncated_text_files": 3,
+      "incomplete_parse_files": 1,
+      "indexed_bytes": 1723080,
+      "source_bytes": 88271461
+    }
+  },
+  "contexts": [
+    {
+      "task": "understand context engineering and context packet construction",
+      "seconds": 0.32260440600020956,
+      "task_class": "generic",
+      "objects": [
+        {
+          "object_id": "sym:dd19a8cd9dc627f66cf0",
+          "object_type": "symbol",
+          "relevance": 0.8315111111111112,
+          "reason": "lexical index match; task-to-symbol structural match",
+          "path": "kernel/retrieval.py",
+          "source_range": [
+            292,
+            355
+          ],
+          "lane": "lexical+symbol",
+          "trust": "exact"
+        },
+        {
+          "object_id": "sym:83c9e5cb5c1df827ad53",
+          "object_type": "symbol",
+          "relevance": 0.8270666666666667,
+          "reason": "lexical index match; task-to-symbol structural match",
+          "path": "tests/test_knowledge_retrieval.py",
+          "source_range": [
+            51,
+            61
+          ],
+          "lane": "lexical+symbol",
+          "trust": "exact"
+        },
+        {
+          "object_id": "sym:d8a7403b8d29a17f9dde",
+          "object_type": "symbol",
+          "relevance": 0.7945777777777777,
+          "reason": "lexical index match; task-to-symbol structural match",
+          "path": "kernel/skill_runtime.py",
+          "source_range": [
+            202,
+            208
+          ],
+          "lane": "lexical+symbol",
+          "trust": "exact"
+        },
+        {
+          "object_id": "sym:a73bb65e8057f47f3528",
+          "object_type": "symbol",
+          "relevance": 0.7901333333333334,
+          "reason": "lexical index match; task-to-symbol structural match",
+          "path": "tests/test_skills.py",
+          "source_range": [
+            121,
+            133
+          ],
+          "lane": "lexical+symbol",
+          "trust": "exact"
+        },
+        {
+          "object_id": "sym:168f86ea41382050d3c1",
+          "object_type": "symbol",
+          "relevance": 0.7856888888888889,
+          "reason": "lexical index match; task-to-symbol structural match",
+          "path": "tests/test_agi_state.py",
+          "source_range": [
+            77,
+            83
+          ],
+          "lane": "lexical+symbol",
+          "trust": "exact"
+        },
+        {
+          "object_id": "file:f75f488e994ad6372e51",
+          "object_type": "file",
+          "relevance": 0.76,
+          "reason": "lexical index match",
+          "path": "skills/nolane-agi-context-engineering/SKILL.md",
+          "source_range": null,
+          "lane": "lexical",
+          "trust": null
+        }
+      ],
+      "omitted": 451,
+      "lane_counts": {
+        "lexical": 10,
+        "symbol": 8,
+        "graph": 3
+      }
+    },
+    {
+      "task": "find tool orchestration and execution proof logic",
+      "seconds": 0.21712052900011258,
+      "task_class": "implementation",
+      "objects": [
+        {
+          "object_id": "sym:5a526a7871fac28717fa",
+          "object_type": "symbol",
+          "relevance": 1.0,
+          "reason": "lexical index match; task-to-symbol structural match",
+          "path": "tests/test_skill_runtime.py",
+          "source_range": [
+            76,
+            83
+          ],
+          "lane": "lexical+symbol",
+          "trust": "exact"
+        },
+        {
+          "object_id": "sym:4e2caf6fa0641ef6155a",
+          "object_type": "symbol",
+          "relevance": 0.9036106666666666,
+          "reason": "lexical index match; task-to-symbol structural match",
+          "path": "tests/test_tool_broker.py",
+          "source_range": [
+            24,
+            30
+          ],
+          "lane": "lexical+symbol",
+          "trust": "exact"
+        },
+        {
+          "object_id": "sym:592940dd385a9e580818",
+          "object_type": "symbol",
+          "relevance": 0.8621027368421053,
+          "reason": "lexical index match; task-to-symbol structural match",
+          "path": "tests/test_semantic_proof.py",
+          "source_range": [
+            99,
+            103
+          ],
+          "lane": "lexical+symbol",
+          "trust": "exact"
+        },
+        {
+          "object_id": "sym:685406e50137e0810b56",
+          "object_type": "symbol",
+          "relevance": 0.8066666666666666,
+          "reason": "task-to-symbol structural match",
+          "path": "tests/test_adversarial.py",
+          "source_range": [
+            207,
+            211
+          ],
+          "lane": "symbol",
+          "trust": "exact"
+        },
+        {
+          "object_id": "file:b135b4e5a80d7f8c47dd",
+          "object_type": "file",
+          "relevance": 0.8061862399999999,
+          "reason": "lexical index match; test-file lane; dependency expansion:imports trust:exact",
+          "path": "tests/test_v4_property_attacks.py",
+          "source_range": null,
+          "lane": "lexical+test+graph",
+          "trust": "exact"
+        },
+        {
+          "object_id": "sym:875636297a2216b45a2c",
+          "object_type": "symbol",
+          "relevance": 0.7937853056,
+          "reason": "lexical index match; task-to-symbol structural match; dependency expansion:calls trust:parser",
+          "path": "kernel/tool_broker.py",
+          "source_range": [
+            27,
+            65
+          ],
+          "lane": "lexical+symbol+graph",
+          "trust": "exact"
+        }
+      ],
+      "omitted": 951,
+      "lane_counts": {
+        "lexical": 9,
+        "symbol": 8,
+        "test": 3,
+        "graph": 2
+      }
+    },
+    {
+      "task": "locate semantic proof and verification policy",
+      "seconds": 0.24844311700007893,
+      "task_class": "generic",
+      "objects": [
+        {
+          "object_id": "sym:a057d66eaba75222ab3a",
+          "object_type": "symbol",
+          "relevance": 0.79984,
+          "reason": "lexical index match; task-to-symbol structural match",
+          "path": "kernel/semantic_proof.py",
+          "source_range": [
+            106,
+            175
+          ],
+          "lane": "lexical+symbol",
+          "trust": "exact"
+        },
+        {
+          "object_id": "sym:6f16a2283f6f331db960",
+          "object_type": "symbol",
+          "relevance": 0.7954399999999999,
+          "reason": "lexical index match; task-to-symbol structural match",
+          "path": "kernel/semantic_proof.py",
+          "source_range": [
+            198,
+            270
+          ],
+          "lane": "lexical+symbol",
+          "trust": "exact"
+        },
+        {
+          "object_id": "sym:7173b165390eb5a809cd",
+          "object_type": "symbol",
+          "relevance": 0.79104,
+          "reason": "lexical index match; task-to-symbol structural match",
+          "path": "tests/test_semantic_proof.py",
+          "source_range": [
+            67,
+            68
+          ],
+          "lane": "lexical+symbol",
+          "trust": "exact"
+        },
+        {
+          "object_id": "sym:592940dd385a9e580818",
+          "object_type": "symbol",
+          "relevance": 0.7864087272727271,
+          "reason": "lexical index match; task-to-symbol structural match",
+          "path": "tests/test_semantic_proof.py",
+          "source_range": [
+            99,
+            103
+          ],
+          "lane": "lexical+symbol",
+          "trust": "exact"
+        },
+        {
+          "object_id": "sym:dfd3bfec903f3ebe6365",
+          "object_type": "symbol",
+          "relevance": 0.779750016,
+          "reason": "lexical index match; task-to-symbol structural match; dependency expansion:calls trust:parser",
+          "path": "kernel/semantic_proof.py",
+          "source_range": [
+            64,
+            72
+          ],
+          "lane": "lexical+symbol+graph",
+          "trust": "exact"
+        },
+        {
+          "object_id": "sym:e0399d1dd6fd049c6efc",
+          "object_type": "symbol",
+          "relevance": 0.7782076594176,
+          "reason": "lexical index match; task-to-symbol structural match; dependency expansion:calls trust:parser",
+          "path": "tests/test_semantic_proof.py",
+          "source_range": [
+            105,
+            111
+          ],
+          "lane": "lexical+symbol+graph",
+          "trust": "exact"
+        }
+      ],
+      "omitted": 381,
+      "lane_counts": {
+        "lexical": 12,
+        "symbol": 10,
+        "graph": 4
+      }
+    }
+  ],
+  "claim_boundary": "This probe measures Habitat plumbing/index behavior only. It does not measure LLM token savings or task-success uplift."
+}

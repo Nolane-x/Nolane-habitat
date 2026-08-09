@@ -1,0 +1,83 @@
+{
+  "release": "0.1.0-alpha.12",
+  "capabilities": {
+    "cinematic_observatory": {
+      "status": "admitted",
+      "evidence": {
+        "graph_nodes": 150,
+        "graph_edges": 126,
+        "effects": 49,
+        "dataflows": 55,
+        "runtime_topology_nodes": 16,
+        "world_entities": 18,
+        "counterfactual_worlds": 2
+      },
+      "observer_only_http_post": 405
+    },
+    "effect_twin": {
+      "status": "admitted-static-evidence",
+      "demo_facts": 32,
+      "stress_facts": 29012
+    },
+    "dataflow_twin": {
+      "status": "admitted-static-intra-file",
+      "demo_facts": 37,
+      "stress_facts": 35809
+    },
+    "runtime_topology": {
+      "status": "admitted-observed-telemetry",
+      "demo_nodes": 16,
+      "demo_edges": 15
+    },
+    "project_world": {
+      "status": "admitted-selected-providers",
+      "demo_nodes": 18,
+      "demo_edges": 10
+    },
+    "counterfactual_worlds": {
+      "status": "admitted",
+      "demo_worlds": 2,
+      "verification": "disposable-copy supported; canonical promotion transactional"
+    },
+    "cognitive_director": {
+      "status": "admitted-ordinal-heuristic",
+      "next": {
+        "operation": "selective-revalidate",
+        "reason": "Observed world changed at auth/claims.py; current plan may be stale.",
+        "expected_information_gain": "high",
+        "decision_sensitivity": "critical",
+        "cost": "low",
+        "score": 16,
+        "ref_id": "notify:eb1f5aa969b4ea89a971",
+        "gate": "must-resolve-before-consequential-commit"
+      }
+    },
+    "mcp_agent_underlay": {
+      "status": "inherited",
+      "catalog": "12 high-level tools; explicit agent identity"
+    }
+  },
+  "stress": {
+    "files": 251,
+    "symbols": 865,
+    "occurrences": 4351,
+    "ordinary_warm_hashes": 0,
+    "deep_compiled": 0,
+    "deep_reused": 251,
+    "no_gold": {
+      "confidence": "low",
+      "abstained": true,
+      "source_bytes_read": 0
+    }
+  },
+  "not_admitted": [
+    "whole-program/interprocedural dataflow proof",
+    "causal inference",
+    "complete deployment/runtime world",
+    "universal semantic-provider parity",
+    "hostile-code production sandbox",
+    "same-model product-quality superiority",
+    "unbounded thousands-of-nodes Observatory scale"
+  ],
+  "claim_boundary": "Capability case describes mechanisms actually exercised by alpha.12 evidence; partial providers remain partial."
+}

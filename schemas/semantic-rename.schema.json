@@ -1,0 +1,51 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "nolane.habitat/semantic-rename/v1alpha5",
+  "type": "object",
+  "required": [
+    "provider",
+    "trust",
+    "symbol_id",
+    "old_name",
+    "new_name",
+    "site_count",
+    "project_execution",
+    "paths"
+  ],
+  "properties": {
+    "provider": {
+      "type": "string"
+    },
+    "provider_version": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "trust": {
+      "const": "semantic"
+    },
+    "symbol_id": {
+      "type": "string"
+    },
+    "old_name": {
+      "type": "string"
+    },
+    "new_name": {
+      "type": "string"
+    },
+    "site_count": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "project_execution": {
+      "const": false
+    },
+    "paths": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    }
+  }
+}

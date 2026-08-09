@@ -1,0 +1,326 @@
+{
+  "release": "0.1.0-alpha.2",
+  "corpus": "Nolane-AGI-Cognitive-System-4.0.0(1).zip",
+  "cold_ingest_ms": 951.81,
+  "warm_refresh_ms": 215.79,
+  "source_bytes": 88271461,
+  "indexed_bytes": 1723080,
+  "sqlite_bytes": 6193152,
+  "file_count": 251,
+  "symbol_count": 865,
+  "occurrence_count": 3429,
+  "cold_provider_summary": {
+    "typescript-project": {
+      "available": true,
+      "reason": "no JS/TS files",
+      "files": 0,
+      "relations": 0
+    },
+    "cache": {
+      "reused": false
+    }
+  },
+  "warm_refresh": {
+    "revision": "rev:fe96f0e700b22b962419",
+    "changed_paths": [],
+    "unchanged": true,
+    "compiled_files": 0,
+    "reused_files": 251,
+    "providers": {
+      "builtin": 173,
+      "python-ast": 78
+    },
+    "project_semantics": {
+      "typescript-project": {
+        "available": true,
+        "reason": "no JS/TS files",
+        "files": 0,
+        "relations": 0
+      },
+      "cache": {
+        "reused": true
+      }
+    },
+    "project_semantic_cache_hit": true,
+    "occurrence_count": 3429
+  },
+  "one_file_mutation": {
+    "path": "AGI-RESEARCH.md",
+    "refresh_ms": 310.84,
+    "refresh": {
+      "revision": "rev:c1eb870c89ad7dfc8857",
+      "changed_paths": [
+        "AGI-RESEARCH.md"
+      ],
+      "unchanged": false,
+      "compiled_files": 1,
+      "reused_files": 250,
+      "providers": {
+        "builtin": 173,
+        "python-ast": 78
+      },
+      "project_semantics": {
+        "typescript-project": {
+          "available": true,
+          "reason": "no JS/TS files",
+          "files": 0,
+          "relations": 0
+        },
+        "cache": {
+          "reused": false
+        }
+      },
+      "project_semantic_cache_hit": false,
+      "occurrence_count": 3429
+    }
+  },
+  "events": {
+    "since_seq": 253,
+    "next_seq": 255,
+    "latest_seq": 255,
+    "events": [
+      {
+        "seq": 254,
+        "kind": "file-modified",
+        "path": "AGI-RESEARCH.md",
+        "observed_at": "2026-08-07T05:00:39.983385+00:00",
+        "revision_before": "rev:fe96f0e700b22b962419",
+        "revision_after": "rev:c1eb870c89ad7dfc8857",
+        "old_digest": "a59f1e685c50f16621d5396a75430698307664c9b4cd8f9692cea505863f6cec",
+        "new_digest": "cb55f6dd72ab5cffe70eaad22a1b06b70d3b42d01de2ecfad259ea72c81f4f5c",
+        "source": "source-bridge",
+        "details": {
+          "reason": "stress-one-file-external-edit"
+        }
+      },
+      {
+        "seq": 255,
+        "kind": "semantic-refresh",
+        "path": null,
+        "observed_at": "2026-08-07T05:00:39.983385+00:00",
+        "revision_before": "rev:fe96f0e700b22b962419",
+        "revision_after": "rev:c1eb870c89ad7dfc8857",
+        "old_digest": null,
+        "new_digest": null,
+        "source": "semantic-twin",
+        "details": {
+          "reason": "stress-one-file-external-edit",
+          "unchanged_revision": false,
+          "compiled_files": 1,
+          "reused_files": 250,
+          "project_semantic_cache_hit": false,
+          "providers": {
+            "typescript-project": {
+              "available": true,
+              "reason": "no JS/TS files",
+              "files": 0,
+              "relations": 0
+            },
+            "cache": {
+              "reused": false
+            }
+          }
+        }
+      }
+    ],
+    "has_more": false
+  },
+  "context": {
+    "objects": [
+      {
+        "object_id": "sym:6f16a2283f6f331db960",
+        "object_type": "symbol",
+        "relevance": 1.0,
+        "reason": "lexical index match; task-to-symbol structural match; dependency expansion:imports_symbol trust:semantic; dependency expansion:calls trust:semantic; dependency expansion:imports_symbol trust:semantic; dependency expansion:calls trust:semantic; dependency expansion:imports_symbol trust:semantic; dependency expansion:calls trust:semantic; dependency expansion:imports_symbol trust:semantic; dependency expansion:calls trust:semantic; dependency expansion:imports_symbol trust:semantic; dependency expansion:calls trust:semantic",
+        "path": "kernel/semantic_proof.py",
+        "source_range": [
+          198,
+          270
+        ],
+        "lane": "lexical+symbol+graph",
+        "trust": "exact"
+      },
+      {
+        "object_id": "sym:071bd3fc9da791270413",
+        "object_type": "symbol",
+        "relevance": 0.8583912188159999,
+        "reason": "lexical index match; task-to-symbol structural match; dependency expansion:calls trust:semantic; dependency expansion:calls trust:semantic; dependency expansion:contains trust:exact",
+        "path": "tests/test_gate.py",
+        "source_range": [
+          355,
+          358
+        ],
+        "lane": "lexical+symbol+graph",
+        "trust": "exact"
+      },
+      {
+        "object_id": "sym:7173b165390eb5a809cd",
+        "object_type": "symbol",
+        "relevance": 0.8064007961599999,
+        "reason": "lexical index match; task-to-symbol structural match; dependency expansion:calls trust:semantic",
+        "path": "tests/test_semantic_proof.py",
+        "source_range": [
+          67,
+          68
+        ],
+        "lane": "lexical+symbol+graph",
+        "trust": "exact"
+      },
+      {
+        "object_id": "sym:a057d66eaba75222ab3a",
+        "object_type": "symbol",
+        "relevance": 0.7739999999999999,
+        "reason": "lexical index match; task-to-symbol structural match",
+        "path": "kernel/semantic_proof.py",
+        "source_range": [
+          106,
+          175
+        ],
+        "lane": "lexical+symbol",
+        "trust": "exact"
+      },
+      {
+        "object_id": "file:b135b4e5a80d7f8c47dd",
+        "object_type": "file",
+        "relevance": 0.7638128,
+        "reason": "lexical index match; dependency expansion:imports_symbol trust:semantic",
+        "path": "tests/test_v4_property_attacks.py",
+        "source_range": null,
+        "lane": "lexical+graph",
+        "trust": "semantic"
+      },
+      {
+        "object_id": "file:3c0b52c37f407ef43aab",
+        "object_type": "file",
+        "relevance": 0.76,
+        "reason": "lexical index match",
+        "path": "skills/nolane-agi-context-engineering/references/protocol.md",
+        "source_range": null,
+        "lane": "lexical",
+        "trust": null
+      },
+      {
+        "object_id": "sym:e9de75e9dbc64adcc879",
+        "object_type": "symbol",
+        "relevance": 0.7564,
+        "reason": "lexical index match; task-to-symbol structural match",
+        "path": "tests/test_gate.py",
+        "source_range": [
+          360,
+          363
+        ],
+        "lane": "lexical+symbol",
+        "trust": "exact"
+      },
+      {
+        "object_id": "file:f2ac5b6f80b606f9db9e",
+        "object_type": "file",
+        "relevance": 0.7556,
+        "reason": "lexical index match",
+        "path": "skills/nolane-agi-tool-orchestration/references/protocol.md",
+        "source_range": null,
+        "lane": "lexical",
+        "trust": null
+      },
+      {
+        "object_id": "file:f75f488e994ad6372e51",
+        "object_type": "file",
+        "relevance": 0.7512,
+        "reason": "lexical index match",
+        "path": "skills/nolane-agi-context-engineering/SKILL.md",
+        "source_range": null,
+        "lane": "lexical",
+        "trust": null
+      },
+      {
+        "object_id": "sym:e0399d1dd6fd049c6efc",
+        "object_type": "symbol",
+        "relevance": 0.748884173568,
+        "reason": "lexical index match; task-to-symbol structural match; dependency expansion:calls trust:semantic",
+        "path": "tests/test_semantic_proof.py",
+        "source_range": [
+          105,
+          111
+        ],
+        "lane": "lexical+symbol+graph",
+        "trust": "exact"
+      },
+      {
+        "object_id": "sym:dfd3bfec903f3ebe6365",
+        "object_type": "symbol",
+        "relevance": 0.7439856,
+        "reason": "lexical index match; task-to-symbol structural match; dependency expansion:calls trust:parser",
+        "path": "kernel/semantic_proof.py",
+        "source_range": [
+          64,
+          72
+        ],
+        "lane": "lexical+symbol+graph",
+        "trust": "exact"
+      },
+      {
+        "object_id": "sym:5cbf5d428bb9a1349c22",
+        "object_type": "symbol",
+        "relevance": 0.7379856,
+        "reason": "lexical index match; task-to-symbol structural match; dependency expansion:calls trust:parser",
+        "path": "kernel/semantic_proof.py",
+        "source_range": [
+          14,
+          23
+        ],
+        "lane": "lexical+symbol+graph",
+        "trust": "exact"
+      }
+    ],
+    "unknowns": [],
+    "trust_counts": {
+      "exact": 8,
+      "semantic": 1,
+      "unknown": 3
+    },
+    "lane_counts": {
+      "lexical": 12,
+      "symbol": 8,
+      "graph": 7
+    }
+  },
+  "provider_report": {
+    "revision": "rev:c1eb870c89ad7dfc8857",
+    "providers": {
+      "python-ast": {
+        "available": true,
+        "scope": "file syntax + project import/call linkage",
+        "trust_ceiling": "semantic"
+      },
+      "typescript-program": {
+        "available": true,
+        "reason": "TypeScript compiler API resolved by Node",
+        "scope": "whole-project TypeScript Program/TypeChecker",
+        "trust_ceiling": "semantic"
+      },
+      "tree-sitter": {
+        "available": false,
+        "reason": "Python tree-sitter bindings are not bundled; optional provider contract reserved",
+        "trust_ceiling": "parser"
+      },
+      "scip": {
+        "available": false,
+        "reason": "external SCIP indexer/CLI required for precise index ingestion",
+        "trust_ceiling": "semantic"
+      },
+      "lsp": {
+        "available": false,
+        "reason": "external language server required",
+        "trust_ceiling": "semantic"
+      },
+      "java": {
+        "available": true,
+        "provider": "regex-fallback",
+        "reason": "javac is intentionally not executed during ingestion",
+        "trust_ceiling": "heuristic"
+      }
+    },
+    "policy": "missing precise providers are explicit capability gaps; Habitat does not relabel fallback output as precise"
+  },
+  "claim_boundary": "Measures Habitat plumbing on this corpus; it does not measure model token use, task success, or AGI capability."
+}

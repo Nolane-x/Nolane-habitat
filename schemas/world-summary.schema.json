@@ -1,0 +1,80 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://nolane.local/habitat/schemas/world-summary.schema.json",
+  "title": "Habitat Bounded World Summary",
+  "type": "object",
+  "required": [
+    "revision",
+    "backend",
+    "policy",
+    "execution_security",
+    "git",
+    "dependencies",
+    "active_evidence",
+    "claim_boundary"
+  ],
+  "properties": {
+    "revision": {
+      "type": "string"
+    },
+    "backend": {
+      "type": "object"
+    },
+    "policy": {
+      "type": "object"
+    },
+    "execution_security": {
+      "type": "object"
+    },
+    "git": {
+      "type": "object"
+    },
+    "dependencies": {
+      "type": "object"
+    },
+    "active_evidence": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "agents": {
+      "type": "object"
+    },
+    "pending_coordination_notifications": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "invariants": {
+      "type": "object"
+    },
+    "guidance_files": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "claim_boundary": {
+      "type": "string"
+    },
+    "effect_facts": {
+      "type": "integer"
+    },
+    "runtime_observations": {
+      "type": "integer"
+    },
+    "counterfactual_worlds": {
+      "type": "object"
+    },
+    "epistemic_open": {
+      "type": "object"
+    },
+    "project_world": {
+      "type": "object"
+    },
+    "dataflow_facts": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "executive": {
+      "type": "object"
+    }
+  },
+  "additionalProperties": true
+}

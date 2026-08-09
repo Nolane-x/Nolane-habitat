@@ -1,0 +1,382 @@
+{
+  "release": "0.1.0-alpha.5",
+  "cold_ingest_ms": 1729.53,
+  "context": {
+    "confidence": "high",
+    "objects": [
+      {
+        "object_id": "sym:b3f6914c8c2f3e63e3a2",
+        "object_type": "symbol",
+        "relevance": 1.0,
+        "reason": "task-to-symbol structural match; dependency expansion:calls trust:semantic; dependency expansion:imports_symbol trust:semantic",
+        "path": "auth.py",
+        "source_range": [
+          1,
+          2
+        ],
+        "lane": "symbol+graph",
+        "trust": "exact"
+      },
+      {
+        "object_id": "sym:e2ca12fad7c2597454e5",
+        "object_type": "symbol",
+        "relevance": 0.9313848888888889,
+        "reason": "lexical index match; task-to-symbol structural match; dependency expansion:calls trust:semantic",
+        "path": "service.py",
+        "source_range": [
+          3,
+          4
+        ],
+        "lane": "lexical+symbol+graph",
+        "trust": "exact"
+      },
+      {
+        "object_id": "file:3a47b4c168e35e57a3d7",
+        "object_type": "file",
+        "relevance": 0.7087185185185185,
+        "reason": "lexical index match; dependency expansion:imports_symbol trust:semantic",
+        "path": "service.py",
+        "source_range": null,
+        "lane": "lexical+graph",
+        "trust": "semantic"
+      },
+      {
+        "object_id": "sym:713f52821ae068b9d6a7",
+        "object_type": "symbol",
+        "relevance": 0.704874074074074,
+        "reason": "dependency expansion:calls trust:semantic",
+        "path": "tests/test_auth.py",
+        "source_range": [
+          3,
+          4
+        ],
+        "lane": "graph",
+        "trust": "exact"
+      },
+      {
+        "object_id": "file:a99307c61c3c55875b5b",
+        "object_type": "file",
+        "relevance": 0.6439185185185186,
+        "reason": "dependency expansion:imports_symbol trust:semantic",
+        "path": "tests/test_auth.py",
+        "source_range": null,
+        "lane": "graph",
+        "trust": "semantic"
+      },
+      {
+        "object_id": "file:dbcf43432c07570656f9",
+        "object_type": "file",
+        "relevance": 0.3126,
+        "reason": "dependency expansion:imports trust:semantic",
+        "path": "auth.py",
+        "source_range": null,
+        "lane": "graph",
+        "trust": "semantic"
+      }
+    ],
+    "address_pages": 6,
+    "prefetch_source_bytes": 187
+  },
+  "selective_retrieval": {
+    "no_gold_confidence": "low",
+    "abstention_recommended": true
+  },
+  "semantic_rename": {
+    "proposal": {
+      "provider": "python-jedi",
+      "provider_version": "0.20.0",
+      "trust": "semantic",
+      "symbol_id": "sym:b3f6914c8c2f3e63e3a2",
+      "old_name": "validate_credentials",
+      "new_name": "verify_credentials",
+      "outside_project_references": [],
+      "site_count": 4,
+      "project_execution": false,
+      "paths": [
+        "auth.py",
+        "service.py",
+        "tests/test_auth.py"
+      ]
+    },
+    "changed_paths": [
+      "auth.py",
+      "service.py",
+      "tests/test_auth.py"
+    ],
+    "verification_status": "passed"
+  },
+  "evidence_lifecycle": {
+    "failed_status": "failed",
+    "active_after_fail": 1,
+    "passed_status": "passed",
+    "active_after_pass": 0
+  },
+  "merkle_diff": {
+    "prefix": "",
+    "old_root": "77289800629b4c79e5d49700baef9c78d93e7831665fdf1f9ed3ca8f35f56de7",
+    "new_root": "9f0c41d4dc7f44c000ee1b92fe4128ec1e13bda6468ae3265ddd1fc5e5d4347d",
+    "added": [],
+    "deleted": [],
+    "modified": [
+      "auth.py",
+      "service.py",
+      "tests/test_auth.py"
+    ],
+    "renamed": [],
+    "changed": true,
+    "pruned_equal_subtree": false,
+    "from_revision": "rev:fdd179a9e9d74b53c3c8",
+    "to_revision": "rev:21377c15d4986eae0204",
+    "source_bytes_read": 0
+  },
+  "ui": {
+    "available": true,
+    "assertion": {
+      "session_id": "ui-session:58f6525c6a913cffc98f",
+      "mode": "runtime-semantic-assertion",
+      "passed": true,
+      "assertion_count": 1,
+      "failure_count": 0,
+      "results": [
+        {
+          "index": 0,
+          "selector": {
+            "handle": "ui:id:out",
+            "role": null,
+            "name": null
+          },
+          "matched_handles": [
+            "ui:id:out"
+          ],
+          "checks": [
+            {
+              "field": "count",
+              "expected": {
+                "min": 1,
+                "max": null
+              },
+              "actual": 1,
+              "ok": true
+            },
+            {
+              "field": "text_contains",
+              "expected": "Hello Nolane",
+              "actual": "Hello Nolane",
+              "ok": true
+            }
+          ],
+          "ok": true
+        }
+      ],
+      "failures": [],
+      "oracle": "DOM/accessibility/runtime state; pixels not consulted",
+      "screenshot_used": false,
+      "revision": "rev:21377c15d4986eae0204"
+    }
+  },
+  "warm_refresh": {
+    "revision": "rev:21377c15d4986eae0204",
+    "changed_paths": [],
+    "unchanged": true,
+    "compiled_files": 0,
+    "reused_files": 6,
+    "hashed_files": 6,
+    "refresh_mode": "deep",
+    "providers": {
+      "python-ast": 3,
+      "html-semantic-parser": 1,
+      "typescript-compiler-api": 2
+    },
+    "project_semantics": {
+      "base-resolver": {
+        "cache_hit": true,
+        "domain_digest": "dd7652ab3e60282305e3d3d6c2fa2f7e25937182525da4e3c606d74a73eb6954",
+        "relations": 8,
+        "partitioned": true,
+        "partitions_total": 4,
+        "partitions_reused": 4,
+        "partitions_recomputed": 0,
+        "stale_partitions_removed": 0,
+        "dirty_paths": [],
+        "partition_sample": [
+          {
+            "path": "auth.py",
+            "cache_hit": true,
+            "relations": 0
+          },
+          {
+            "path": "b.ts",
+            "cache_hit": true,
+            "relations": 1
+          },
+          {
+            "path": "service.py",
+            "cache_hit": true,
+            "relations": 3
+          },
+          {
+            "path": "tests/test_auth.py",
+            "cache_hit": true,
+            "relations": 4
+          }
+        ]
+      },
+      "python-jedi": {
+        "available": true,
+        "reason": "Jedi static semantic engine available",
+        "version": "0.20.0",
+        "files": 3,
+        "relations": 2,
+        "occurrences": 2,
+        "calls_examined": 3,
+        "unresolved_calls": 1,
+        "ambiguous_calls": 0,
+        "file_errors": 0,
+        "cache_hit": true,
+        "domain_digest": "941b77920edba3153207372ea66203d9e1c995fc25d647a1642de8702c279506",
+        "api_surface_digest": "1a328587b81032360294309529472fe41d91d0735dc515cdcba5575a0e476d1a",
+        "partitions_total": 3,
+        "partitions_reused": 3,
+        "partitions_recomputed": 0,
+        "trust_ceiling": "semantic",
+        "project_execution": false
+      },
+      "typescript-project": {
+        "available": true,
+        "reason": "TypeScript Program + TypeChecker",
+        "version": "5.8.3",
+        "files": 2,
+        "relations": 2,
+        "occurrences": 2,
+        "cache_hit": true,
+        "domain_digest": "8cd090e67b2f071b68c3a9180900fdd0cfde89dbc314b6a1855f6d1554327847",
+        "api_surface_digest": "acf253cf53eae761b9ab518a023432c0f81b7743f093a90ff8379267c80899e1",
+        "partitions_total": 2,
+        "partitions_reused": 2,
+        "partitions_recomputed": 0,
+        "program_invoked": false,
+        "scanned_files": 0
+      },
+      "cache": {
+        "reused": true,
+        "provider_domain_reuse": {
+          "base": true,
+          "python_jedi": true,
+          "typescript": true
+        },
+        "compatibility_gate_drift": false
+      }
+    },
+    "project_semantic_cache_hit": true,
+    "occurrence_count": 17,
+    "graph_delta": {
+      "relations": {
+        "inserted": 0,
+        "updated": 0,
+        "deleted": 0,
+        "unchanged": 9,
+        "total": 9
+      },
+      "occurrences": {
+        "inserted": 0,
+        "updated": 0,
+        "deleted": 0,
+        "unchanged": 17,
+        "total": 17
+      }
+    }
+  },
+  "providers": {
+    "revision": "rev:21377c15d4986eae0204",
+    "providers": {
+      "python-ast": {
+        "available": true,
+        "scope": "file syntax + project import/call linkage",
+        "trust_ceiling": "semantic"
+      },
+      "python-jedi": {
+        "available": true,
+        "reason": "Jedi static semantic engine available",
+        "version": "0.20.0",
+        "scope": "static cross-file Python goto/call resolution without project execution",
+        "trust_ceiling": "semantic",
+        "files": 3,
+        "relations": 2,
+        "occurrences": 2,
+        "calls_examined": 3,
+        "unresolved_calls": 1,
+        "ambiguous_calls": 0,
+        "file_errors": 0,
+        "cache_hit": true,
+        "domain_digest": "941b77920edba3153207372ea66203d9e1c995fc25d647a1642de8702c279506",
+        "api_surface_digest": "1a328587b81032360294309529472fe41d91d0735dc515cdcba5575a0e476d1a",
+        "partitions_total": 3,
+        "partitions_reused": 3,
+        "partitions_recomputed": 0,
+        "project_execution": false
+      },
+      "typescript-program": {
+        "available": true,
+        "reason": "TypeScript Program + TypeChecker",
+        "scope": "whole-project TypeScript Program/TypeChecker with dirty-source traversal partitions",
+        "trust_ceiling": "semantic",
+        "version": "5.8.3",
+        "files": 2,
+        "relations": 2,
+        "occurrences": 2,
+        "cache_hit": true,
+        "domain_digest": "8cd090e67b2f071b68c3a9180900fdd0cfde89dbc314b6a1855f6d1554327847",
+        "api_surface_digest": "acf253cf53eae761b9ab518a023432c0f81b7743f093a90ff8379267c80899e1",
+        "partitions_total": 2,
+        "partitions_reused": 2,
+        "partitions_recomputed": 0,
+        "program_invoked": false,
+        "scanned_files": 0
+      },
+      "tree-sitter": {
+        "available": false,
+        "reason": "Python tree-sitter bindings are not bundled; optional provider contract reserved",
+        "trust_ceiling": "parser"
+      },
+      "scip": {
+        "available": false,
+        "reason": "external SCIP indexer/CLI required for precise index ingestion",
+        "trust_ceiling": "semantic"
+      },
+      "lsp": {
+        "available": false,
+        "reason": "external language server required",
+        "trust_ceiling": "semantic"
+      },
+      "java": {
+        "available": true,
+        "provider": "regex-fallback",
+        "reason": "javac is intentionally not executed during ingestion",
+        "trust_ceiling": "heuristic"
+      }
+    },
+    "policy": "missing precise providers are explicit capability gaps; Habitat does not relabel fallback output as precise"
+  },
+  "checkpoint_resume": {
+    "mode": "direct"
+  },
+  "mcp": {
+    "spec_target": "2026-07-28",
+    "tool_count": 12,
+    "tools": [
+      "habitat_start_task",
+      "habitat_inspect",
+      "habitat_references",
+      "habitat_change_symbol",
+      "habitat_rename_symbol",
+      "habitat_verify",
+      "habitat_ui_open",
+      "habitat_ui_act",
+      "habitat_ui_assert",
+      "habitat_checkpoint",
+      "habitat_resume",
+      "habitat_state"
+    ]
+  },
+  "claim_boundary": "Executable alpha.5 plumbing demo. It does not establish model token savings, coding superiority, or AGI capability."
+}

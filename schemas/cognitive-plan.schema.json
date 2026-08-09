@@ -1,0 +1,11 @@
+{
+  "$schema":"https://json-schema.org/draft/2020-12/schema",
+  "$id":"nolane.habitat/cognitive-plan/v1alpha12",
+  "type":"object",
+  "required":["revision","candidates","next","epistemic_debt","stopping_policy","claim_boundary"],
+  "properties":{
+    "revision":{"type":"string"},"agent_id":{"type":["string","null"]},"episode_id":{"type":["string","null"]},
+    "candidates":{"type":"array","items":{"type":"object","required":["operation","reason","expected_information_gain","decision_sensitivity","cost","score"],"additionalProperties":true}},
+    "next":{"type":"object"},"epistemic_debt":{"type":"object"},"stopping_policy":{"type":"object"},"claim_boundary":{"type":"string"}
+  },"additionalProperties":true
+}

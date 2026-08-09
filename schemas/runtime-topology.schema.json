@@ -1,0 +1,12 @@
+{
+  "$schema":"https://json-schema.org/draft/2020-12/schema",
+  "$id":"nolane.habitat/runtime-topology/v1alpha12",
+  "type":"object",
+  "required":["nodes","edges","claim_boundary"],
+  "properties":{
+    "revision":{"type":"string"},"agent_id":{"type":["string","null"]},
+    "nodes":{"type":"array","items":{"type":"object","required":["id","type","label"],"additionalProperties":true}},
+    "edges":{"type":"array","items":{"type":"object","required":["source","target","kind"],"additionalProperties":true}},
+    "claim_boundary":{"type":"string"}
+  },"additionalProperties":true
+}

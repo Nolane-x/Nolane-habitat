@@ -1,0 +1,52 @@
+{
+  "release": "0.1.0-alpha.9",
+  "method": "belief-rival-probe-correction-verifier",
+  "entries": [
+    {
+      "belief": "Network namespace containment materially reduces execution risk.",
+      "rival": "It will be mislabeled as a full sandbox.",
+      "probe": "Attempt external TCP under network-contained profile and inspect filesystem claim.",
+      "observation": "Network is isolated where host probe succeeds; filesystem confinement absent.",
+      "decision": "retain-bounded",
+      "change": "Expose network-contained, never full sandbox; untrusted policy refuses it.",
+      "verifier": "alpha9 containment test"
+    },
+    {
+      "belief": "Agent-scoped attention plus leases reduces cross-agent contamination/races.",
+      "rival": "Revision checks alone are enough.",
+      "probe": "A stages path; B attempts same path and owner mismatch commit.",
+      "observation": "Without a lease model the intent boundary is under-specified.",
+      "decision": "retain",
+      "change": "Agent sessions + utility namespace + path leases + owner binding.",
+      "verifier": "alpha9 multi-agent tests/demo"
+    },
+    {
+      "belief": "Repeated evidence rows strengthen a hypothesis.",
+      "rival": "Rows from one provider are correlated and create fake consensus.",
+      "probe": "Link repeated pytest evidence from same provider.",
+      "observation": "Independent source count must remain one.",
+      "decision": "reject-naive-counting",
+      "change": "Group by source/provider with diminishing return.",
+      "verifier": "alpha9 uncertainty test"
+    },
+    {
+      "belief": "Same-model superiority should be the next evidence frontier.",
+      "rival": "A synthetic harness could manufacture a result.",
+      "probe": "Build harness with external commands only and contract-double smoke.",
+      "observation": "Orchestration can be standardized without embedding model/evaluator.",
+      "decision": "retain-infrastructure-only",
+      "change": "Executable paired A/B harness with strict claim boundary.",
+      "verifier": "alpha9 benchmark harness test"
+    },
+    {
+      "belief": "Release identity is already synchronized after cloning alpha.8.",
+      "rival": "Package metadata can drift independently.",
+      "probe": "Compare VERSION, runtime __version__, pyproject project.version.",
+      "observation": "pyproject remained 0.1.0a8.",
+      "decision": "reject",
+      "change": "Set 0.1.0a9 and add regression.",
+      "verifier": "alpha9 release identity test"
+    }
+  ],
+  "claim_boundary": "Method trace records engineering belief updates; it is not evidence of AGI capability."
+}

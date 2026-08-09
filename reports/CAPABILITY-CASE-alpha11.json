@@ -1,0 +1,73 @@
+{
+  "release": "0.1.0-alpha.11",
+  "capability_case": [
+    {
+      "capability": "agent-underlay",
+      "status": "admitted",
+      "evidence": [
+        "generic NDJSON server",
+        "optional MCP adapter",
+        "direct protocol/workspace embedding",
+        "explicit agent handles"
+      ]
+    },
+    {
+      "capability": "realtime-observatory",
+      "status": "admitted",
+      "evidence": [
+        "query-only observer read model",
+        "HTTP 405 mutation verbs",
+        "SSE activity stream",
+        "live multi-agent demo",
+        "rendered screenshot"
+      ]
+    },
+    {
+      "capability": "runtime-twin-ingress",
+      "status": "admitted-bounded",
+      "evidence": [
+        "OTel-shaped spans/logs/metrics",
+        "DAP events",
+        "source/symbol linkage"
+      ],
+      "boundary": "not full OTLP collector/debugger orchestration or causal proof"
+    },
+    {
+      "capability": "semantic-provider-fabric",
+      "status": "admitted-boundary",
+      "evidence": [
+        "Tree-sitter/LSP/SCIP/native discovery report"
+      ],
+      "boundary": "discovery only; providers are not claimed active merely because detected"
+    },
+    {
+      "capability": "epistemic-runtime",
+      "status": "admitted-bounded",
+      "evidence": [
+        "explicit unknown/assumption/contradiction records",
+        "cognition.next",
+        "unknown probes"
+      ],
+      "boundary": "metacognitive environment heuristics, not raw chain-of-thought or calibrated VoI"
+    },
+    {
+      "capability": "project-memory",
+      "status": "admitted",
+      "evidence": [
+        "six memory kinds",
+        "revision/provenance/evidence binding",
+        "supersession/invalidation",
+        "agent-private recall isolation"
+      ]
+    }
+  ],
+  "not_admitted": [
+    "universal active Tree-sitter/LSP/SCIP semantics",
+    "complete OTLP pipeline",
+    "complete DAP session orchestration",
+    "human-control UI",
+    "raw model chain-of-thought",
+    "AGI capability",
+    "same-model coding superiority"
+  ]
+}

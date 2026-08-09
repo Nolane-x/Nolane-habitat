@@ -1,0 +1,102 @@
+{
+  "release": "0.1.0-alpha.7",
+  "local_mirror_semantic_equal": true,
+  "local_mirror_exploration_equal": true,
+  "local_backend": {
+    "backend_id": "backend:1ef59e12fadca34a8bfb",
+    "kind": "local-filesystem",
+    "authority": "source-files",
+    "authoritative_root": "/tmp/tmpmmx86qt5/local",
+    "materialized_root": "/tmp/tmpmmx86qt5/local",
+    "execution_kind": "local-process",
+    "supports_native_watch": true,
+    "capabilities": [
+      "discover",
+      "execute",
+      "read",
+      "reconcile",
+      "watch",
+      "write"
+    ],
+    "source_authority_id": "authority:468116d4adf86f64858e",
+    "execution_provider_id": "executor:b3485c95e2a46ec71eb7",
+    "source_authority": {
+      "authority_id": "authority:468116d4adf86f64858e",
+      "kind": "local-filesystem",
+      "authority": "source-files",
+      "authoritative_root": "/tmp/tmpmmx86qt5/local",
+      "materialized_root": "/tmp/tmpmmx86qt5/local",
+      "supports_native_watch": true,
+      "capabilities": [
+        "read",
+        "write",
+        "reconcile",
+        "watch"
+      ]
+    },
+    "execution_provider": {
+      "provider_id": "executor:b3485c95e2a46ec71eb7",
+      "kind": "local-process",
+      "execution_root": "/tmp/tmpmmx86qt5/local",
+      "capabilities": [
+        "discover",
+        "execute"
+      ]
+    },
+    "semantic_twin_authority": false,
+    "semantic_materialization_role": "shared-source-view",
+    "substrate_composable": true
+  },
+  "mirror_backend": {
+    "backend_id": "backend:07ae4b80d10132d479ef",
+    "kind": "directory-mirror",
+    "authority": "external-directory",
+    "authoritative_root": "/tmp/tmpmmx86qt5/mirror",
+    "materialized_root": "/tmp/tmpmmx86qt5/h-mirror/backend-mirror",
+    "execution_kind": "authority-local-process",
+    "supports_native_watch": false,
+    "capabilities": [
+      "discover",
+      "execute",
+      "materialized-mirror",
+      "read",
+      "reconcile",
+      "write"
+    ],
+    "source_authority_id": "authority:97bbe6a786ce5dee4ea0",
+    "execution_provider_id": "executor:2a4b19360e2124884df0",
+    "source_authority": {
+      "authority_id": "authority:97bbe6a786ce5dee4ea0",
+      "kind": "directory-mirror",
+      "authority": "external-directory",
+      "authoritative_root": "/tmp/tmpmmx86qt5/mirror",
+      "materialized_root": "/tmp/tmpmmx86qt5/h-mirror/backend-mirror",
+      "supports_native_watch": false,
+      "capabilities": [
+        "read",
+        "write",
+        "reconcile",
+        "materialized-mirror"
+      ]
+    },
+    "execution_provider": {
+      "provider_id": "executor:2a4b19360e2124884df0",
+      "kind": "authority-local-process",
+      "execution_root": "/tmp/tmpmmx86qt5/mirror",
+      "capabilities": [
+        "discover",
+        "execute"
+      ]
+    },
+    "semantic_twin_authority": false,
+    "semantic_materialization_role": "compiler-mirror",
+    "substrate_composable": true
+  },
+  "detached_executor_mutation_fail_closed": true,
+  "fail_closed_error": {
+    "type": "RuntimeError",
+    "message": "execution mutated a non-authoritative checkout; no durable source write-back bridge is configured"
+  },
+  "authority_unchanged": true,
+  "claim_boundary": "Local/directory contract-double composition only; no real Cloudflare Computer transport or remote runtime is claimed."
+}

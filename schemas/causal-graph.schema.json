@@ -1,0 +1,85 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "nolane.habitat/causal-graph/v1alpha7",
+  "type": "object",
+  "required": [
+    "ref_id",
+    "max_depth",
+    "visited_refs",
+    "edge_count",
+    "edges",
+    "truncated",
+    "causality_scope"
+  ],
+  "properties": {
+    "ref_id": {
+      "type": "string"
+    },
+    "max_depth": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "visited_refs": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "edge_count": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "edges": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "seq",
+          "source_kind",
+          "source_ref",
+          "relation",
+          "target_kind",
+          "target_ref",
+          "revision",
+          "details",
+          "created_at"
+        ],
+        "properties": {
+          "seq": {
+            "type": "integer"
+          },
+          "source_kind": {
+            "type": "string"
+          },
+          "source_ref": {
+            "type": "string"
+          },
+          "relation": {
+            "type": "string"
+          },
+          "target_kind": {
+            "type": "string"
+          },
+          "target_ref": {
+            "type": "string"
+          },
+          "revision": {
+            "type": "string"
+          },
+          "details": {
+            "type": "object"
+          },
+          "created_at": {
+            "type": "string"
+          }
+        },
+        "additionalProperties": false
+      }
+    },
+    "truncated": {
+      "type": "boolean"
+    },
+    "causality_scope": {
+      "type": "string"
+    }
+  },
+  "additionalProperties": false
+}

@@ -1,0 +1,18 @@
+{
+  "release": "0.1.0-alpha.6",
+  "semantic_before_equal": true,
+  "semantic_after_equal": true,
+  "context_paths_equal": true,
+  "context_confidence_equal": true,
+  "canonical_source_equal_after_mutation": true,
+  "local_execution_provenance": {
+    "backend_id": "backend:90e22678316e694eb47e",
+    "execution_backend": "local-process"
+  },
+  "mirror_execution_provenance": {
+    "backend_id": "backend:48aad3076ead3d1bf46e",
+    "execution_backend": "authority-local-process"
+  },
+  "verification_equal": true,
+  "claim_boundary": "This is a local contract-double equivalence test. It proves Habitat semantic behavior is backend-separated for these fixtures; it is not a Cloudflare Computer integration test."
+}

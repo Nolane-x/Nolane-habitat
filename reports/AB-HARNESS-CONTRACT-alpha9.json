@@ -1,0 +1,55 @@
+{
+  "claim_boundary": "This harness standardizes paired execution. A report is evidence only if baseline-cmd and habitat-cmd truly use the same model/scaffold/budgets and an independent evaluator determines success.",
+  "repetitions": 2,
+  "runs": [
+    {
+      "arm": "filesystem",
+      "input_tokens": 10,
+      "observed_wall_ms": 574,
+      "output_tokens": 5,
+      "repetition": 0,
+      "success": true,
+      "task_id": "t1",
+      "tool_calls": 1,
+      "wall_ms": 3
+    },
+    {
+      "arm": "habitat",
+      "input_tokens": 10,
+      "observed_wall_ms": 543,
+      "output_tokens": 5,
+      "repetition": 0,
+      "success": true,
+      "task_id": "t1",
+      "tool_calls": 1,
+      "wall_ms": 3
+    },
+    {
+      "arm": "filesystem",
+      "input_tokens": 10,
+      "observed_wall_ms": 605,
+      "output_tokens": 5,
+      "repetition": 1,
+      "success": true,
+      "task_id": "t1",
+      "tool_calls": 1,
+      "wall_ms": 3
+    },
+    {
+      "arm": "habitat",
+      "input_tokens": 10,
+      "observed_wall_ms": 651,
+      "output_tokens": 5,
+      "repetition": 1,
+      "success": true,
+      "task_id": "t1",
+      "tool_calls": 1,
+      "wall_ms": 3
+    }
+  ],
+  "same_model_required": true,
+  "same_scaffold_required": true,
+  "schema": 1,
+  "seed": 9,
+  "tasks": 1
+}

@@ -1,0 +1,8 @@
+Nolane Habitat 0.1.0-alpha.14 artifact checksums
+
+artifacts/nolane_habitat-0.1.0a14-py3-none-any.whl
+size: 234352 bytes
+sha256: e36f52a74b878bd616436784d73fba35eb7ec324ecb30b3d0661a7a7b8e5fb20
+isolated-install smoke: PASS
+packaged executive + Observatory assets: PASS
+post-close shared runtime services: zero active resources

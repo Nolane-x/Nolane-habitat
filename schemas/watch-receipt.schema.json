@@ -1,0 +1,32 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Habitat Watch Receipt",
+  "type": "object",
+  "required": [
+    "observations",
+    "candidate_paths",
+    "revision"
+  ],
+  "properties": {
+    "observations": {
+      "type": "array"
+    },
+    "candidate_paths": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "refresh": {
+      "type": [
+        "object",
+        "null"
+      ]
+    },
+    "revision": {
+      "type": "string"
+    }
+  },
+  "additionalProperties": true,
+  "$id": "https://nolane.local/schemas/watch-receipt.schema.json"
+}

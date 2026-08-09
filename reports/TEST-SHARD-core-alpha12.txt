@@ -1,0 +1,31 @@
+test_capabilities_expose_availability_instead_of_pretending (tests.test_capabilities.CapabilityTests.test_capabilities_expose_availability_instead_of_pretending) ... ok
+test_python_ast_symbols_are_exact (tests.test_compiler.CompilerTests.test_python_ast_symbols_are_exact) ... ok
+test_typescript_uses_best_available_parser_without_overclaiming (tests.test_compiler.CompilerTests.test_typescript_uses_best_available_parser_without_overclaiming) ... ok
+test_structured_receipt_and_change_readback (tests.test_execution.ExecutionTests.test_structured_receipt_and_change_readback) ... ok
+test_truncated_index_is_explicit (tests.test_large_file_coverage.LargeFileCoverageTests.test_truncated_index_is_explicit) ... ok
+test_agent_protocol_orient_and_inspect (tests.test_protocol.ProtocolTests.test_agent_protocol_orient_and_inspect) ... ok
+test_stdio_transport_is_ndjson (tests.test_protocol.ProtocolTests.test_stdio_transport_is_ndjson) ... ok
+test_unknown_method_fails_typed (tests.test_protocol.ProtocolTests.test_unknown_method_fails_typed) ... ok
+test_cross_file_alias_call_resolves_to_exact_project_symbol (tests.test_python_jedi.PythonJediSemanticTests.test_cross_file_alias_call_resolves_to_exact_project_symbol) ... ok
+test_indexing_does_not_execute_python_module (tests.test_python_jedi.PythonJediSemanticTests.test_indexing_does_not_execute_python_module) ... ok
+test_jedi_precision_partitions_recompute_one_file_for_body_only_edit (tests.test_python_jedi.PythonJediSemanticTests.test_jedi_precision_partitions_recompute_one_file_for_body_only_edit) ... ok
+test_precise_call_site_does_not_erase_other_unresolved_call_site (tests.test_python_jedi.PythonJediSemanticTests.test_precise_call_site_does_not_erase_other_unresolved_call_site) ... ok
+test_all_json_schemas_are_valid_json (tests.test_schemas.SchemaTests.test_all_json_schemas_are_valid_json) ... ok
+test_folder_is_linked (tests.test_source_bridge.SourceBridgeTests.test_folder_is_linked) ... ok
+test_loose_file_is_managed (tests.test_source_bridge.SourceBridgeTests.test_loose_file_is_managed) ... ok
+test_zip_is_managed (tests.test_source_bridge.SourceBridgeTests.test_zip_is_managed) ... ok
+test_zip_size_limit_rejected (tests.test_source_bridge.SourceBridgeTests.test_zip_size_limit_rejected) ... ok
+test_zip_symlink_rejected (tests.test_source_bridge.SourceBridgeTests.test_zip_symlink_rejected) ... ok
+test_zip_traversal_rejected (tests.test_source_bridge.SourceBridgeTests.test_zip_traversal_rejected) ... ok
+test_source_body_not_duplicated_in_files_table (tests.test_storage.StorageTests.test_source_body_not_duplicated_in_files_table) ... ok
+test_committed_transaction_can_rollback_when_no_newer_edit (tests.test_workspace.WorkspaceTests.test_committed_transaction_can_rollback_when_no_newer_edit) ... ok
+test_ingest_orient_inspect_refresh (tests.test_workspace.WorkspaceTests.test_ingest_orient_inspect_refresh) ... ok
+test_semantic_html_observation (tests.test_workspace.WorkspaceTests.test_semantic_html_observation) ... ok
+test_staged_transaction_detects_external_edit (tests.test_workspace.WorkspaceTests.test_staged_transaction_detects_external_edit) ... ok
+test_stale_digest_rejected (tests.test_workspace.WorkspaceTests.test_stale_digest_rejected) ... ok
+test_transaction_syncs_to_external_source (tests.test_workspace.WorkspaceTests.test_transaction_syncs_to_external_source) ... ok
+
+----------------------------------------------------------------------
+Ran 26 tests in 4.402s
+
+OK

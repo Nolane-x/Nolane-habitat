@@ -1,0 +1,15 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://nolane.local/habitat/schemas/retention-report.schema.json",
+  "title": "Habitat Cognitive-State Retention Report",
+  "type": "object",
+  "required": ["revision"],
+  "properties": {
+    "revision": {"type": "string"},
+    "plan": {"type": "object"},
+    "deleted": {"type": "object"},
+    "dry_run": {"type": "boolean"},
+    "state_permissions": {"type": "object"}
+  },
+  "additionalProperties": true
+}

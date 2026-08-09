@@ -1,0 +1,29 @@
+{
+  "release": "0.1.0-alpha.3",
+  "case": "live-agent-native-project-workspace",
+  "admission": "bounded experimental checkpoint",
+  "supported_claims": [
+    "ordinary folder/ZIP/file can be ingested into a revisioned semantic twin while canonical source remains authoritative",
+    "ordinary read-side synchronization can target metadata-identified candidates and content-hash only those candidates",
+    "consequential mutation does not trust watcher metadata and performs deep content-hash reconciliation",
+    "semantic provider domains and relation/occurrence persistence can be reused/delta-synchronized on included fixtures",
+    "revision-bound context can be refreshed and materialized under explicit object/source budgets",
+    "runtime web UI can be observed/acted on semantically when browser capability is available",
+    "unique literal TSX/JSX anchors can provide bounded parser-grade source ownership candidates"
+  ],
+  "rejected_claims": [
+    "Habitat reduces LLM tokens by a specific percentage",
+    "Habitat makes every coding agent faster or more successful",
+    "Habitat fully understands arbitrary repositories or dynamic programs",
+    "Habitat is a production sandbox for hostile code",
+    "Habitat provides framework-complete runtime UI ownership"
+  ],
+  "evidence_refs": [
+    "TEST-EVIDENCE-alpha3.txt",
+    "DEMO-EVIDENCE-alpha3.json",
+    "AGI-ZIP-STRESS-alpha3.json",
+    "NAVIGATION-PLUMBING-AB-alpha3.json",
+    "AGI-METHOD-TRACE-alpha3.json"
+  ],
+  "rollback": "Canonical source is independent of the semantic database; derivative workspace state can be rebuilt. Transaction rollback remains available when no newer conflicting edit invalidates it."
+}

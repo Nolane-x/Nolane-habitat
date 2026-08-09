@@ -1,0 +1,329 @@
+$ create
+{
+  "workspace": "/tmp/tmp.RruWHK46V3/workspace",
+  "source_root": "/tmp/tmp.RruWHK46V3/project",
+  "mode": "linked-folder",
+  "revision": "rev:e6b1839dbff61a0063a5",
+  "file_count": 1,
+  "symbol_count": 1,
+  "diagnostic_count": 0,
+  "occurrence_count": 1,
+  "event_cursor": 2,
+  "languages": {
+    "python": 1.0
+  },
+  "capabilities": [],
+  "backend": {
+    "backend_id": "backend:70d758df74e5541b91f9",
+    "kind": "local-filesystem",
+    "authority": "source-files",
+    "authoritative_root": "/tmp/tmp.RruWHK46V3/project",
+    "materialized_root": "/tmp/tmp.RruWHK46V3/project",
+    "execution_kind": "local-process",
+    "supports_native_watch": true,
+    "capabilities": [
+      "read",
+      "write",
+      "reconcile",
+      "execute",
+      "watch"
+    ],
+    "semantic_twin_authority": false,
+    "semantic_materialization_role": "shared-source-view"
+  },
+  "semantic_providers": {
+    "python-ast": {
+      "available": true,
+      "trust_ceiling": "semantic",
+      "project_linking": true
+    },
+    "python-jedi": {
+      "available": true,
+      "reason": "Jedi static semantic engine available",
+      "version": "0.20.0",
+      "trust_ceiling": "semantic",
+      "project_linking": true,
+      "files": 1,
+      "relations": 0,
+      "occurrences": 0,
+      "calls_examined": 0,
+      "unresolved_calls": 0,
+      "ambiguous_calls": 0,
+      "file_errors": 0,
+      "cache_hit": false,
+      "domain_digest": "bb344a7ecb1190679e86fc042efef11a4e1a34745a96995e5397b6adb78ae145",
+      "api_surface_digest": "086cc3b3e22cba8d9252b6a8cdac3e8ddfdd19d5077c601e95ac941ac869014c",
+      "partitions_total": 1,
+      "partitions_reused": 0,
+      "partitions_recomputed": 1,
+      "project_execution": false
+    },
+    "typescript-compiler-api": {
+      "available": true,
+      "reason": "TypeScript compiler API resolved by Node",
+      "trust_ceiling": "semantic",
+      "project_linking": true
+    },
+    "java": {
+      "available": true,
+      "provider": "regex-fallback",
+      "trust_ceiling": "heuristic"
+    },
+    "runtime-browser": {
+      "available": true,
+      "reason": "Playwright + system Chromium available",
+      "browser": "/usr/bin/chromium"
+    }
+  },
+  "index_health": {
+    "truncated_text_files": 0,
+    "incomplete_parse_files": 0,
+    "indexed_bytes": 44,
+    "source_bytes": 44
+  },
+  "live_workspace": {
+    "ordinary_sync": "metadata candidates -> targeted content hash -> incremental semantic admission",
+    "mutation_integrity": "deep content hash before stage/commit/rollback",
+    "watcher": {
+      "running": false,
+      "revision": "rev:e6b1839dbff61a0063a5"
+    },
+    "context_refresh": true,
+    "context_materialization": "bounded symbol-body packet; no automatic whole-file dump",
+    "context_residency": {
+      "revision": "rev:e6b1839dbff61a0063a5",
+      "config": {
+        "max_objects": 32,
+        "max_source_bytes": 120000
+      },
+      "count": 0,
+      "source_bytes_estimate": 0,
+      "state_counts": {
+        "fresh": 0,
+        "stale": 0,
+        "missing": 0
+      },
+      "objects": []
+    },
+    "virtual_context_memory": true,
+    "content_addressed_state": "Merkle snapshots derived from already-hashed canonical files; no source copy",
+    "active_evidence": 0,
+    "semantic_rename": "Python/Jedi precision lane; fail-closed outside proven provider boundary"
+  },
+  "principles": {
+    "source_authority": "source files",
+    "semantic_twin": "derived and provenance-bound",
+    "terminal": "not an agent primitive; raw process output is fallback evidence",
+    "ui": "semantic runtime state first; pixels optional secondary oracle",
+    "context": "orientation and bounded exact-source packets; retrieved metadata is not authority"
+  }
+}
+$ enter
+{
+  "workspace": "/tmp/tmp.RruWHK46V3/workspace",
+  "source_root": "/tmp/tmp.RruWHK46V3/project",
+  "mode": "linked-folder",
+  "revision": "rev:e6b1839dbff61a0063a5",
+  "file_count": 1,
+  "symbol_count": 1,
+  "diagnostic_count": 0,
+  "occurrence_count": 1,
+  "event_cursor": 2,
+  "languages": {
+    "python": 1.0
+  },
+  "capabilities": [],
+  "backend": {
+    "backend_id": "backend:70d758df74e5541b91f9",
+    "kind": "local-filesystem",
+    "authority": "source-files",
+    "authoritative_root": "/tmp/tmp.RruWHK46V3/project",
+    "materialized_root": "/tmp/tmp.RruWHK46V3/project",
+    "execution_kind": "local-process",
+    "supports_native_watch": true,
+    "capabilities": [
+      "read",
+      "write",
+      "reconcile",
+      "execute",
+      "watch"
+    ],
+    "semantic_twin_authority": false,
+    "semantic_materialization_role": "shared-source-view"
+  },
+  "semantic_providers": {
+    "python-ast": {
+      "available": true,
+      "trust_ceiling": "semantic",
+      "project_linking": true
+    },
+    "python-jedi": {
+      "available": true,
+      "reason": "Jedi static semantic engine available",
+      "version": "0.20.0",
+      "trust_ceiling": "semantic",
+      "project_linking": true,
+      "files": 1,
+      "relations": 0,
+      "occurrences": 0,
+      "calls_examined": 0,
+      "unresolved_calls": 0,
+      "ambiguous_calls": 0,
+      "file_errors": 0,
+      "cache_hit": false,
+      "domain_digest": "bb344a7ecb1190679e86fc042efef11a4e1a34745a96995e5397b6adb78ae145",
+      "api_surface_digest": "086cc3b3e22cba8d9252b6a8cdac3e8ddfdd19d5077c601e95ac941ac869014c",
+      "partitions_total": 1,
+      "partitions_reused": 0,
+      "partitions_recomputed": 1,
+      "project_execution": false
+    },
+    "typescript-compiler-api": {
+      "available": true,
+      "reason": "TypeScript compiler API resolved by Node",
+      "trust_ceiling": "semantic",
+      "project_linking": true
+    },
+    "java": {
+      "available": true,
+      "provider": "regex-fallback",
+      "trust_ceiling": "heuristic"
+    },
+    "runtime-browser": {
+      "available": true,
+      "reason": "Playwright + system Chromium available",
+      "browser": "/usr/bin/chromium"
+    }
+  },
+  "index_health": {
+    "truncated_text_files": 0,
+    "incomplete_parse_files": 0,
+    "indexed_bytes": 44,
+    "source_bytes": 44
+  },
+  "live_workspace": {
+    "ordinary_sync": "metadata candidates -> targeted content hash -> incremental semantic admission",
+    "mutation_integrity": "deep content hash before stage/commit/rollback",
+    "watcher": {
+      "running": false,
+      "revision": "rev:e6b1839dbff61a0063a5"
+    },
+    "context_refresh": true,
+    "context_materialization": "bounded symbol-body packet; no automatic whole-file dump",
+    "context_residency": {
+      "revision": "rev:e6b1839dbff61a0063a5",
+      "config": {
+        "max_objects": 32,
+        "max_source_bytes": 120000
+      },
+      "count": 0,
+      "source_bytes_estimate": 0,
+      "state_counts": {
+        "fresh": 0,
+        "stale": 0,
+        "missing": 0
+      },
+      "objects": []
+    },
+    "virtual_context_memory": true,
+    "content_addressed_state": "Merkle snapshots derived from already-hashed canonical files; no source copy",
+    "active_evidence": 0,
+    "semantic_rename": "Python/Jedi precision lane; fail-closed outside proven provider boundary"
+  },
+  "principles": {
+    "source_authority": "source files",
+    "semantic_twin": "derived and provenance-bound",
+    "terminal": "not an agent primitive; raw process output is fallback evidence",
+    "ui": "semantic runtime state first; pixels optional secondary oracle",
+    "context": "orientation and bounded exact-source packets; retrieved metadata is not authority"
+  }
+}
+$ orient
+{
+  "task": "inspect hello function",
+  "revision": "rev:e6b1839dbff61a0063a5",
+  "objects": [
+    {
+      "object_id": "sym:10f4051b28872871d88e",
+      "object_type": "symbol",
+      "relevance": 1.0,
+      "reason": "lexical index match; task-to-symbol structural match",
+      "path": "app.py",
+      "source_range": [
+        1,
+        2
+      ],
+      "lane": "lexical+symbol",
+      "trust": "exact"
+    },
+    {
+      "object_id": "file:568470d013cd12e4f388",
+      "object_type": "file",
+      "relevance": 0.54,
+      "reason": "lexical index match",
+      "path": "app.py",
+      "source_range": null,
+      "lane": "lexical",
+      "trust": null
+    }
+  ],
+  "unknowns": [],
+  "omitted_candidates": 0,
+  "budget": 6,
+  "task_class": "implementation",
+  "handle": "ctx:3788b847a7789728e742",
+  "lane_counts": {
+    "lexical": 2,
+    "symbol": 1
+  },
+  "trust_counts": {
+    "exact": 1,
+    "unknown": 1
+  },
+  "decision_packet": {
+    "objective": "inspect hello function",
+    "revision": "rev:e6b1839dbff61a0063a5",
+    "retrieval_confidence": "medium",
+    "top_candidate_score": 1.0,
+    "concept_coverage": 0.5,
+    "supported_concepts": [
+      "hello"
+    ],
+    "unsupported_concepts": [
+      "inspect"
+    ],
+    "abstention_recommended": false,
+    "top_evidence_lanes": [
+      "lexical",
+      "symbol"
+    ],
+    "context_utility_priors_applied": 0,
+    "context_utility_is_non_authoritative": true,
+    "inspect_first": [
+      "sym:10f4051b28872871d88e",
+      "file:568470d013cd12e4f388"
+    ],
+    "exact_source_required_before_mutation": [],
+    "context_is_orientation_not_authority": true,
+    "omitted_candidates": 0
+  }
+}
+$ backend-info
+{
+  "backend_id": "backend:70d758df74e5541b91f9",
+  "kind": "local-filesystem",
+  "authority": "source-files",
+  "authoritative_root": "/tmp/tmp.RruWHK46V3/project",
+  "materialized_root": "/tmp/tmp.RruWHK46V3/project",
+  "execution_kind": "local-process",
+  "supports_native_watch": true,
+  "capabilities": [
+    "read",
+    "write",
+    "reconcile",
+    "execute",
+    "watch"
+  ],
+  "semantic_twin_authority": false,
+  "semantic_materialization_role": "shared-source-view"
+}

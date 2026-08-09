@@ -1,0 +1,34 @@
+{
+  "release": "0.1.0-alpha.5",
+  "case": "precision-calibrated-agent-native-project-workspace",
+  "admission": "bounded experimental checkpoint pending packaged-artifact verification",
+  "supported_claims": [
+    "ordinary folder/ZIP/file projects can be represented as a revisioned semantic twin while canonical source remains authoritative",
+    "Python/Jedi call evidence can refine project relationships without importing/executing project Python",
+    "Python precision output and TypeScript semantic traversal can reuse per-source partitions under bounded invalidation rules",
+    "task context can abstain on low-evidence no-gold queries and page exact source through revision/digest-bound virtual addresses",
+    "Merkle revision state can be derived/diffed from admitted digests without additional source reads",
+    "runtime/test failures can exist as active evidence and be resolved after successful verification",
+    "supported Python symbols can be renamed across proven Jedi references through digest-bound transactional spans",
+    "supported browser sessions can be asserted from DOM/accessibility/runtime state without requiring screenshots",
+    "an optional compact MCP adapter can map high-level Habitat operations without making MCP a core dependency"
+  ],
+  "rejected_claims": [
+    "specific LLM token reduction",
+    "universal coding-agent uplift",
+    "fully persistent TypeScript language-service incrementality",
+    "universal Java/LSP/SCIP precision",
+    "production hostile-code sandbox",
+    "framework-complete UI provenance",
+    "real MCP runtime on this build host",
+    "AGI capability"
+  ],
+  "evidence_refs": [
+    "TEST-EVIDENCE-alpha5.txt",
+    "DEMO-EVIDENCE-alpha5.json",
+    "AGI-ZIP-STRESS-alpha5.json",
+    "CONTEXT-PRECISION-alpha5.json",
+    "AGI-METHOD-TRACE-alpha5.json"
+  ],
+  "rollback": "Canonical source is independent from derivative semantic/virtual-memory/Merkle/evidence state. Source mutation remains transactional/conflict-bound; derivative workspace state is rebuildable."
+}

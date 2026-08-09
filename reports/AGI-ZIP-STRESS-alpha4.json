@@ -1,0 +1,1373 @@
+{
+  "release": "0.1.0-alpha.4",
+  "corpus": "Nolane-AGI-Cognitive-System-4.0.0(1).zip",
+  "cold_ingest_ms": 1001.13,
+  "warm_refresh_ms": 263.02,
+  "source_bytes": 88271461,
+  "indexed_bytes": 1723080,
+  "sqlite_bytes": 4997120,
+  "file_count": 251,
+  "symbol_count": 865,
+  "occurrence_count": 3429,
+  "warm_refresh": {
+    "revision": "rev:c1556eda26d06076e4d7",
+    "changed_paths": [],
+    "unchanged": true,
+    "compiled_files": 0,
+    "reused_files": 251,
+    "hashed_files": 251,
+    "refresh_mode": "deep",
+    "providers": {
+      "builtin": 173,
+      "python-ast": 78
+    },
+    "project_semantics": {
+      "base-resolver": {
+        "cache_hit": true,
+        "domain_digest": "3a43508d107cc3f698e68be0e2a30d20db4ccc76a990ac9347055b250dd0a743",
+        "relations": 2918,
+        "partitioned": true,
+        "partitions_total": 78,
+        "partitions_reused": 78,
+        "partitions_recomputed": 0,
+        "stale_partitions_removed": 0,
+        "dirty_paths": [],
+        "partition_sample": [
+          {
+            "path": "adapters/shared/gate_hook.py",
+            "cache_hit": true,
+            "relations": 79
+          },
+          {
+            "path": "command.py",
+            "cache_hit": true,
+            "relations": 2
+          },
+          {
+            "path": "install.py",
+            "cache_hit": true,
+            "relations": 9
+          },
+          {
+            "path": "kernel/__init__.py",
+            "cache_hit": true,
+            "relations": 2
+          },
+          {
+            "path": "kernel/agi_policy.py",
+            "cache_hit": true,
+            "relations": 18
+          },
+          {
+            "path": "kernel/agi_state.py",
+            "cache_hit": true,
+            "relations": 35
+          },
+          {
+            "path": "kernel/attestation.py",
+            "cache_hit": true,
+            "relations": 10
+          },
+          {
+            "path": "kernel/audit.py",
+            "cache_hit": true,
+            "relations": 171
+          },
+          {
+            "path": "kernel/benchmark.py",
+            "cache_hit": true,
+            "relations": 22
+          },
+          {
+            "path": "kernel/capability.py",
+            "cache_hit": true,
+            "relations": 31
+          },
+          {
+            "path": "kernel/cli.py",
+            "cache_hit": true,
+            "relations": 286
+          },
+          {
+            "path": "kernel/cognition_gate.py",
+            "cache_hit": true,
+            "relations": 33
+          },
+          {
+            "path": "kernel/cognition_model.py",
+            "cache_hit": true,
+            "relations": 30
+          },
+          {
+            "path": "kernel/cognitive_trajectory.py",
+            "cache_hit": true,
+            "relations": 24
+          },
+          {
+            "path": "kernel/composer.py",
+            "cache_hit": true,
+            "relations": 34
+          },
+          {
+            "path": "kernel/errors.py",
+            "cache_hit": true,
+            "relations": 3
+          },
+          {
+            "path": "kernel/evaluation.py",
+            "cache_hit": true,
+            "relations": 12
+          },
+          {
+            "path": "kernel/executive.py",
+            "cache_hit": true,
+            "relations": 16
+          },
+          {
+            "path": "kernel/gate.py",
+            "cache_hit": true,
+            "relations": 44
+          },
+          {
+            "path": "kernel/invalidation.py",
+            "cache_hit": true,
+            "relations": 1
+          },
+          {
+            "path": "kernel/knowledge.py",
+            "cache_hit": true,
+            "relations": 59
+          },
+          {
+            "path": "kernel/knowledge_graph.py",
+            "cache_hit": true,
+            "relations": 74
+          },
+          {
+            "path": "kernel/learning.py",
+            "cache_hit": true,
+            "relations": 10
+          },
+          {
+            "path": "kernel/ledger.py",
+            "cache_hit": true,
+            "relations": 7
+          },
+          {
+            "path": "kernel/memory.py",
+            "cache_hit": true,
+            "relations": 29
+          },
+          {
+            "path": "kernel/memory_service.py",
+            "cache_hit": true,
+            "relations": 25
+          },
+          {
+            "path": "kernel/meta_reasoning.py",
+            "cache_hit": true,
+            "relations": 8
+          },
+          {
+            "path": "kernel/model.py",
+            "cache_hit": true,
+            "relations": 27
+          },
+          {
+            "path": "kernel/policy.py",
+            "cache_hit": true,
+            "relations": 9
+          },
+          {
+            "path": "kernel/retrieval.py",
+            "cache_hit": true,
+            "relations": 31
+          },
+          {
+            "path": "kernel/semantic_proof.py",
+            "cache_hit": true,
+            "relations": 23
+          },
+          {
+            "path": "kernel/session_gate.py",
+            "cache_hit": true,
+            "relations": 26
+          },
+          {
+            "path": "kernel/skill_audit.py",
+            "cache_hit": true,
+            "relations": 3
+          },
+          {
+            "path": "kernel/skill_runtime.py",
+            "cache_hit": true,
+            "relations": 94
+          },
+          {
+            "path": "kernel/tool_broker.py",
+            "cache_hit": true,
+            "relations": 8
+          },
+          {
+            "path": "kernel/trajectory.py",
+            "cache_hit": true,
+            "relations": 26
+          },
+          {
+            "path": "package.py",
+            "cache_hit": true,
+            "relations": 33
+          },
+          {
+            "path": "tests/test_adapters.py",
+            "cache_hit": true,
+            "relations": 53
+          },
+          {
+            "path": "tests/test_adversarial.py",
+            "cache_hit": true,
+            "relations": 72
+          },
+          {
+            "path": "tests/test_agi_adapters.py",
+            "cache_hit": true,
+            "relations": 99
+          }
+        ]
+      },
+      "typescript-project": {
+        "available": true,
+        "reason": "no JS/TS files",
+        "files": 0,
+        "relations": 0,
+        "occurrences": 0,
+        "cache_hit": true,
+        "domain_digest": null
+      },
+      "cache": {
+        "reused": true,
+        "provider_domain_reuse": {
+          "base": true,
+          "typescript": true
+        },
+        "compatibility_gate_drift": false
+      }
+    },
+    "project_semantic_cache_hit": true,
+    "occurrence_count": 3429,
+    "graph_delta": {
+      "relations": {
+        "inserted": 0,
+        "updated": 0,
+        "deleted": 0,
+        "unchanged": 2918,
+        "total": 2918
+      },
+      "occurrences": {
+        "inserted": 0,
+        "updated": 0,
+        "deleted": 0,
+        "unchanged": 3429,
+        "total": 3429
+      }
+    }
+  },
+  "documentation_probe": {
+    "path": "AGI-RESEARCH.md",
+    "elapsed_ms": 125.72,
+    "refresh": {
+      "revision": "rev:812f8e9e40e23ff5c27d",
+      "changed_paths": [
+        "AGI-RESEARCH.md"
+      ],
+      "unchanged": false,
+      "compiled_files": 1,
+      "reused_files": 0,
+      "hashed_files": 1,
+      "refresh_mode": "targeted",
+      "providers": {
+        "builtin": 1
+      },
+      "project_semantics": {
+        "base-resolver": {
+          "cache_hit": true,
+          "domain_digest": "3a43508d107cc3f698e68be0e2a30d20db4ccc76a990ac9347055b250dd0a743",
+          "relations": 2918,
+          "partitioned": true,
+          "partitions_total": 78,
+          "partitions_reused": 78,
+          "partitions_recomputed": 0,
+          "stale_partitions_removed": 0,
+          "dirty_paths": [],
+          "partition_sample": [
+            {
+              "path": "adapters/shared/gate_hook.py",
+              "cache_hit": true,
+              "relations": 79
+            },
+            {
+              "path": "command.py",
+              "cache_hit": true,
+              "relations": 2
+            },
+            {
+              "path": "install.py",
+              "cache_hit": true,
+              "relations": 9
+            },
+            {
+              "path": "kernel/__init__.py",
+              "cache_hit": true,
+              "relations": 2
+            },
+            {
+              "path": "kernel/agi_policy.py",
+              "cache_hit": true,
+              "relations": 18
+            },
+            {
+              "path": "kernel/agi_state.py",
+              "cache_hit": true,
+              "relations": 35
+            },
+            {
+              "path": "kernel/attestation.py",
+              "cache_hit": true,
+              "relations": 10
+            },
+            {
+              "path": "kernel/audit.py",
+              "cache_hit": true,
+              "relations": 171
+            },
+            {
+              "path": "kernel/benchmark.py",
+              "cache_hit": true,
+              "relations": 22
+            },
+            {
+              "path": "kernel/capability.py",
+              "cache_hit": true,
+              "relations": 31
+            },
+            {
+              "path": "kernel/cli.py",
+              "cache_hit": true,
+              "relations": 286
+            },
+            {
+              "path": "kernel/cognition_gate.py",
+              "cache_hit": true,
+              "relations": 33
+            },
+            {
+              "path": "kernel/cognition_model.py",
+              "cache_hit": true,
+              "relations": 30
+            },
+            {
+              "path": "kernel/cognitive_trajectory.py",
+              "cache_hit": true,
+              "relations": 24
+            },
+            {
+              "path": "kernel/composer.py",
+              "cache_hit": true,
+              "relations": 34
+            },
+            {
+              "path": "kernel/errors.py",
+              "cache_hit": true,
+              "relations": 3
+            },
+            {
+              "path": "kernel/evaluation.py",
+              "cache_hit": true,
+              "relations": 12
+            },
+            {
+              "path": "kernel/executive.py",
+              "cache_hit": true,
+              "relations": 16
+            },
+            {
+              "path": "kernel/gate.py",
+              "cache_hit": true,
+              "relations": 44
+            },
+            {
+              "path": "kernel/invalidation.py",
+              "cache_hit": true,
+              "relations": 1
+            },
+            {
+              "path": "kernel/knowledge.py",
+              "cache_hit": true,
+              "relations": 59
+            },
+            {
+              "path": "kernel/knowledge_graph.py",
+              "cache_hit": true,
+              "relations": 74
+            },
+            {
+              "path": "kernel/learning.py",
+              "cache_hit": true,
+              "relations": 10
+            },
+            {
+              "path": "kernel/ledger.py",
+              "cache_hit": true,
+              "relations": 7
+            },
+            {
+              "path": "kernel/memory.py",
+              "cache_hit": true,
+              "relations": 29
+            },
+            {
+              "path": "kernel/memory_service.py",
+              "cache_hit": true,
+              "relations": 25
+            },
+            {
+              "path": "kernel/meta_reasoning.py",
+              "cache_hit": true,
+              "relations": 8
+            },
+            {
+              "path": "kernel/model.py",
+              "cache_hit": true,
+              "relations": 27
+            },
+            {
+              "path": "kernel/policy.py",
+              "cache_hit": true,
+              "relations": 9
+            },
+            {
+              "path": "kernel/retrieval.py",
+              "cache_hit": true,
+              "relations": 31
+            },
+            {
+              "path": "kernel/semantic_proof.py",
+              "cache_hit": true,
+              "relations": 23
+            },
+            {
+              "path": "kernel/session_gate.py",
+              "cache_hit": true,
+              "relations": 26
+            },
+            {
+              "path": "kernel/skill_audit.py",
+              "cache_hit": true,
+              "relations": 3
+            },
+            {
+              "path": "kernel/skill_runtime.py",
+              "cache_hit": true,
+              "relations": 94
+            },
+            {
+              "path": "kernel/tool_broker.py",
+              "cache_hit": true,
+              "relations": 8
+            },
+            {
+              "path": "kernel/trajectory.py",
+              "cache_hit": true,
+              "relations": 26
+            },
+            {
+              "path": "package.py",
+              "cache_hit": true,
+              "relations": 33
+            },
+            {
+              "path": "tests/test_adapters.py",
+              "cache_hit": true,
+              "relations": 53
+            },
+            {
+              "path": "tests/test_adversarial.py",
+              "cache_hit": true,
+              "relations": 72
+            },
+            {
+              "path": "tests/test_agi_adapters.py",
+              "cache_hit": true,
+              "relations": 99
+            }
+          ]
+        },
+        "typescript-project": {
+          "available": true,
+          "reason": "no JS/TS files",
+          "files": 0,
+          "relations": 0,
+          "occurrences": 0,
+          "cache_hit": true,
+          "domain_digest": null
+        },
+        "cache": {
+          "reused": false,
+          "provider_domain_reuse": {
+            "base": true,
+            "typescript": true
+          },
+          "compatibility_gate_drift": false
+        }
+      },
+      "project_semantic_cache_hit": false,
+      "occurrence_count": 3429,
+      "graph_delta": {
+        "relations": {
+          "inserted": 0,
+          "updated": 0,
+          "deleted": 0,
+          "unchanged": 2918,
+          "total": 2918
+        },
+        "occurrences": {
+          "inserted": 0,
+          "updated": 0,
+          "deleted": 0,
+          "unchanged": 3429,
+          "total": 3429
+        }
+      }
+    }
+  },
+  "code_probe": {
+    "path": "adapters/shared/gate_hook.py",
+    "elapsed_ms": 136.59,
+    "refresh": {
+      "revision": "rev:b9932be163cdf8b68a4f",
+      "changed_paths": [
+        "adapters/shared/gate_hook.py"
+      ],
+      "unchanged": false,
+      "compiled_files": 1,
+      "reused_files": 0,
+      "hashed_files": 1,
+      "refresh_mode": "targeted",
+      "providers": {
+        "python-ast": 1
+      },
+      "project_semantics": {
+        "base-resolver": {
+          "cache_hit": true,
+          "domain_digest": "bb1ca7031c471c1aac7a24241db43cd1fef159898010e4203b24d00fdeda42cd",
+          "relations": 2918,
+          "partitioned": true,
+          "partitions_total": 78,
+          "partitions_reused": 78,
+          "partitions_recomputed": 0,
+          "stale_partitions_removed": 0,
+          "dirty_paths": [],
+          "partition_sample": [
+            {
+              "path": "adapters/shared/gate_hook.py",
+              "cache_hit": true,
+              "relations": 79
+            },
+            {
+              "path": "command.py",
+              "cache_hit": true,
+              "relations": 2
+            },
+            {
+              "path": "install.py",
+              "cache_hit": true,
+              "relations": 9
+            },
+            {
+              "path": "kernel/__init__.py",
+              "cache_hit": true,
+              "relations": 2
+            },
+            {
+              "path": "kernel/agi_policy.py",
+              "cache_hit": true,
+              "relations": 18
+            },
+            {
+              "path": "kernel/agi_state.py",
+              "cache_hit": true,
+              "relations": 35
+            },
+            {
+              "path": "kernel/attestation.py",
+              "cache_hit": true,
+              "relations": 10
+            },
+            {
+              "path": "kernel/audit.py",
+              "cache_hit": true,
+              "relations": 171
+            },
+            {
+              "path": "kernel/benchmark.py",
+              "cache_hit": true,
+              "relations": 22
+            },
+            {
+              "path": "kernel/capability.py",
+              "cache_hit": true,
+              "relations": 31
+            },
+            {
+              "path": "kernel/cli.py",
+              "cache_hit": true,
+              "relations": 286
+            },
+            {
+              "path": "kernel/cognition_gate.py",
+              "cache_hit": true,
+              "relations": 33
+            },
+            {
+              "path": "kernel/cognition_model.py",
+              "cache_hit": true,
+              "relations": 30
+            },
+            {
+              "path": "kernel/cognitive_trajectory.py",
+              "cache_hit": true,
+              "relations": 24
+            },
+            {
+              "path": "kernel/composer.py",
+              "cache_hit": true,
+              "relations": 34
+            },
+            {
+              "path": "kernel/errors.py",
+              "cache_hit": true,
+              "relations": 3
+            },
+            {
+              "path": "kernel/evaluation.py",
+              "cache_hit": true,
+              "relations": 12
+            },
+            {
+              "path": "kernel/executive.py",
+              "cache_hit": true,
+              "relations": 16
+            },
+            {
+              "path": "kernel/gate.py",
+              "cache_hit": true,
+              "relations": 44
+            },
+            {
+              "path": "kernel/invalidation.py",
+              "cache_hit": true,
+              "relations": 1
+            },
+            {
+              "path": "kernel/knowledge.py",
+              "cache_hit": true,
+              "relations": 59
+            },
+            {
+              "path": "kernel/knowledge_graph.py",
+              "cache_hit": true,
+              "relations": 74
+            },
+            {
+              "path": "kernel/learning.py",
+              "cache_hit": true,
+              "relations": 10
+            },
+            {
+              "path": "kernel/ledger.py",
+              "cache_hit": true,
+              "relations": 7
+            },
+            {
+              "path": "kernel/memory.py",
+              "cache_hit": true,
+              "relations": 29
+            },
+            {
+              "path": "kernel/memory_service.py",
+              "cache_hit": true,
+              "relations": 25
+            },
+            {
+              "path": "kernel/meta_reasoning.py",
+              "cache_hit": true,
+              "relations": 8
+            },
+            {
+              "path": "kernel/model.py",
+              "cache_hit": true,
+              "relations": 27
+            },
+            {
+              "path": "kernel/policy.py",
+              "cache_hit": true,
+              "relations": 9
+            },
+            {
+              "path": "kernel/retrieval.py",
+              "cache_hit": true,
+              "relations": 31
+            },
+            {
+              "path": "kernel/semantic_proof.py",
+              "cache_hit": true,
+              "relations": 23
+            },
+            {
+              "path": "kernel/session_gate.py",
+              "cache_hit": true,
+              "relations": 26
+            },
+            {
+              "path": "kernel/skill_audit.py",
+              "cache_hit": true,
+              "relations": 3
+            },
+            {
+              "path": "kernel/skill_runtime.py",
+              "cache_hit": true,
+              "relations": 94
+            },
+            {
+              "path": "kernel/tool_broker.py",
+              "cache_hit": true,
+              "relations": 8
+            },
+            {
+              "path": "kernel/trajectory.py",
+              "cache_hit": true,
+              "relations": 26
+            },
+            {
+              "path": "package.py",
+              "cache_hit": true,
+              "relations": 33
+            },
+            {
+              "path": "tests/test_adapters.py",
+              "cache_hit": true,
+              "relations": 53
+            },
+            {
+              "path": "tests/test_adversarial.py",
+              "cache_hit": true,
+              "relations": 72
+            },
+            {
+              "path": "tests/test_agi_adapters.py",
+              "cache_hit": true,
+              "relations": 99
+            }
+          ]
+        },
+        "typescript-project": {
+          "available": true,
+          "reason": "no JS/TS files",
+          "files": 0,
+          "relations": 0,
+          "occurrences": 0,
+          "cache_hit": true,
+          "domain_digest": null
+        },
+        "cache": {
+          "reused": false,
+          "provider_domain_reuse": {
+            "base": true,
+            "typescript": true
+          },
+          "compatibility_gate_drift": false
+        }
+      },
+      "project_semantic_cache_hit": false,
+      "occurrence_count": 3429,
+      "graph_delta": {
+        "relations": {
+          "inserted": 43,
+          "updated": 0,
+          "deleted": 0,
+          "unchanged": 2875,
+          "total": 2918
+        },
+        "occurrences": {
+          "inserted": 0,
+          "updated": 0,
+          "deleted": 0,
+          "unchanged": 3429,
+          "total": 3429
+        }
+      }
+    }
+  },
+  "context": {
+    "objects": [
+      {
+        "object_id": "sym:6f16a2283f6f331db960",
+        "object_type": "symbol",
+        "relevance": 1.0,
+        "reason": "lexical index match; task-to-symbol structural match; dependency expansion:imports_symbol trust:semantic; dependency expansion:calls trust:semantic; dependency expansion:imports_symbol trust:semantic; dependency expansion:calls trust:semantic; dependency expansion:imports_symbol trust:semantic; dependency expansion:calls trust:semantic; dependency expansion:imports_symbol trust:semantic; dependency expansion:calls trust:semantic; dependency expansion:imports_symbol trust:semantic; dependency expansion:calls trust:semantic",
+        "path": "kernel/semantic_proof.py",
+        "source_range": [
+          198,
+          270
+        ],
+        "lane": "lexical+symbol+graph",
+        "trust": "exact"
+      },
+      {
+        "object_id": "sym:071bd3fc9da791270413",
+        "object_type": "symbol",
+        "relevance": 0.8583912188159999,
+        "reason": "lexical index match; task-to-symbol structural match; dependency expansion:calls trust:semantic; dependency expansion:calls trust:semantic; dependency expansion:contains trust:exact",
+        "path": "tests/test_gate.py",
+        "source_range": [
+          355,
+          358
+        ],
+        "lane": "lexical+symbol+graph",
+        "trust": "exact"
+      },
+      {
+        "object_id": "sym:7173b165390eb5a809cd",
+        "object_type": "symbol",
+        "relevance": 0.8064007961599999,
+        "reason": "lexical index match; task-to-symbol structural match; dependency expansion:calls trust:semantic",
+        "path": "tests/test_semantic_proof.py",
+        "source_range": [
+          67,
+          68
+        ],
+        "lane": "lexical+symbol+graph",
+        "trust": "exact"
+      },
+      {
+        "object_id": "sym:a057d66eaba75222ab3a",
+        "object_type": "symbol",
+        "relevance": 0.7739999999999999,
+        "reason": "lexical index match; task-to-symbol structural match",
+        "path": "kernel/semantic_proof.py",
+        "source_range": [
+          106,
+          175
+        ],
+        "lane": "lexical+symbol",
+        "trust": "exact"
+      },
+      {
+        "object_id": "file:b135b4e5a80d7f8c47dd",
+        "object_type": "file",
+        "relevance": 0.7638128,
+        "reason": "lexical index match; dependency expansion:imports_symbol trust:semantic",
+        "path": "tests/test_v4_property_attacks.py",
+        "source_range": null,
+        "lane": "lexical+graph",
+        "trust": "semantic"
+      },
+      {
+        "object_id": "file:3c0b52c37f407ef43aab",
+        "object_type": "file",
+        "relevance": 0.76,
+        "reason": "lexical index match",
+        "path": "skills/nolane-agi-context-engineering/references/protocol.md",
+        "source_range": null,
+        "lane": "lexical",
+        "trust": null
+      },
+      {
+        "object_id": "sym:e9de75e9dbc64adcc879",
+        "object_type": "symbol",
+        "relevance": 0.7564,
+        "reason": "lexical index match; task-to-symbol structural match",
+        "path": "tests/test_gate.py",
+        "source_range": [
+          360,
+          363
+        ],
+        "lane": "lexical+symbol",
+        "trust": "exact"
+      },
+      {
+        "object_id": "file:f2ac5b6f80b606f9db9e",
+        "object_type": "file",
+        "relevance": 0.7556,
+        "reason": "lexical index match",
+        "path": "skills/nolane-agi-tool-orchestration/references/protocol.md",
+        "source_range": null,
+        "lane": "lexical",
+        "trust": null
+      },
+      {
+        "object_id": "file:f75f488e994ad6372e51",
+        "object_type": "file",
+        "relevance": 0.7512,
+        "reason": "lexical index match",
+        "path": "skills/nolane-agi-context-engineering/SKILL.md",
+        "source_range": null,
+        "lane": "lexical",
+        "trust": null
+      },
+      {
+        "object_id": "sym:e0399d1dd6fd049c6efc",
+        "object_type": "symbol",
+        "relevance": 0.748884173568,
+        "reason": "lexical index match; task-to-symbol structural match; dependency expansion:calls trust:semantic",
+        "path": "tests/test_semantic_proof.py",
+        "source_range": [
+          105,
+          111
+        ],
+        "lane": "lexical+symbol+graph",
+        "trust": "exact"
+      },
+      {
+        "object_id": "sym:dfd3bfec903f3ebe6365",
+        "object_type": "symbol",
+        "relevance": 0.7439856,
+        "reason": "lexical index match; task-to-symbol structural match; dependency expansion:calls trust:parser",
+        "path": "kernel/semantic_proof.py",
+        "source_range": [
+          64,
+          72
+        ],
+        "lane": "lexical+symbol+graph",
+        "trust": "exact"
+      },
+      {
+        "object_id": "sym:5cbf5d428bb9a1349c22",
+        "object_type": "symbol",
+        "relevance": 0.7379856,
+        "reason": "lexical index match; task-to-symbol structural match; dependency expansion:calls trust:parser",
+        "path": "kernel/semantic_proof.py",
+        "source_range": [
+          14,
+          23
+        ],
+        "lane": "lexical+symbol+graph",
+        "trust": "exact"
+      }
+    ],
+    "unknowns": [],
+    "trust_counts": {
+      "exact": 8,
+      "semantic": 1,
+      "unknown": 3
+    },
+    "lane_counts": {
+      "lexical": 12,
+      "symbol": 8,
+      "graph": 7
+    }
+  },
+  "residency": {
+    "admitted": [
+      "sym:6f16a2283f6f331db960",
+      "sym:071bd3fc9da791270413",
+      "sym:7173b165390eb5a809cd",
+      "sym:a057d66eaba75222ab3a",
+      "file:b135b4e5a80d7f8c47dd",
+      "file:3c0b52c37f407ef43aab",
+      "sym:e9de75e9dbc64adcc879",
+      "file:f2ac5b6f80b606f9db9e"
+    ],
+    "status": {
+      "revision": "rev:c1556eda26d06076e4d7",
+      "config": {
+        "max_objects": 8,
+        "max_source_bytes": 30000
+      },
+      "count": 8,
+      "source_bytes_estimate": 10366,
+      "state_counts": {
+        "fresh": 8,
+        "stale": 0,
+        "missing": 0
+      },
+      "objects": [
+        {
+          "object_id": "sym:071bd3fc9da791270413",
+          "kind": "symbol",
+          "path": "tests/test_gate.py",
+          "admitted_revision": "rev:c1556eda26d06076e4d7",
+          "source_digest": "7d135e3997c0d93e52731baf8cf39f0d37f3616b7aea03b664908dc017425841",
+          "relevance": 0.8583912188159999,
+          "pinned": 1,
+          "source_bytes_estimate": 269,
+          "access_count": 1,
+          "last_access_seq": 2,
+          "admitted_at": "2026-08-07T06:10:56.045292+00:00",
+          "last_touched_at": "2026-08-07T06:10:56.045292+00:00",
+          "state": "fresh"
+        },
+        {
+          "object_id": "sym:6f16a2283f6f331db960",
+          "kind": "symbol",
+          "path": "kernel/semantic_proof.py",
+          "admitted_revision": "rev:c1556eda26d06076e4d7",
+          "source_digest": "6abdc5f5ffcc2fc78c8f593ffb30942a90b242618dcdda8e905d9d0133752fc4",
+          "relevance": 1.1538559359999998,
+          "pinned": 1,
+          "source_bytes_estimate": 5574,
+          "access_count": 1,
+          "last_access_seq": 1,
+          "admitted_at": "2026-08-07T06:10:56.045292+00:00",
+          "last_touched_at": "2026-08-07T06:10:56.045292+00:00",
+          "state": "fresh"
+        },
+        {
+          "object_id": "file:f2ac5b6f80b606f9db9e",
+          "kind": "file",
+          "path": "skills/nolane-agi-tool-orchestration/references/protocol.md",
+          "admitted_revision": "rev:c1556eda26d06076e4d7",
+          "source_digest": "b469bb32c55e381c550392cf6688884d1facf1fda70d6c258a762ecfe8134d24",
+          "relevance": 0.7556,
+          "pinned": 0,
+          "source_bytes_estimate": 0,
+          "access_count": 1,
+          "last_access_seq": 8,
+          "admitted_at": "2026-08-07T06:10:56.045292+00:00",
+          "last_touched_at": "2026-08-07T06:10:56.045292+00:00",
+          "state": "fresh"
+        },
+        {
+          "object_id": "sym:e9de75e9dbc64adcc879",
+          "kind": "symbol",
+          "path": "tests/test_gate.py",
+          "admitted_revision": "rev:c1556eda26d06076e4d7",
+          "source_digest": "7d135e3997c0d93e52731baf8cf39f0d37f3616b7aea03b664908dc017425841",
+          "relevance": 0.7564,
+          "pinned": 0,
+          "source_bytes_estimate": 268,
+          "access_count": 1,
+          "last_access_seq": 7,
+          "admitted_at": "2026-08-07T06:10:56.045292+00:00",
+          "last_touched_at": "2026-08-07T06:10:56.045292+00:00",
+          "state": "fresh"
+        },
+        {
+          "object_id": "file:3c0b52c37f407ef43aab",
+          "kind": "file",
+          "path": "skills/nolane-agi-context-engineering/references/protocol.md",
+          "admitted_revision": "rev:c1556eda26d06076e4d7",
+          "source_digest": "14badc758a3715fc0d71c9a99e0193bea94fe134e6723920ca6363c75c4f920a",
+          "relevance": 0.76,
+          "pinned": 0,
+          "source_bytes_estimate": 0,
+          "access_count": 1,
+          "last_access_seq": 6,
+          "admitted_at": "2026-08-07T06:10:56.045292+00:00",
+          "last_touched_at": "2026-08-07T06:10:56.045292+00:00",
+          "state": "fresh"
+        },
+        {
+          "object_id": "file:b135b4e5a80d7f8c47dd",
+          "kind": "file",
+          "path": "tests/test_v4_property_attacks.py",
+          "admitted_revision": "rev:c1556eda26d06076e4d7",
+          "source_digest": "6c53d5950e170d6200137f234242bbbcd2633315caed8d4795bb0fea0f22d3a5",
+          "relevance": 0.7638128,
+          "pinned": 0,
+          "source_bytes_estimate": 0,
+          "access_count": 1,
+          "last_access_seq": 5,
+          "admitted_at": "2026-08-07T06:10:56.045292+00:00",
+          "last_touched_at": "2026-08-07T06:10:56.045292+00:00",
+          "state": "fresh"
+        },
+        {
+          "object_id": "sym:a057d66eaba75222ab3a",
+          "kind": "symbol",
+          "path": "kernel/semantic_proof.py",
+          "admitted_revision": "rev:c1556eda26d06076e4d7",
+          "source_digest": "6abdc5f5ffcc2fc78c8f593ffb30942a90b242618dcdda8e905d9d0133752fc4",
+          "relevance": 0.7739999999999999,
+          "pinned": 0,
+          "source_bytes_estimate": 4107,
+          "access_count": 1,
+          "last_access_seq": 4,
+          "admitted_at": "2026-08-07T06:10:56.045292+00:00",
+          "last_touched_at": "2026-08-07T06:10:56.045292+00:00",
+          "state": "fresh"
+        },
+        {
+          "object_id": "sym:7173b165390eb5a809cd",
+          "kind": "symbol",
+          "path": "tests/test_semantic_proof.py",
+          "admitted_revision": "rev:c1556eda26d06076e4d7",
+          "source_digest": "7bcc8d31aadf622629dd83dd605973f3e8f5e92e06ccf3e7c7d21f9dcbdaab34",
+          "relevance": 0.8064007961599999,
+          "pinned": 0,
+          "source_bytes_estimate": 148,
+          "access_count": 1,
+          "last_access_seq": 3,
+          "admitted_at": "2026-08-07T06:10:56.045292+00:00",
+          "last_touched_at": "2026-08-07T06:10:56.045292+00:00",
+          "state": "fresh"
+        }
+      ]
+    },
+    "materialized_source_bytes": 10366
+  },
+  "partition_summary": {
+    "warm_base": {
+      "cache_hit": true,
+      "domain_digest": "3a43508d107cc3f698e68be0e2a30d20db4ccc76a990ac9347055b250dd0a743",
+      "relations": 2918,
+      "partitioned": true,
+      "partitions_total": 78,
+      "partitions_reused": 78,
+      "partitions_recomputed": 0,
+      "stale_partitions_removed": 0,
+      "dirty_paths": [],
+      "partition_sample": [
+        {
+          "path": "adapters/shared/gate_hook.py",
+          "cache_hit": true,
+          "relations": 79
+        },
+        {
+          "path": "command.py",
+          "cache_hit": true,
+          "relations": 2
+        },
+        {
+          "path": "install.py",
+          "cache_hit": true,
+          "relations": 9
+        },
+        {
+          "path": "kernel/__init__.py",
+          "cache_hit": true,
+          "relations": 2
+        },
+        {
+          "path": "kernel/agi_policy.py",
+          "cache_hit": true,
+          "relations": 18
+        },
+        {
+          "path": "kernel/agi_state.py",
+          "cache_hit": true,
+          "relations": 35
+        },
+        {
+          "path": "kernel/attestation.py",
+          "cache_hit": true,
+          "relations": 10
+        },
+        {
+          "path": "kernel/audit.py",
+          "cache_hit": true,
+          "relations": 171
+        },
+        {
+          "path": "kernel/benchmark.py",
+          "cache_hit": true,
+          "relations": 22
+        },
+        {
+          "path": "kernel/capability.py",
+          "cache_hit": true,
+          "relations": 31
+        },
+        {
+          "path": "kernel/cli.py",
+          "cache_hit": true,
+          "relations": 286
+        },
+        {
+          "path": "kernel/cognition_gate.py",
+          "cache_hit": true,
+          "relations": 33
+        },
+        {
+          "path": "kernel/cognition_model.py",
+          "cache_hit": true,
+          "relations": 30
+        },
+        {
+          "path": "kernel/cognitive_trajectory.py",
+          "cache_hit": true,
+          "relations": 24
+        },
+        {
+          "path": "kernel/composer.py",
+          "cache_hit": true,
+          "relations": 34
+        },
+        {
+          "path": "kernel/errors.py",
+          "cache_hit": true,
+          "relations": 3
+        },
+        {
+          "path": "kernel/evaluation.py",
+          "cache_hit": true,
+          "relations": 12
+        },
+        {
+          "path": "kernel/executive.py",
+          "cache_hit": true,
+          "relations": 16
+        },
+        {
+          "path": "kernel/gate.py",
+          "cache_hit": true,
+          "relations": 44
+        },
+        {
+          "path": "kernel/invalidation.py",
+          "cache_hit": true,
+          "relations": 1
+        },
+        {
+          "path": "kernel/knowledge.py",
+          "cache_hit": true,
+          "relations": 59
+        },
+        {
+          "path": "kernel/knowledge_graph.py",
+          "cache_hit": true,
+          "relations": 74
+        },
+        {
+          "path": "kernel/learning.py",
+          "cache_hit": true,
+          "relations": 10
+        },
+        {
+          "path": "kernel/ledger.py",
+          "cache_hit": true,
+          "relations": 7
+        },
+        {
+          "path": "kernel/memory.py",
+          "cache_hit": true,
+          "relations": 29
+        },
+        {
+          "path": "kernel/memory_service.py",
+          "cache_hit": true,
+          "relations": 25
+        },
+        {
+          "path": "kernel/meta_reasoning.py",
+          "cache_hit": true,
+          "relations": 8
+        },
+        {
+          "path": "kernel/model.py",
+          "cache_hit": true,
+          "relations": 27
+        },
+        {
+          "path": "kernel/policy.py",
+          "cache_hit": true,
+          "relations": 9
+        },
+        {
+          "path": "kernel/retrieval.py",
+          "cache_hit": true,
+          "relations": 31
+        },
+        {
+          "path": "kernel/semantic_proof.py",
+          "cache_hit": true,
+          "relations": 23
+        },
+        {
+          "path": "kernel/session_gate.py",
+          "cache_hit": true,
+          "relations": 26
+        },
+        {
+          "path": "kernel/skill_audit.py",
+          "cache_hit": true,
+          "relations": 3
+        },
+        {
+          "path": "kernel/skill_runtime.py",
+          "cache_hit": true,
+          "relations": 94
+        },
+        {
+          "path": "kernel/tool_broker.py",
+          "cache_hit": true,
+          "relations": 8
+        },
+        {
+          "path": "kernel/trajectory.py",
+          "cache_hit": true,
+          "relations": 26
+        },
+        {
+          "path": "package.py",
+          "cache_hit": true,
+          "relations": 33
+        },
+        {
+          "path": "tests/test_adapters.py",
+          "cache_hit": true,
+          "relations": 53
+        },
+        {
+          "path": "tests/test_adversarial.py",
+          "cache_hit": true,
+          "relations": 72
+        },
+        {
+          "path": "tests/test_agi_adapters.py",
+          "cache_hit": true,
+          "relations": 99
+        }
+      ]
+    }
+  },
+  "provider_report": {
+    "revision": "rev:b9932be163cdf8b68a4f",
+    "providers": {
+      "python-ast": {
+        "available": true,
+        "scope": "file syntax + project import/call linkage",
+        "trust_ceiling": "semantic"
+      },
+      "typescript-program": {
+        "available": true,
+        "reason": "TypeScript compiler API resolved by Node",
+        "scope": "whole-project TypeScript Program/TypeChecker",
+        "trust_ceiling": "semantic"
+      },
+      "tree-sitter": {
+        "available": false,
+        "reason": "Python tree-sitter bindings are not bundled; optional provider contract reserved",
+        "trust_ceiling": "parser"
+      },
+      "scip": {
+        "available": false,
+        "reason": "external SCIP indexer/CLI required for precise index ingestion",
+        "trust_ceiling": "semantic"
+      },
+      "lsp": {
+        "available": false,
+        "reason": "external language server required",
+        "trust_ceiling": "semantic"
+      },
+      "java": {
+        "available": true,
+        "provider": "regex-fallback",
+        "reason": "javac is intentionally not executed during ingestion",
+        "trust_ceiling": "heuristic"
+      }
+    },
+    "policy": "missing precise providers are explicit capability gaps; Habitat does not relabel fallback output as precise"
+  },
+  "claim_boundary": "Measures Habitat indexing/synchronization plumbing on this corpus; it does not measure model tokens, coding success, or AGI capability."
+}

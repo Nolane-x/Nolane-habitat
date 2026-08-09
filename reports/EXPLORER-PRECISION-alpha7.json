@@ -1,0 +1,99 @@
+{
+  "release": "0.1.0-alpha.7",
+  "benchmark": "line-budget-explorer-plumbing-v1",
+  "fixture": {
+    "files": 202,
+    "noise_files": 200
+  },
+  "filesystem_full_scan": {
+    "credential": {
+      "files_read": 202,
+      "source_bytes_read": 8111,
+      "source_lines_read": 406,
+      "top_paths": [
+        "auth.py"
+      ]
+    },
+    "billing": {
+      "files_read": 202,
+      "source_bytes_read": 8111,
+      "source_lines_read": 406,
+      "top_paths": [
+        "billing.py"
+      ]
+    },
+    "no_gold": {
+      "files_read": 202,
+      "source_bytes_read": 8111,
+      "source_lines_read": 406,
+      "top_paths": []
+    }
+  },
+  "habitat": {
+    "credential": {
+      "confidence": "high",
+      "abstained": false,
+      "regions": [
+        {
+          "object_id": "sym:b3f6914c8c2f3e63e3a2",
+          "path": "auth.py",
+          "start_line": 1,
+          "end_line": 3,
+          "line_count": 3,
+          "partial": false,
+          "kind": "symbol",
+          "trust": "exact",
+          "score": 1.107126,
+          "lane": "lexical+symbol",
+          "reason": "lexical index match; task-to-symbol structural match",
+          "virtual_region": "region://ctx:efefa5b4744fbb209379/region:c7418fb245f27963d169"
+        }
+      ],
+      "lines_selected": 3,
+      "explorer_source_bytes": 0,
+      "solver_faulted_source_bytes": 127,
+      "gold_path": "auth.py",
+      "gold_region_retrieved": true,
+      "noise_regions": []
+    },
+    "billing": {
+      "confidence": "high",
+      "abstained": false,
+      "regions": [
+        {
+          "object_id": "sym:bea01053806dd1c161ee",
+          "path": "billing.py",
+          "start_line": 1,
+          "end_line": 3,
+          "line_count": 3,
+          "partial": false,
+          "kind": "symbol",
+          "trust": "exact",
+          "score": 0.967867,
+          "lane": "lexical+symbol",
+          "reason": "lexical index match; task-to-symbol structural match",
+          "virtual_region": "region://ctx:37ded4df1f134179af92/region:2e3b60512b4e55ec86b3"
+        }
+      ],
+      "lines_selected": 3,
+      "explorer_source_bytes": 0,
+      "solver_faulted_source_bytes": 92,
+      "gold_path": "billing.py",
+      "gold_region_retrieved": true,
+      "noise_regions": []
+    },
+    "no_gold": {
+      "confidence": "low",
+      "abstained": true,
+      "regions": [],
+      "lines_selected": 0,
+      "explorer_source_bytes": 0,
+      "solver_faulted_source_bytes": 0,
+      "gold_path": null,
+      "gold_region_retrieved": null,
+      "noise_regions": []
+    }
+  },
+  "metrics_definition": "Deterministic semantic region selection under line budget plus exact-source page-fault bytes; explorer reads zero source bytes.",
+  "claim_boundary": "Not a same-model agent A/B. Source bytes and line budgets are not token counts and do not establish coding success."
+}

@@ -1,0 +1,66 @@
+{
+  "schema": 1,
+  "release": "0.1.0-alpha.16",
+  "date": "2026-08-08",
+  "inventory_collected_tests": 272,
+  "completed_final_source_tests": 140,
+  "completed_status": "passed",
+  "completed_groups": [
+    {
+      "name": "alpha16-forensic-nearlive",
+      "tests": 12
+    },
+    {
+      "name": "alpha15-ai-operator",
+      "tests": 3
+    },
+    {
+      "name": "alpha13-microdepth-resilience",
+      "tests": 27
+    },
+    {
+      "name": "alpha14-executive-trajectory",
+      "tests": 15
+    },
+    {
+      "name": "alpha11-observatory-runtime",
+      "tests": 12
+    },
+    {
+      "name": "alpha12-cinematic-world",
+      "tests": 11
+    },
+    {
+      "name": "alpha12-observatory-cinematic",
+      "tests": 4
+    },
+    {
+      "name": "core-protocol-workspace-schemas",
+      "tests": 10
+    },
+    {
+      "name": "alpha5-deep+schema",
+      "tests": 17
+    },
+    {
+      "name": "alpha7-deep+schema",
+      "tests": 10
+    },
+    {
+      "name": "adversarial+alpha1-protocol+schema",
+      "tests": 6
+    },
+    {
+      "name": "alpha1-semantics-process-isolated",
+      "tests": 13
+    }
+  ],
+  "static_gates": {
+    "python_compileall": "passed",
+    "observatory_js_syntax": "passed",
+    "json_schema_parse": "56/56",
+    "app_js_literal_nul_bytes": 0,
+    "lifecycle_close_raw_stream_count": 0
+  },
+  "claim_boundary": "Only completed process runs on the final source are counted. Combined/parallel long-host probes that exceeded the runner wall clock are recorded as non-evidence and are not relabeled PASS. The full 272-test inventory was collected, but this release evidence does not claim 272/272 final-source execution."
+}

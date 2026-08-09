@@ -1,0 +1,56 @@
+{
+  "format": "nolane-habitat-agi-method-trace/v1",
+  "release": "0.1.0-alpha.6",
+  "method": "belief -> rival -> probe -> observation -> update -> verifier",
+  "traces": [
+    {
+      "belief": "Habitat can separate source/execution backend without changing cognition semantics.",
+      "rival": "Backend separation will change semantic IDs, graph answers, task context or mutations.",
+      "probe": "Run identical fixture under local and directory-mirror backends and compare before/after semantic signatures, context and canonical mutation.",
+      "observation": "Fresh equivalence report shows semantic/context/canonical equivalence; execution provenance differs as expected.",
+      "update": "retain",
+      "verifier": "reports/BACKEND-EQUIVALENCE-alpha6.json"
+    },
+    {
+      "belief": "A mirror compiler view may be used for compilation while exact source remains backend-authoritative.",
+      "rival": "Some code paths will still read mirror bytes as exact evidence.",
+      "probe": "Audit direct source reads and external-authority drift during context page fault.",
+      "observation": "Residency contained a direct mirror read and was corrected; drift invalidates context before source fault.",
+      "update": "retain with stricter authority invariant",
+      "verifier": "tests/test_alpha6_backend_cognition.py"
+    },
+    {
+      "belief": "Known changed paths can avoid an O(project) remote listing tax.",
+      "rival": "Targeted backend hydration still enumerates the backend or materialized workspace.",
+      "probe": "Edit one authority file and call refresh_paths(['auth.py']).",
+      "observation": "First backend patch still left workspace enumeration; corrected. Final receipt reports targeted-no-enumeration, one path considered, one hash.",
+      "update": "retain after correction",
+      "verifier": "test_mirror_targeted_refresh_does_not_require_full_backend_enumeration"
+    },
+    {
+      "belief": "Prior context use can improve future attention without becoming truth.",
+      "rival": "Feedback becomes self-fulfilling and invents relevance.",
+      "probe": "Record used/unhelpful only for ranked candidates; try unknown candidate; inspect bounded score lane.",
+      "observation": "Unknown candidate is rejected; utility only adjusts existing candidate with bounded score and separate lane.",
+      "update": "retain bounded/non-authoritative design",
+      "verifier": "test_context_feedback_is_bounded_prior_and_cannot_invent_candidate"
+    },
+    {
+      "belief": "A page planner should be able to refuse source acquisition on no-gold tasks.",
+      "rival": "Planner always fills page/source budget.",
+      "probe": "Use quantum/banana/teleportation/matrix no-gold query.",
+      "observation": "Planner returns abstain-or-broaden-query and reads zero source bytes on fixtures and supplied AGI corpus.",
+      "update": "retain",
+      "verifier": "reports/CONTEXT-PRECISION-alpha6.json + reports/AGI-ZIP-STRESS-alpha6.json"
+    },
+    {
+      "belief": "Long-horizon continuity needs executable workflow provenance beyond narrative checkpoints.",
+      "rival": "Task note + revision is sufficient.",
+      "probe": "Link context, transaction, commit revision, verification, checkpoint and episode outcome.",
+      "observation": "Episode ledger retains links and causality.explain returns the owning workflow; checkpoint may bind active episode and backend identity.",
+      "update": "retain with explicit non-program-causality scope",
+      "verifier": "work-episode/checkpoint alpha.6 tests + demo"
+    }
+  ],
+  "claim_boundary": "The trace records engineering hypothesis tests. It is not evidence that the software or assistant is AGI."
+}

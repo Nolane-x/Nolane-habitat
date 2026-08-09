@@ -1,0 +1,171 @@
+{
+  "release": "0.1.0-alpha.3",
+  "method": "nolane-agi-style falsifiable engineering loop",
+  "charter": {
+    "goal": "Make ordinary project folders/ZIPs behave as a revisioned, semantic, agent-native living workspace without replacing canonical source files.",
+    "non_goals": [
+      "OS replacement",
+      "generic terminal wrapper",
+      "opaque source replacement",
+      "unverified token-savings claim",
+      "production hostile-code sandbox"
+    ],
+    "protected_invariants": [
+      "canonical source remains authority",
+      "project code is not executed during indexing",
+      "generic shell absent from agent protocol",
+      "consequential writes deep-hash canonical bytes",
+      "weak evidence is never silently upgraded to exact/semantic"
+    ]
+  },
+  "belief_updates": [
+    {
+      "id": "B1",
+      "initial_belief": "Per-file compile cache is sufficient to call refresh incremental.",
+      "rival": "Graph persistence can still rewrite the whole semantic database even when parsers are reused.",
+      "probe": "Instrument relation/occurrence persistence on no-op and one-file refresh.",
+      "observation": "Alpha.2 globally replaced graph rows; alpha.3 no-op stress reports 2918 relation and 3429 occurrence rows unchanged with zero insert/update/delete.",
+      "decision": "REJECT initial belief",
+      "change": "Set-diff relation/occurrence synchronization with graph_delta receipts.",
+      "verifier": "test_noop_graph_sync_does_not_rewrite_rows + AGI-ZIP-STRESS-alpha3.json"
+    },
+    {
+      "id": "B2",
+      "initial_belief": "One project-root semantic cache is a reasonable invalidation boundary.",
+      "rival": "Provider domains should depend only on source and toolchain inputs relevant to them.",
+      "probe": "Mutate Markdown and Python separately; inspect TypeScript/base provider reuse.",
+      "observation": "On supplied AGI corpus, Markdown mutation hashes/compiles one file while base and TypeScript domains both reuse; Python mutation invalidates base but reuses TypeScript.",
+      "decision": "REJECT root-wide invalidation",
+      "change": "Provider-domain digests/fingerprints and independent semantic caches.",
+      "verifier": "document/provider-domain tests + AGI-ZIP stress documentation/code probes"
+    },
+    {
+      "id": "B3",
+      "initial_belief": "A live filesystem watcher can be the synchronization authority.",
+      "rival": "Metadata observers can miss same-size/restored-mtime edits and must only accelerate candidate discovery.",
+      "probe": "Change source bytes while preserving size and mtime, then attempt consequential mutation.",
+      "observation": "Metadata lane can miss the edit; deep mutation reconciliation detects it.",
+      "decision": "REJECT watcher-as-authority",
+      "change": "Background watcher is observation-only; foreground targeted admission; mutation stage/commit/rollback retain deep hashing.",
+      "verifier": "test_metadata_preserving_edit_is_caught_by_deep_integrity_refresh"
+    },
+    {
+      "id": "B4",
+      "initial_belief": "Orientation plus object inspection is already sufficiently agent-native.",
+      "rival": "Repeated inspect/source calls preserve human-style navigation choreography under semantic names.",
+      "probe": "Count calls and exact-source materialization needed for task packets.",
+      "observation": "A bounded one-call task packet can materialize selected symbol bodies while files remain metadata-only.",
+      "decision": "PARTIALLY REJECT",
+      "change": "Context Materializer with revision binding, source byte budget, object budget and explicit omissions.",
+      "verifier": "materializer/stale/schema tests + alpha3 demo; model-level benefit remains unadmitted"
+    },
+    {
+      "id": "B5",
+      "initial_belief": "Literal DOM id/testid can be mapped directly to framework source ownership.",
+      "rival": "Duplicate anchors and build/runtime transformations make ownership ambiguous.",
+      "probe": "Create unique and duplicate TSX anchors and inspect runtime source hints.",
+      "observation": "Unique anchors produce parser candidates; duplicates cannot support unique ownership. A same element carrying equal id/testid initially produced duplicate semantic IDs.",
+      "decision": "BOUND AND DOWNGRADE",
+      "change": "Deduplicate parser anchor identity; emit renders edges; unique runtime correlations stay parser-grade and ambiguous correlations become heuristic.",
+      "verifier": "unique/duplicate JSX owner tests + alpha3 demo"
+    },
+    {
+      "id": "B6",
+      "initial_belief": "Engineering plumbing measurements can support claims of lower LLM token use.",
+      "rival": "A deterministic filesystem baseline is not an agent/model baseline and may be intentionally weak.",
+      "probe": "Build disclosed navigation harness and separately specify controlled same-model benchmark contract.",
+      "observation": "Both arms find all three synthetic targets; Habitat requests 100–132 exact source bytes plus bounded task packets versus 12,219 source bytes scanned by the disclosed baseline, but this does not measure an LLM trajectory.",
+      "decision": "REJECT token/capability claim",
+      "change": "Keep report labeled plumbing-only; include same-model repeated-trial contract without fabricated results.",
+      "verifier": "NAVIGATION-PLUMBING-AB-alpha3.json + AGENT-AB-BENCHMARK-CONTRACT.md"
+    }
+  ],
+  "negative_results_preserved": [
+    {
+      "id": "F1",
+      "failure": "Navigation benchmark crashed because sqlite3.Row was treated as dict.get-capable.",
+      "correction": "Use storage row contract; rerun before admitting report."
+    },
+    {
+      "id": "F2",
+      "failure": "JSX element with identical id/data-testid emitted duplicate stable symbol ID.",
+      "correction": "Deduplicate anchor/line parser emission and add regression."
+    },
+    {
+      "id": "F3",
+      "failure": "First admission invocation omitted required source_zip for AGI stress harness.",
+      "correction": "Fail-fast retained; entire evidence chain rerun with supplied AGI ZIP."
+    },
+    {
+      "id": "F4",
+      "failure": "Release summary helper expected verification.execution while demo contract exposes verification.receipt.",
+      "correction": "Read typed report schema rather than inventing fields; raw report remained valid."
+    },
+    {
+      "id": "F5",
+      "failure": "RC pip smoke with default build isolation attempted unavailable package-index access for setuptools>=68.",
+      "correction": "Classified as environment/dependency-fetch failure; reran with --no-build-isolation --no-deps using installed setuptools 82.0.1 and verified isolated import/version."
+    }
+  ],
+  "admission_evidence": {
+    "tests": "71/71 PASS in current source tree before packaging",
+    "demo": {
+      "materialized_source_bytes": 361,
+      "materialized_objects": 6,
+      "targeted_verification_exit": 0,
+      "watch_candidate_paths": [
+        "README.md"
+      ],
+      "watch_hashed_files": 1,
+      "runtime_ui_output": "Hello Nolane",
+      "warm_compiled": 0,
+      "warm_reused": 9
+    },
+    "agi_zip_stress": {
+      "files": 251,
+      "symbols": 865,
+      "occurrences": 3429,
+      "warm_compiled": 0,
+      "warm_reused": 251,
+      "warm_relations_unchanged": 2918,
+      "warm_occurrences_unchanged": 3429,
+      "documentation_hashed": 1,
+      "documentation_provider_reuse": {
+        "base": true,
+        "typescript": true
+      },
+      "code_hashed": 1,
+      "code_provider_reuse": {
+        "base": false,
+        "typescript": true
+      }
+    },
+    "navigation_plumbing": {
+      "both_found_all_targets": true,
+      "cases": [
+        {
+          "id": "credential",
+          "filesystem_source_bytes_read": 12219,
+          "habitat_exact_source_bytes_requested": 132,
+          "habitat_context_packet_bytes": 2522,
+          "habitat_agent_api_calls": 2
+        },
+        {
+          "id": "billing",
+          "filesystem_source_bytes_read": 12219,
+          "habitat_exact_source_bytes_requested": 107,
+          "habitat_context_packet_bytes": 1026,
+          "habitat_agent_api_calls": 2
+        },
+        {
+          "id": "avatar",
+          "filesystem_source_bytes_read": 12219,
+          "habitat_exact_source_bytes_requested": 100,
+          "habitat_context_packet_bytes": 2452,
+          "habitat_agent_api_calls": 2
+        }
+      ]
+    }
+  },
+  "claim_boundary": "Admit bounded workspace plumbing/semantic mechanisms only. No universal token reduction, coding-success uplift, AGI capability, hostile-code sandbox or framework-complete ownership claim."
+}

@@ -1,0 +1,205 @@
+{
+  "release": "0.1.0-alpha.6",
+  "cold_ingest_ms": 841.44,
+  "backend": {
+    "backend_id": "backend:fe063b90f4a50aef8cff",
+    "kind": "directory-mirror",
+    "authority": "external-directory",
+    "authoritative_root": "/tmp/tmp07iiu9qd/project",
+    "materialized_root": "/tmp/tmp07iiu9qd/habitat/backend-mirror",
+    "execution_kind": "authority-local-process",
+    "supports_native_watch": false,
+    "capabilities": [
+      "read",
+      "write",
+      "reconcile",
+      "execute",
+      "materialized-mirror"
+    ],
+    "semantic_twin_authority": false,
+    "semantic_materialization_role": "compiler-mirror"
+  },
+  "context": {
+    "confidence": "high",
+    "planned_pages": [
+      "vpage:63cd5487c019c2fc84ed",
+      "vpage:e8f4e45631741b7fec55"
+    ],
+    "exact_source_bytes": 205,
+    "feedback": {
+      "handle": "ctx:f8867e6178162b863eca",
+      "revision": "rev:5b24e0d4b4c14bbfd15c",
+      "compiled_revision": "rev:5b24e0d4b4c14bbfd15c",
+      "task_terms": [
+        "credential",
+        "validation",
+        "login",
+        "verify"
+      ],
+      "records": [
+        {
+          "seq": 1,
+          "object_id": "sym:b3f6914c8c2f3e63e3a2",
+          "verdict": "used",
+          "utility": {
+            "useful_weight": 4.0,
+            "unhelpful_weight": 0.0,
+            "matched_terms": [
+              "credential",
+              "login",
+              "validation",
+              "verify"
+            ]
+          }
+        }
+      ],
+      "feedback_is_attention_prior_not_source_truth": true
+    },
+    "followup_target_lanes": "lexical+symbol+graph+utility",
+    "followup_target_score": 1.0913108444444446
+  },
+  "episode": {
+    "id": "episode:acf1b21bc05aa6a07fc6",
+    "status": "completed",
+    "link_kinds": [
+      "context-compiled",
+      "transaction-staged",
+      "transaction-committed",
+      "verification-run",
+      "episode-closed"
+    ],
+    "causality_episode_count": 1
+  },
+  "mutation": {
+    "changed_paths": [
+      "auth.py"
+    ],
+    "authority_mirror_equal": true,
+    "authority_contains_backup": true
+  },
+  "verification": {
+    "status": "passed",
+    "exit_code": 0,
+    "backend_id": "backend:fe063b90f4a50aef8cff",
+    "execution_backend": "authority-local-process"
+  },
+  "checkpoint_resume": {
+    "mode": "direct",
+    "backend_identity_drift": false
+  },
+  "selective_retrieval": {
+    "no_gold_confidence": "low",
+    "abstention_recommended": true,
+    "page_plan_action": "abstain-or-broaden-query",
+    "source_bytes_read": 0
+  },
+  "warm_refresh": {
+    "revision": "rev:504a1cd6c3046ec2bd22",
+    "changed_paths": [],
+    "unchanged": true,
+    "compiled_files": 0,
+    "reused_files": 3,
+    "hashed_files": 3,
+    "refresh_mode": "deep",
+    "providers": {
+      "python-ast": 3
+    },
+    "project_semantics": {
+      "base-resolver": {
+        "cache_hit": true,
+        "domain_digest": "802ff68979aff4b2512f3426ae8e7d7aac9ccbeead5264e64cab5e97e537f4e0",
+        "relations": 6,
+        "partitioned": true,
+        "partitions_total": 2,
+        "partitions_reused": 2,
+        "partitions_recomputed": 0,
+        "stale_partitions_removed": 0,
+        "dirty_paths": [],
+        "partition_sample": [
+          {
+            "path": "auth.py",
+            "cache_hit": true,
+            "relations": 1
+          },
+          {
+            "path": "tests/test_auth.py",
+            "cache_hit": true,
+            "relations": 5
+          }
+        ]
+      },
+      "python-jedi": {
+        "available": true,
+        "reason": "Jedi static semantic engine available",
+        "version": "0.20.0",
+        "files": 3,
+        "relations": 2,
+        "occurrences": 2,
+        "calls_examined": 3,
+        "unresolved_calls": 1,
+        "ambiguous_calls": 0,
+        "file_errors": 0,
+        "cache_hit": true,
+        "domain_digest": "173f5bcbbe9402cfb81c953ef9e0ae453f60ae4a5019322dee16e790a94ba134",
+        "api_surface_digest": "22655ec2413c8ae13617a2fb8d121b2d0a93670495da67347c8598b9aad1f799",
+        "partitions_total": 3,
+        "partitions_reused": 3,
+        "partitions_recomputed": 0,
+        "trust_ceiling": "semantic",
+        "project_execution": false
+      },
+      "typescript-project": {
+        "available": true,
+        "reason": "no JS/TS files",
+        "files": 0,
+        "relations": 0,
+        "occurrences": 0,
+        "cache_hit": true,
+        "partitions_total": 0,
+        "partitions_reused": 0,
+        "partitions_recomputed": 0,
+        "program_invoked": false
+      },
+      "cache": {
+        "reused": true,
+        "provider_domain_reuse": {
+          "base": true,
+          "python_jedi": true,
+          "typescript": true
+        },
+        "compatibility_gate_drift": false
+      }
+    },
+    "project_semantic_cache_hit": true,
+    "occurrence_count": 10,
+    "graph_delta": {
+      "relations": {
+        "inserted": 0,
+        "updated": 0,
+        "deleted": 0,
+        "unchanged": 6,
+        "total": 6
+      },
+      "occurrences": {
+        "inserted": 0,
+        "updated": 0,
+        "deleted": 0,
+        "unchanged": 10,
+        "total": 10
+      }
+    },
+    "backend_sync": {
+      "changed_paths": [],
+      "deleted_paths": [],
+      "hydrated_paths": [],
+      "authoritative_bytes_read": 497,
+      "authoritative_bytes_written": 0,
+      "mode": "authority-to-mirror",
+      "paths_considered": 3,
+      "listing_mode": "full-enumeration"
+    },
+    "workspace_listing_mode": "full-enumeration",
+    "paths_considered": 3
+  },
+  "claim_boundary": "Executable alpha.6 backend/cognition plumbing demo. It does not establish model token savings, coding superiority, Cloudflare compatibility, or AGI capability."
+}

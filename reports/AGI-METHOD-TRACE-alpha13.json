@@ -1,0 +1,14 @@
+{
+  "release": "0.1.0-alpha.13",
+  "method": "Nolane AGI command-attack / self-audit methodology applied to Habitat engineering",
+  "attack_families": ["sequence-reconnect", "stale-state", "provenance-collision", "hostile-input", "concurrency", "claim-boundary", "silent-truncation", "ablation"],
+  "belief_updates": [
+    {"initial": "Workspace duplicate guard is sufficient for runtime-history immutability", "probe": "inspect direct Store mutation path", "finding": "INSERT OR REPLACE remained", "update": "Store itself must be append-only"},
+    {"initial": "counterfactual verification freshness is enough", "probe": "verify a failing world then promote", "finding": "fresh FAILED could promote", "update": "verified worlds require fresh PASSED"},
+    {"initial": "sensitive-key redaction covers debugger telemetry", "probe": "DAP {name:API_KEY,value:secret}", "finding": "sibling name carries sensitivity", "update": "structural redaction"},
+    {"initial": "bounded UI graph is harmless presentation", "probe": "inflate semantic world beyond graph cap", "finding": "silent omission changes spectator interpretation", "update": "adaptive LOD + disclosure"},
+    {"initial": "one observer snapshot means one coherent world", "probe": "trace DB vs filesystem-backed projection", "finding": "only SQLite core has transaction snapshot", "update": "split consistency claim"},
+    {"initial": "failed test list cap is only formatting", "probe": "125 explicit failures", "finding": "agent can mistake first 100 for complete set", "update": "total/truncated + aggregate evidence"}
+  ],
+  "admission_rule": "successful attacks become regressions or explicit open claim boundaries before release"
+}

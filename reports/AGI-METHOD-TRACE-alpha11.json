@@ -1,0 +1,54 @@
+{
+  "release": "0.1.0-alpha.11",
+  "method": "Nolane-AGI-inspired belief/rival/probe/admission trace",
+  "belief_updates": [
+    {
+      "belief": "The human UI can share the Workspace SQLite connection because it is read-only.",
+      "rival": "Observer thread requires a separate read model.",
+      "probe": "Threaded real HTTP snapshot while Workspace owns the authoritative connection.",
+      "observation": "sqlite3.ProgrammingError cross-thread.",
+      "decision": "rejected",
+      "architecture_change": "Per-request mode=ro + query_only SQLite connection; no check_same_thread bypass."
+    },
+    {
+      "belief": "MCP needs a separate attach tool for explicit agent identity.",
+      "rival": "Mint agent identity inside start_task to keep the compact tool catalog.",
+      "probe": "Catalog contract against historical 12-tool surface.",
+      "observation": "Separate attach would create 13 tools.",
+      "decision": "rejected",
+      "architecture_change": "habitat_start_task mints/returns explicit agent_id."
+    },
+    {
+      "belief": "Context Residency can serve as Project Memory.",
+      "rival": "Hot working set and durable remembered claims require different validity/provenance semantics.",
+      "probe": "Supersession, revision drift, private-agent recall and invalidation tests.",
+      "observation": "Durable memory needs provenance/evidence/revision/scope independent of residency.",
+      "decision": "rejected",
+      "architecture_change": "Dedicated project_memories store and workspace.memory.* API."
+    },
+    {
+      "belief": "Observer UI activity can be instrumented only at MCP/adapter wrapper.",
+      "rival": "Direct Workspace/custom agents would become invisible.",
+      "probe": "Direct domain mutation/verification event test.",
+      "observation": "Adapter-only instrumentation misses legitimate control paths.",
+      "decision": "rejected",
+      "architecture_change": "Best-effort activity emission at domain boundaries plus wrapper tool events."
+    },
+    {
+      "belief": "Detected provider availability can be presented as semantic capability.",
+      "rival": "Discovery and admitted/used precision are different.",
+      "probe": "Host provider scan including missing Tree-sitter/SCIP and available clangd/sourcekit-lsp.",
+      "observation": "Availability is heterogeneous and does not prove integration/usage.",
+      "decision": "bounded",
+      "architecture_change": "Semantic Fabric reports provider availability/reason/precision with explicit discovery-only claim."
+    }
+  ],
+  "admission_gates": {
+    "historical_regression_tests": 198,
+    "observatory_demo_verification": "passed",
+    "observer_post_status": 405,
+    "supplied_agi_files": 251,
+    "no_gold_abstained": true
+  },
+  "claim_boundary": "The method shapes Habitat environment affordances. It does not embed Nolane AGI as a runtime and does not establish that an external model becomes AGI."
+}

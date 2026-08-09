@@ -1,0 +1,14 @@
+{
+  "$schema":"https://json-schema.org/draft/2020-12/schema",
+  "$id":"nolane.habitat/context-materialization/v1alpha3",
+  "type":"object",
+  "required":["handle","stale","revision","objects","source_bytes","omissions"],
+  "properties":{
+    "handle":{"type":"string"},"stale":{"type":"boolean"},"revision":{"type":"string"},
+    "objects":{"type":"array","items":{"type":"object"}},
+    "source_bytes":{"type":"integer","minimum":0},"max_source_bytes":{"type":"integer","minimum":0},
+    "object_count":{"type":"integer","minimum":0},"packet_bytes":{"type":"integer","minimum":0},
+    "omissions":{"type":"array","items":{"type":"string"}}
+  },
+  "additionalProperties":true
+}
