@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import difflib
+import hashlib
 import json
 import os
 import stat
@@ -150,8 +151,19 @@ class MutationEngine:
                 previews.append({"path":op["from_path"],"to_path":op["to_path"],"changed":True,"structural":"move"})
         return originals,outputs,previews
 
+    def _transaction_dir(self, txid: str) -> Path:
+        root = self.workspace.habitat_dir/"transactions"
+        safe = root/f"tx-{hashlib.sha256(txid.encode('utf-8')).hexdigest()}"
+        legacy = root/txid
+        try:
+            if Path(txid).name == txid and legacy.is_dir():
+                return legacy
+        except OSError:
+            pass
+        return safe
+
     def _journal_path(self, txid: str) -> Path:
-        return self.workspace.habitat_dir/"transactions"/txid/"journal.json"
+        return self._transaction_dir(txid)/"journal.json"
 
     def _write_journal(self, txid: str, value: dict) -> None:
         p=self._journal_path(txid); p.parent.mkdir(parents=True,exist_ok=True)
@@ -184,7 +196,7 @@ class MutationEngine:
         return TransactionRecord(**value)
 
     def _backup(self, tx: TransactionRecord, originals: dict[str,bytes]) -> dict[str,dict]:
-        root=self.workspace.habitat_dir/"transactions"/tx.id/"backup"; root.mkdir(parents=True,exist_ok=True)
+        root=self._transaction_dir(tx.id)/"backup"; root.mkdir(parents=True,exist_ok=True)
         meta={}
         for rel,raw in originals.items():
             b=root/rel; b.parent.mkdir(parents=True,exist_ok=True); b.write_bytes(raw)
@@ -198,7 +210,7 @@ class MutationEngine:
         return meta
 
     def _restore_from_journal(self, txid: str, journal: dict) -> None:
-        backup_root=self.workspace.habitat_dir/"transactions"/txid/"backup"
+        backup_root=self._transaction_dir(txid)/"backup"
         meta=journal.get("backup_meta") or {}
         # Remove destinations/new files first, then restore original paths.
         for rel,info in meta.items():
@@ -223,7 +235,13 @@ class MutationEngine:
             try: journal=json.loads(jp.read_text(encoding="utf-8"))
             except Exception: continue
             if journal.get("state") in {"committed","rolled-back"}: continue
-            txid=jp.parent.name; tx=self.workspace.store.load_json("transactions",txid)
+            txid=journal.get("transaction_id")
+            if not isinstance(txid,str):
+                legacy_txid=jp.parent.name
+                txid=legacy_txid if self.workspace.store.load_json("transactions",legacy_txid) else None
+            if txid is None:
+                continue
+            tx=self.workspace.store.load_json("transactions",txid)
             if tx and tx.get("status")=="committed":
                 journal["state"]="committed"; journal["recovered_at"]=utc_now(); self._write_journal(txid,journal)
                 recovered.append({"transaction_id":txid,"action":"finalized-commit-marker"}); continue

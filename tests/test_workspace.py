@@ -1,3 +1,4 @@
+import json
 import tempfile
 import unittest
 from pathlib import Path
@@ -46,6 +47,25 @@ class WorkspaceTests(unittest.TestCase):
             tx = ws.change([{"op":"replace_text","path":"auth.py","old":"password == \"secret\"","new":"password == \"better-secret\""}])
             self.assertEqual(tx["status"], "committed")
             self.assertIn("better-secret", (src / "auth.py").read_text())
+
+    def test_transaction_journal_uses_filesystem_safe_directory(self):
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            src = self.make_project(root)
+            with HabitatWorkspace.create(src, root / "hab") as ws:
+                result = ws.change([{
+                    "op": "replace_text",
+                    "path": "auth.py",
+                    "old": 'password == "secret"',
+                    "new": 'password == "safer-secret"',
+                }])
+                journals = list((root / "hab" / "transactions").glob("*/journal.json"))
+                self.assertEqual(len(journals), 1)
+                self.assertNotIn(":", journals[0].parent.name)
+                self.assertEqual(
+                    json.loads(journals[0].read_text(encoding="utf-8"))["transaction_id"],
+                    result["id"],
+                )
 
     def test_stale_digest_rejected(self):
         with tempfile.TemporaryDirectory() as td:
