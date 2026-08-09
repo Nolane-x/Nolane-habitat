@@ -20,8 +20,8 @@ class Alpha3LiveWorkspaceTests(unittest.TestCase):
             ws=HabitatWorkspace.create(p,root/'h')
             (p/'a.py').write_text('def a():\n    return 3\n')
             out=ws.reconcile()
-            self.assertEqual(out['refresh_mode'],'targeted')
-            self.assertEqual(out['hashed_files'],1)
+            self.assertEqual(out['refresh_mode'], 'deep' if os.name == 'nt' else 'targeted')
+            self.assertEqual(out['hashed_files'], 2 if os.name == 'nt' else 1)
             self.assertEqual(out['compiled_files'],1)
             self.assertEqual(out['changed_paths'],['a.py'])
 

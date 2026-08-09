@@ -17,7 +17,7 @@ class Alpha12ObservatoryCinematicTests(unittest.TestCase):
         (root/'app.py').write_text('''import os\n\ndef load_user(user_id):\n    if not user_id:\n        raise ValueError("missing user")\n    token=os.getenv("TOKEN")\n    return db.query(user_id)\n''',encoding='utf-8')
         (root/'package.json').write_text(json.dumps({'name':'cinematic-demo','scripts':{'test':'pytest'}}),encoding='utf-8')
         (root/'docker-compose.yml').write_text('services:\n  api:\n    image: demo/api\n  db:\n    image: postgres\n',encoding='utf-8')
-        ws=HabitatWorkspace.create(root,hab); self.addCleanup(ws.close); self.addCleanup(td.cleanup)
+        ws=HabitatWorkspace.create(root,hab); self.addCleanup(td.cleanup); self.addCleanup(ws.close)
         return ws,root
 
     def test_observatory_snapshot_contains_effect_world_runtime_counterfactual_and_director(self):

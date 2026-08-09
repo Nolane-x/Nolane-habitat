@@ -23,8 +23,8 @@ class Alpha15AIOperatorRuntimeTests(unittest.TestCase):
             encoding="utf-8",
         )
         ws = HabitatWorkspace.create(project, root / "state")
-        self.addCleanup(ws.close)
         self.addCleanup(td.cleanup)
+        self.addCleanup(ws.close)
         return ws
 
     def test_runtime_emits_authoritative_observer_frame_and_pointer_receipt(self):

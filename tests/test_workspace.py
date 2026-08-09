@@ -5,6 +5,7 @@ from pathlib import Path
 
 from habitat.workspace import HabitatWorkspace
 from habitat.mutation import TransactionConflict
+from .support import WorkspaceTemporaryDirectory
 
 
 class WorkspaceTests(unittest.TestCase):
@@ -17,9 +18,9 @@ class WorkspaceTests(unittest.TestCase):
         return src
 
     def test_ingest_orient_inspect_refresh(self):
-        with tempfile.TemporaryDirectory() as td:
+        with WorkspaceTemporaryDirectory() as td:
             root = Path(td); src = self.make_project(root)
-            ws = HabitatWorkspace.create(src, root / "hab")
+            ws = td.create_workspace(src, root / "hab")
             entered = ws.enter()
             self.assertEqual(entered["file_count"], 2)
             self.assertGreaterEqual(entered["symbol_count"], 4)
@@ -41,9 +42,9 @@ class WorkspaceTests(unittest.TestCase):
             self.assertTrue(ws.query("FLAG"))
 
     def test_transaction_syncs_to_external_source(self):
-        with tempfile.TemporaryDirectory() as td:
+        with WorkspaceTemporaryDirectory() as td:
             root = Path(td); src = self.make_project(root)
-            ws = HabitatWorkspace.create(src, root / "hab")
+            ws = td.create_workspace(src, root / "hab")
             tx = ws.change([{"op":"replace_text","path":"auth.py","old":"password == \"secret\"","new":"password == \"better-secret\""}])
             self.assertEqual(tx["status"], "committed")
             self.assertIn("better-secret", (src / "auth.py").read_text())
@@ -68,16 +69,16 @@ class WorkspaceTests(unittest.TestCase):
                 )
 
     def test_stale_digest_rejected(self):
-        with tempfile.TemporaryDirectory() as td:
+        with WorkspaceTemporaryDirectory() as td:
             root = Path(td); src = self.make_project(root)
-            ws = HabitatWorkspace.create(src, root / "hab")
+            ws = td.create_workspace(src, root / "hab")
             with self.assertRaises(TransactionConflict):
                 ws.change([{"op":"replace_text","path":"auth.py","expected_digest":"deadbeef","old":"secret","new":"x"}])
 
     def test_staged_transaction_detects_external_edit(self):
-        with tempfile.TemporaryDirectory() as td:
+        with WorkspaceTemporaryDirectory() as td:
             root = Path(td); src = self.make_project(root)
-            ws = HabitatWorkspace.create(src, root / "hab")
+            ws = td.create_workspace(src, root / "hab")
             tx = ws.stage_change([{"op":"replace_text","path":"auth.py","old":"password == \"secret\"","new":"password == \"new\""}])
             (src / "auth.py").write_text((src / "auth.py").read_text() + "\n# human edit\n")
             with self.assertRaises(TransactionConflict):
@@ -85,19 +86,19 @@ class WorkspaceTests(unittest.TestCase):
             self.assertNotIn('password == "new"', (src / "auth.py").read_text())
 
     def test_committed_transaction_can_rollback_when_no_newer_edit(self):
-        with tempfile.TemporaryDirectory() as td:
+        with WorkspaceTemporaryDirectory() as td:
             root = Path(td); src = self.make_project(root)
             original = (src / "auth.py").read_text()
-            ws = HabitatWorkspace.create(src, root / "hab")
+            ws = td.create_workspace(src, root / "hab")
             tx = ws.change([{"op":"replace_text","path":"auth.py","old":"password == \"secret\"","new":"password == \"new\""}])
             rolled = ws.rollback_change(tx["id"])
             self.assertEqual(rolled["status"], "rolled-back")
             self.assertEqual((src / "auth.py").read_text(), original)
 
     def test_semantic_html_observation(self):
-        with tempfile.TemporaryDirectory() as td:
+        with WorkspaceTemporaryDirectory() as td:
             root = Path(td); src = self.make_project(root)
-            ws = HabitatWorkspace.create(src, root / "hab")
+            ws = td.create_workspace(src, root / "hab")
             ui = ws.observe_ui("login.html")
             roles = {e["role"] for e in ui["elements"]}
             names = {e["name"] for e in ui["elements"] if e["name"]}

@@ -1,4 +1,5 @@
 import tempfile
+import tomllib
 import unittest
 from pathlib import Path
 
@@ -8,8 +9,10 @@ from habitat.semantic.python_jedi import probe
 
 class PythonJediSemanticTests(unittest.TestCase):
     def test_dev_extra_includes_python_semantic_provider(self):
-        text = Path("pyproject.toml").read_text(encoding="utf-8")
-        self.assertIn('dev = ["jsonschema>=4", "jedi>=0.19,<1"]', text)
+        config = tomllib.loads(Path("pyproject.toml").read_text(encoding="utf-8"))
+        dependencies = config["project"]["optional-dependencies"]["dev"]
+        self.assertIn("jedi>=0.19,<1", dependencies)
+        self.assertIn("pytest>=8", dependencies)
 
     def test_cross_file_alias_call_resolves_to_exact_project_symbol(self):
         with tempfile.TemporaryDirectory() as td:

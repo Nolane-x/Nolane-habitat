@@ -19,6 +19,8 @@ class Alpha13MicroDepthTests(unittest.TestCase):
         (project/'app.py').write_text('def f(x):\n    return x + 1\n',encoding='utf-8')
         (project/'tests').mkdir(); (project/'tests'/'test_app.py').write_text('from app import f\n\ndef test_f():\n    assert f(1) == 2\n',encoding='utf-8')
         ws=HabitatWorkspace.create(project,base/'habitat')
+        self.addCleanup(td.cleanup)
+        self.addCleanup(ws.close)
         return td,project,ws
 
     def test_release_identity_current(self):
@@ -257,7 +259,7 @@ class Alpha13MicroDepthTests(unittest.TestCase):
             ws.close();td.cleanup()
 
     def test_observatory_assets_use_adaptive_lod_and_disclose_bounded_view(self):
-        base=Path(__file__).resolve().parents[1]; app=(base/'habitat'/'observatory_assets'/'app.js').read_text(); html=(base/'habitat'/'observatory_assets'/'index.html').read_text()
+        base=Path(__file__).resolve().parents[1]; app=(base/'habitat'/'observatory_assets'/'app.js').read_text(encoding='utf-8'); html=(base/'habitat'/'observatory_assets'/'index.html').read_text(encoding='utf-8')
         self.assertIn('function compressGraph',app); self.assertNotIn('.slice(0,420)',app); self.assertIn("addEventListener('gap'",app)
         self.assertIn('agentTrails',app); self.assertIn('focusUntil',app); self.assertIn('id="lodTop"',html); self.assertIn('id="thrashTop"',html)
         td,project,ws=self.make_ws(); obs=None

@@ -1,7 +1,14 @@
-import json, subprocess, sys, tempfile, unittest
+import json, os, subprocess, sys, tempfile, unittest
 from pathlib import Path
 
+from benchmarks.agent_ab_harness import command_args
+
 class Alpha9ABHarnessTests(unittest.TestCase):
+    def test_command_args_preserves_windows_paths(self):
+        command = r"C:\Users\admin\Python\python.exe C:\Users\admin\agent.py" if os.name == "nt" else "python agent.py"
+        expected = [r"C:\Users\admin\Python\python.exe", r"C:\Users\admin\agent.py"] if os.name == "nt" else ["python", "agent.py"]
+        self.assertEqual(command_args(command), expected)
+
     def test_harness_runs_paired_arms_without_inventing_model_results(self):
         base=Path(__file__).parents[1]
         with tempfile.TemporaryDirectory() as td:

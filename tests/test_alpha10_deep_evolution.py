@@ -18,8 +18,8 @@ class Alpha10DeepEvolutionTests(unittest.TestCase):
         for rel,text in (files or {'auth.py':'def value():\n    return 1\n'}).items():
             p=root/rel; p.parent.mkdir(parents=True,exist_ok=True); p.write_text(text,encoding='utf-8')
         ws=HabitatWorkspace.create(root,hab)
-        self.addCleanup(lambda: ws.close())
         self.addCleanup(td.cleanup)
+        self.addCleanup(ws.close)
         return ws,root,hab
 
     def test_observed_read_set_generates_selective_revalidation_notification(self):

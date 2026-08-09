@@ -25,8 +25,8 @@ class Alpha16NearLiveForensicTests(unittest.TestCase):
           <button id='go' onclick="console.log('token=console-secret'); fetch('http://habitat.local/missing?api_key=network-secret&safe=yes').catch(()=>{}); document.body.dataset.done='1'">Go</button>
         </body></html>""", encoding="utf-8")
         ws = HabitatWorkspace.create(project, root / "state")
-        self.addCleanup(ws.close)
         self.addCleanup(td.cleanup)
+        self.addCleanup(ws.close)
         return ws
 
     def test_cdp_stream_advances_and_observatory_can_poll_exact_frames(self):

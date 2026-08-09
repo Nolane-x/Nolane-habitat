@@ -37,11 +37,21 @@ def git_diff_fingerprint(repo: Path) -> dict:
     return {"diff_sha256":hashlib.sha256(raw).hexdigest(),"diff_bytes":len(raw),"changed_paths":changed}
 
 
+def command_args(command: str) -> list[str]:
+    """Split an agent command without treating Windows path separators as escapes."""
+    if not command.strip():
+        raise ValueError("command must not be empty")
+    if os.name != "nt":
+        return shlex.split(command)
+    return [arg[1:-1] if len(arg) >= 2 and arg[0] == arg[-1] and arg[0] in "\\\"'" else arg
+            for arg in shlex.split(command, posix=False)]
+
+
 def run_agent(command: str, task: dict, repo: Path, arm: str, timeout_s: int) -> dict:
     env=os.environ.copy(); env.update({"HABITAT_AB_ARM":arm,"HABITAT_AB_REPO":str(repo),"HABITAT_AB_TASK_ID":task["id"]})
     payload={"task_id":task["id"],"prompt":task["prompt"],"repo":str(repo),"arm":arm,"budget":task.get("budget") or {}}
     started=time.monotonic()
-    p=subprocess.run(shlex.split(command),input=json.dumps(payload),text=True,capture_output=True,timeout=timeout_s,env=env,cwd=repo,shell=False)
+    p=subprocess.run(command_args(command),input=json.dumps(payload),text=True,capture_output=True,timeout=timeout_s,env=env,cwd=repo,shell=False)
     elapsed=int((time.monotonic()-started)*1000)
     if p.returncode!=0: return {"task_id":task["id"],"success":False,"agent_claimed_success":False,"harness_error":"agent-command-failed","returncode":p.returncode,"stderr":p.stderr[-4000:],"wall_ms":elapsed,**git_diff_fingerprint(repo)}
     try: result=json.loads(p.stdout)
@@ -54,7 +64,7 @@ def run_agent(command: str, task: dict, repo: Path, arm: str, timeout_s: int) ->
 
 def run_evaluator(command: str, task: dict, repo: Path, agent_result: dict, timeout_s: int) -> dict:
     payload={"task_id":task["id"],"prompt":task["prompt"],"repo":str(repo),"agent_result":agent_result,"evaluator":task.get("evaluator") or {}}
-    p=subprocess.run(shlex.split(command),input=json.dumps(payload),text=True,capture_output=True,timeout=timeout_s,cwd=repo,shell=False)
+    p=subprocess.run(command_args(command),input=json.dumps(payload),text=True,capture_output=True,timeout=timeout_s,cwd=repo,shell=False)
     if p.returncode!=0: return {"ok":False,"success":False,"error":"evaluator-command-failed","returncode":p.returncode,"stderr":p.stderr[-4000:]}
     try: value=json.loads(p.stdout)
     except Exception as exc: return {"ok":False,"success":False,"error":f"invalid-evaluator-json:{exc}"}

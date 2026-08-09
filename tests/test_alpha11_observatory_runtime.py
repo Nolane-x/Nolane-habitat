@@ -17,7 +17,7 @@ class Alpha11ObservatoryRuntimeTests(unittest.TestCase):
         td=tempfile.TemporaryDirectory(); base=Path(td.name); root=base/'project'; root.mkdir(); hab=base/'habitat'
         for rel,text in (files or {'auth.py':'def validate(user):\n    return bool(user)\n'}).items():
             p=root/rel; p.parent.mkdir(parents=True,exist_ok=True); p.write_text(text,encoding='utf-8')
-        ws=HabitatWorkspace.create(root,hab); self.addCleanup(ws.close); self.addCleanup(td.cleanup)
+        ws=HabitatWorkspace.create(root,hab); self.addCleanup(td.cleanup); self.addCleanup(ws.close)
         return ws,root,hab
 
     def test_observatory_http_is_read_only_and_cross_thread_safe(self):

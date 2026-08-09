@@ -15,7 +15,7 @@ dependencies = ["pathspec>=0.12,<1"]
 ui = ["playwright>=1.50", "websocket-client>=1.8,<2"]
 python-semantic = ["jedi>=0.19,<1"]
 mcp = ["mcp>=2,<3"]
-dev = ["jsonschema>=4", "jedi>=0.19,<1"]
+dev = ["jsonschema>=4", "jedi>=0.19,<1", "pytest>=8"]
 
 [project.scripts]
 habitat = "habitat.cli:main"

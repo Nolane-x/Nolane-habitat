@@ -1,10 +1,9 @@
 import json
-import tempfile
 import unittest
 from pathlib import Path
 
 from habitat.protocol import HabitatProtocol
-from habitat.workspace import HabitatWorkspace
+from .support import WorkspaceTemporaryDirectory
 
 
 class Alpha4SchemaContracts(unittest.TestCase):
@@ -18,9 +17,9 @@ class Alpha4SchemaContracts(unittest.TestCase):
         self.assertTrue({'trace_id','call_count','response_bytes','exact_source_bytes'} <= set(trace['required']))
 
     def test_live_outputs_satisfy_core_required_fields(self):
-        with tempfile.TemporaryDirectory() as td:
+        with WorkspaceTemporaryDirectory() as td:
             root=Path(td); p=root/'p'; p.mkdir(); (p/'a.py').write_text('def alpha():\n    return 1\n')
-            ws=HabitatWorkspace.create(p,root/'h')
+            ws=td.create_workspace(p,root/'h')
             ctx=ws.orient('alpha implementation',budget=4); ws.residency_admit(ctx.handle)
             status=ws.residency_status()
             self.assertTrue(set(self._schema('context-residency.schema.json')['required']) <= set(status))
