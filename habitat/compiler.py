@@ -364,8 +364,11 @@ def compile_file(root: Path, path: Path) -> CompiledFile:
             selector = " ".join(m.group(1).split())[:300]
             if not selector or selector.startswith("@"):
                 continue
-            line = _line_of(text, m.start())
-            symbols.append(SymbolRecord(stable_id("css", rel, "rule", selector), file_id, rel, selector, selector,
+            selector_start = m.start(1)
+            while selector_start < m.end(1) and text[selector_start].isspace():
+                selector_start += 1
+            line = _line_of(text, selector_start)
+            symbols.append(SymbolRecord(stable_id("css", rel, "rule", selector, str(line)), file_id, rel, selector, selector,
                                         "css-rule", language, line, _line_of(text, m.end()), selector, None, "heuristic"))
         provider = "css-rule-heuristic"
     semantic_metadata = dict(semantic_metadata or {})
