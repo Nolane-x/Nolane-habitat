@@ -1,5 +1,16 @@
 # Changelog
 
+## 0.1.0-alpha.18 — 2026-08-09
+
+- Added portable Codex distribution with the `nolane-habitat` plugin, marketplace entry, operator skill, and maintainer skill.
+- Added a concise Codex integration guide, contributor guidance, and a product-focused quick-start README.
+- Added Windows-safe transaction journal directories while preserving transaction identity in journal records.
+- Retried transient Windows sharing violations during atomic source replacement and retained same-directory atomic replacement semantics.
+- Made repeated CSS selectors produce distinct, source-anchored symbols so complete UI asset trees ingest into a workspace.
+- Made the balanced test suite close Habitat workspaces before temporary-directory cleanup on Windows.
+- Made benchmark agent and evaluator commands preserve Windows path separators with `shell=False` execution.
+- Added `pytest` to the development extra so execution verification capability is available in a standard development environment.
+
 ## 0.1.0-alpha.17 — 2026-08-08
 
 - Stability/completion pass only: no new subsystem.

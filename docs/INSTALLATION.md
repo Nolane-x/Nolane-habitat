@@ -1,50 +1,45 @@
-# Installation — 0.1.0-alpha.17
+# Install Nolane Habitat
 
-Python 3.10+ is required.
+Nolane Habitat runs locally with Python 3.10 or newer.
 
-```bash
-python -m pip install .
-```
-
-Optional surfaces are explicit capabilities:
+## Development installation
 
 ```bash
-python -m pip install '.[python-semantic,ui,mcp]'
+python -m venv .venv
 ```
 
-The `ui` extra installs Playwright bindings plus the WebSocket transport used by the continuous CDP AI Operator mirror. Habitat still capability-probes the system Chromium/Chrome executable; a missing browser must report unavailable instead of pretending the UI runtime exists.
+On Windows:
 
-## CLI quick start
+```powershell
+.\.venv\Scripts\python -m pip install -U pip
+.\.venv\Scripts\python -m pip install -e ".[dev,mcp,python-semantic]"
+```
+
+On macOS or Linux:
+
+```bash
+.venv/bin/python -m pip install -U pip
+.venv/bin/python -m pip install -e '.[dev,mcp,python-semantic]'
+```
+
+## Create a project workspace
+
+Create the Habitat state directory beside the source project:
 
 ```bash
 habitat create ./project ./project.habitat
 habitat enter ./project.habitat
-habitat orient ./project.habitat "fix login validation"
+habitat orient ./project.habitat "map the login and authentication flow"
 ```
 
-## Agent server and Observatory
+## Core commands
 
 ```bash
-habitat-agent-server ./project.habitat
+habitat refresh ./project.habitat
+habitat query ./project.habitat "credential validation"
+habitat inspect ./project.habitat <object-id>
 ```
 
-The agent server may start the read-only Observatory on loopback. Its URL is written to stderr so stdout remains clean NDJSON. Use `--no-open-observatory` or `--no-observatory` when appropriate.
+## Codex
 
-The standalone spectator surface is also available:
-
-```bash
-habitat-observatory ./project.habitat --no-open
-```
-
-`127.0.0.1`, `localhost`, and `::1` are accepted loopback hosts. IPv6 URLs are emitted in bracketed form such as `http://[::1]:PORT/`.
-
-## MCP
-
-```bash
-python -m pip install 'nolane-habitat[mcp]'
-habitat-mcp-server ./project.habitat
-```
-
-The internal Habitat protocol remains canonical; MCP is a compact adapter rather than a second source of truth.
-
-Core source/workspace operation has no mandatory semantic/browser/MCP dependency. Optional providers are capability-probed and must fail explicitly when unavailable.
+Follow [Codex integration](CODEX-INTEGRATION.md) to register the MCP server and install the bundled skills.

@@ -1,0 +1,30 @@
+{
+  "name": "nolane-habitat",
+  "version": "0.1.0-alpha.18",
+  "description": "Semantic project intelligence and governed workflows for Codex agents.",
+  "author": {
+    "name": "Nolane-x",
+    "url": "https://github.com/Nolane-x"
+  },
+  "homepage": "https://github.com/Nolane-x/Nolane-habitat",
+  "repository": "https://github.com/Nolane-x/Nolane-habitat",
+  "license": "Proprietary",
+  "keywords": [
+    "mcp",
+    "ai-agents",
+    "code-intelligence",
+    "python"
+  ],
+  "skills": "./skills/",
+  "interface": {
+    "displayName": "Nolane Habitat",
+    "shortDescription": "Project intelligence for Codex agents",
+    "longDescription": "Bounded semantic project context and governed development workflows for Codex agents.",
+    "developerName": "Nolane-x",
+    "category": "Productivity",
+    "capabilities": [
+      "Skills"
+    ],
+    "defaultPrompt": "Use Nolane Habitat to orient this task and verify the affected code."
+  }
+}

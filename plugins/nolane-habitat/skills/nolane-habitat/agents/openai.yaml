@@ -1,0 +1,4 @@
+interface:
+  display_name: "Nolane Habitat"
+  short_description: "Project intelligence for Codex agents"
+  default_prompt: "Use $nolane-habitat to orient this task and verify the affected code."

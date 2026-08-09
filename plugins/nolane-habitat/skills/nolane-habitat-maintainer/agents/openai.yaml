@@ -1,0 +1,4 @@
+interface:
+  display_name: "Nolane Habitat Maintainer"
+  short_description: "Maintain and release Nolane Habitat"
+  default_prompt: "Use $nolane-habitat-maintainer to maintain, test, or release Nolane Habitat safely."
