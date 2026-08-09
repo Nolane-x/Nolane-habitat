@@ -5,7 +5,10 @@ from pathlib import Path
 
 from habitat.workspace import HabitatWorkspace
 from habitat.mutation import TransactionConflict
-from .support import WorkspaceTemporaryDirectory
+if __package__:
+    from .support import WorkspaceTemporaryDirectory
+else:
+    from support import WorkspaceTemporaryDirectory
 
 
 class WorkspaceTests(unittest.TestCase):

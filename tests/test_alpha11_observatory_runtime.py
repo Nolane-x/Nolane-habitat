@@ -25,14 +25,21 @@ class Alpha11ObservatoryRuntimeTests(unittest.TestCase):
         ctx=ws.orient('validate user',agent_id=aid); ep=ws.episode_start('validate user',ctx.handle)
         ws.hypothesis_create('validation rejects missing user',episode_id=ep['id'])
         obs=ws.observatory_start(open_browser=False); self.addCleanup(ws.observatory_stop)
-        health=json.loads(urllib.request.urlopen(obs['url']+'api/health',timeout=3).read())
+        with urllib.request.urlopen(obs['url']+'api/health',timeout=3) as response:
+            health=json.loads(response.read())
         self.assertTrue(health['read_only']); self.assertEqual(health['revision'],ws.revision)
-        snap=json.loads(urllib.request.urlopen(obs['url']+'api/snapshot',timeout=3).read())
+        with urllib.request.urlopen(obs['url']+'api/snapshot',timeout=3) as response:
+            snap=json.loads(response.read())
         self.assertTrue(snap['read_only']); self.assertEqual(snap['agents'][0]['name'],'Codex')
         req=urllib.request.Request(obs['url']+'api/snapshot',method='POST')
         with self.assertRaises(urllib.error.HTTPError) as cm: urllib.request.urlopen(req,timeout=3)
-        self.assertEqual(cm.exception.code,405)
-        self.assertEqual(json.loads(cm.exception.read())['error'],'observer-read-only')
+        error_response=cm.exception
+        try:
+            self.assertEqual(error_response.code,405)
+            self.assertEqual(json.loads(error_response.read())['error'],'observer-read-only')
+        finally:
+            error_response.close()
+        self.assertTrue(error_response.closed)
 
     def test_domain_activity_events_capture_agent_episode_mutation_and_are_monotonic(self):
         ws,_,_=self.make_ws(); a=ws.agent_open('Claude')['id']; ctx=ws.orient('change validate',agent_id=a); ep=ws.episode_start('change validate',ctx.handle)
@@ -111,7 +118,8 @@ class Alpha11ObservatoryRuntimeTests(unittest.TestCase):
     def test_observatory_snapshot_includes_project_memory_without_human_control(self):
         ws,_,_=self.make_ws(); ws.memory_record('decision','keep observer plane read only',provenance={'source':'architecture'})
         obs=ws.observatory_start(open_browser=False); self.addCleanup(ws.observatory_stop)
-        snap=json.loads(urllib.request.urlopen(obs['url']+'api/snapshot',timeout=3).read())
+        with urllib.request.urlopen(obs['url']+'api/snapshot',timeout=3) as response:
+            snap=json.loads(response.read())
         self.assertTrue(any(x['statement']=='keep observer plane read only' for x in snap['project_memory']))
         self.assertTrue(snap['read_only'])
 

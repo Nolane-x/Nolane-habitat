@@ -3,7 +3,10 @@ import unittest
 from pathlib import Path
 
 from habitat.protocol import HabitatProtocol
-from .support import WorkspaceTemporaryDirectory
+if __package__:
+    from .support import WorkspaceTemporaryDirectory
+else:
+    from support import WorkspaceTemporaryDirectory
 
 
 class Alpha4SchemaContracts(unittest.TestCase):

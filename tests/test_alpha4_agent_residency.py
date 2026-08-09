@@ -5,7 +5,10 @@ from pathlib import Path
 from habitat.protocol import HabitatProtocol
 from habitat.semantic.typescript import TypeScriptCompilerProvider
 from habitat.ui import BrowserRuntime
-from .support import WorkspaceTemporaryDirectory
+if __package__:
+    from .support import WorkspaceTemporaryDirectory
+else:
+    from support import WorkspaceTemporaryDirectory
 
 
 class Alpha4AgentResidencyTests(unittest.TestCase):

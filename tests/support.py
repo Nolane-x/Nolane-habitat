@@ -90,3 +90,6 @@ class WorkspaceTemporaryDirectory(WorkspaceTrackingTemporaryDirectory):
 
     def create_workspace(self, source_root: Path, workspace_root: Path) -> HabitatWorkspace:
         return HabitatWorkspace.create(source_root, workspace_root)
+
+
+install_workspace_cleanup()

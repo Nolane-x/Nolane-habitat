@@ -31,7 +31,8 @@ class Alpha12ObservatoryCinematicTests(unittest.TestCase):
         world=ws.counterfactual_fork('guard missing user',agent_id=a)
         ws.counterfactual_apply(world['id'],[{'op':'replace_text','path':'app.py','old':'raise ValueError("missing user")','new':'return None'}])
         obs=ws.observatory_start(open_browser=False); self.addCleanup(ws.observatory_stop)
-        snap=json.loads(urllib.request.urlopen(obs['url']+'api/snapshot',timeout=5).read())
+        with urllib.request.urlopen(obs['url']+'api/snapshot',timeout=5) as response:
+            snap=json.loads(response.read())
         self.assertTrue(snap['read_only'])
         self.assertGreater(len(snap['effects']),0)
         self.assertGreater(len(snap['project_world']['nodes']),0)

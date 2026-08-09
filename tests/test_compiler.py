@@ -34,4 +34,13 @@ class CompilerTests(unittest.TestCase):
             self.assertEqual(len({symbol.id for symbol in compiled.symbols}), 2)
             self.assertEqual([symbol.start_line for symbol in compiled.symbols], [1, 2])
 
+    def test_css_rule_symbols_are_unique_when_selectors_repeat_on_one_line(self):
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td); p = root / "styles.css"
+            p.write_text(".card { color: red; } .card { color: blue; }\n", encoding="utf-8")
+            compiled = compile_file(root, p)
+            self.assertEqual(len(compiled.symbols), 2)
+            self.assertEqual(len({symbol.id for symbol in compiled.symbols}), 2)
+            self.assertEqual([symbol.start_line for symbol in compiled.symbols], [1, 1])
+
 if __name__ == "__main__": unittest.main()
