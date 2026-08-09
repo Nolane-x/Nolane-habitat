@@ -5,7 +5,9 @@ import tempfile
 import threading
 import unittest
 from pathlib import Path
+from unittest import mock
 
+from habitat import source_bridge
 from habitat.observatory import ObservatoryReadModel, ObservatoryServer
 from habitat.protocol import HabitatProtocol
 from habitat.source_bridge import atomic_write
@@ -116,6 +118,31 @@ class Alpha17StabilityCompletionTests(unittest.TestCase):
             self.assertTrue(all(not thread.is_alive() for thread in threads))
             self.assertIn(path.read_bytes(), payloads)
             self.assertFalse(list(path.parent.glob(f".{path.name}.habitat-*.tmp")))
+
+    def test_atomic_write_retries_a_transient_windows_sharing_violation(self):
+        with tempfile.TemporaryDirectory() as td:
+            path = Path(td) / "state.txt"
+            path.write_bytes(b"seed")
+            original_replace = source_bridge.os.replace
+            error = PermissionError(13, "Access is denied")
+            error.winerror = 32
+            attempts = 0
+
+            def replace_once_after_sharing_violation(src, dst):
+                nonlocal attempts
+                attempts += 1
+                if attempts == 1:
+                    raise error
+                return original_replace(src, dst)
+
+            with mock.patch(
+                "habitat.source_bridge.os.replace",
+                side_effect=replace_once_after_sharing_violation,
+            ):
+                atomic_write(path, b"updated")
+
+            self.assertEqual(path.read_bytes(), b"updated")
+            self.assertEqual(attempts, 2)
 
 
     def test_ui_input_validation_fails_before_playwright_semantics(self):

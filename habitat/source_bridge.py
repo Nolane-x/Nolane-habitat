@@ -4,11 +4,27 @@ import os
 import shutil
 import stat
 import tempfile
+import time
 import zipfile
 from dataclasses import dataclass
 from pathlib import Path, PurePosixPath
 
 from .util import iter_project_files
+
+
+_WINDOWS_REPLACE_RETRY_DELAYS = (0.005, 0.01, 0.02, 0.04, 0.08)
+
+
+def _replace_with_retry(tmp: Path, path: Path) -> None:
+    """Replace a destination after brief Windows sharing violations."""
+    for delay in (*_WINDOWS_REPLACE_RETRY_DELAYS, None):
+        try:
+            os.replace(tmp, path)
+            return
+        except OSError as exc:
+            if getattr(exc, "winerror", None) not in {5, 32, 33} or delay is None:
+                raise
+            time.sleep(delay)
 
 
 class ImportErrorUnsafe(ValueError):
@@ -145,7 +161,7 @@ def atomic_write(path: Path, data: bytes) -> None:
                         os.setxattr(tmp, name, value)
                     except OSError:
                         pass
-        os.replace(tmp, path)
+        _replace_with_retry(tmp, path)
         # fsync the containing directory so the rename itself is durable across a crash.
         if os.name != "nt":
             dir_fd = -1
