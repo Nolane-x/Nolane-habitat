@@ -7,6 +7,10 @@ from habitat.semantic.python_jedi import probe
 
 
 class PythonJediSemanticTests(unittest.TestCase):
+    def test_dev_extra_includes_python_semantic_provider(self):
+        text = Path("pyproject.toml").read_text(encoding="utf-8")
+        self.assertIn('dev = ["jsonschema>=4", "jedi>=0.19,<1"]', text)
+
     def test_cross_file_alias_call_resolves_to_exact_project_symbol(self):
         with tempfile.TemporaryDirectory() as td:
             root=Path(td)/"project"; root.mkdir()
@@ -62,19 +66,17 @@ class PythonJediSemanticTests(unittest.TestCase):
             ws=HabitatWorkspace.create(root,Path(td)/"ws")
             try:
                 warm=ws.refresh(reason="warm-jedi-partitions")
-                report=ws.semantic_provider_report()["providers"]["python-jedi"]
+                report=warm["project_semantics"]["python-jedi"]
                 if not report.get("available"):
                     self.skipTest("Jedi unavailable")
                 self.assertEqual(report["partitions_recomputed"],0,report)
                 self.assertEqual(report["partitions_reused"],3,report)
                 (root/"a.py").write_text("def a():\n    return 2\n",encoding="utf-8")
-                ws.refresh(reason="body-only")
-                body=ws.semantic_provider_report()["providers"]["python-jedi"]
+                body=ws.refresh(reason="body-only")["project_semantics"]["python-jedi"]
                 self.assertEqual(body["partitions_recomputed"],1,body)
                 self.assertEqual(body["partitions_reused"],2,body)
                 (root/"a.py").write_text("def a():\n    return 2\n\ndef public_api():\n    return 4\n",encoding="utf-8")
-                ws.refresh(reason="api-surface")
-                surface=ws.semantic_provider_report()["providers"]["python-jedi"]
+                surface=ws.refresh(reason="api-surface")["project_semantics"]["python-jedi"]
                 self.assertEqual(surface["partitions_recomputed"],3,surface)
             finally:
                 ws.close()
