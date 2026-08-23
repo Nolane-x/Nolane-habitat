@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 import os
 from pathlib import Path
@@ -16,6 +17,7 @@ def evaluate_quality_gate(
     matrix: Mapping[str, Any],
     scanners: Mapping[str, Mapping[str, Any]],
     required_scanners: tuple[str, ...] = (),
+    expected_commit: str | None = None,
 ) -> dict[str, Any]:
     failed: list[str] = []
     if identity.get("_quality_gate_load_error") or not identity.get("ok"):
@@ -39,6 +41,22 @@ def evaluate_quality_gate(
             failed.append(f"scanner:{name}:errors")
         if scanner.get("results"):
             failed.append(f"scanner:{name}:findings")
+        if expected_commit is not None:
+            if scanner.get("scanner") != name:
+                failed.append(f"scanner:{name}:identity-mismatch")
+            if scanner.get("source_commit") != expected_commit:
+                failed.append(f"scanner:{name}:source-commit-mismatch")
+            if scanner.get("status") != "passed":
+                failed.append(f"scanner:{name}:status")
+            if scanner.get("findings") != 0:
+                failed.append(f"scanner:{name}:findings")
+            digest = scanner.get("report_sha256")
+            unsigned = {key: value for key, value in scanner.items() if key != "report_sha256"}
+            expected_digest = hashlib.sha256(
+                json.dumps(unsigned, sort_keys=True, separators=(",", ":")).encode("utf-8")
+            ).hexdigest()
+            if digest != expected_digest:
+                failed.append(f"scanner:{name}:report-hash-mismatch")
 
     return {
         "schema": 1,
@@ -48,6 +66,7 @@ def evaluate_quality_gate(
         "matrix_statuses": dict(statuses),
         "scanners": sorted(scanners),
         "required_scanners": sorted(set(required_scanners)),
+        "expected_commit": expected_commit,
         "claim_boundary": "This gate evaluates only supplied artifacts. Missing or unreadable required evidence is not a pass.",
     }
 
@@ -87,6 +106,7 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--matrix", type=Path, required=True)
     parser.add_argument("--scanner", action="append", default=[], metavar="NAME=PATH")
     parser.add_argument("--require-scanner", action="append", default=[])
+    parser.add_argument("--expected-commit")
     parser.add_argument("--out", type=Path, required=True)
     args = parser.parse_args(argv)
     scanner_paths = _parse_named_paths(args.scanner)
@@ -95,6 +115,7 @@ def main(argv: list[str] | None = None) -> int:
         matrix=_load_json(args.matrix),
         scanners={name: _load_json(path) for name, path in scanner_paths.items()},
         required_scanners=tuple(args.require_scanner),
+        expected_commit=args.expected_commit,
     )
     _write_json_atomically(args.out, report)
     return 0 if report["ok"] else 1

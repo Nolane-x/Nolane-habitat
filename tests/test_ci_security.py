@@ -16,6 +16,21 @@ class CiSecurityTests(unittest.TestCase):
             for action in actions:
                 self.assertRegex(action, r"^[0-9a-f]{40}$", f"mutable action reference in {workflow}: {action}")
 
+    def test_ci_binds_semgrep_evidence_to_the_github_commit(self) -> None:
+        root = Path(__file__).parents[1]
+        workflow = (root / ".github" / "workflows" / "ci.yml").read_text(encoding="utf-8")
+        pyproject = (root / "pyproject.toml").read_text(encoding="utf-8")
+
+        self.assertIn('"semgrep>=1.168,<2"', pyproject)
+        self.assertIn(
+            "python tools/run_semgrep.py --source-commit ${{ github.sha }} --out .test-artifacts/semgrep-workflows.json",
+            workflow,
+        )
+        self.assertIn(
+            "--scanner semgrep=.test-artifacts/semgrep-workflows.json --require-scanner semgrep --expected-commit ${{ github.sha }}",
+            workflow,
+        )
+
 
 if __name__ == "__main__":
     unittest.main()

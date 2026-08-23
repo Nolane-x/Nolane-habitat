@@ -34,8 +34,10 @@ jobs:
         run: python -m unittest discover -q
       - name: Run isolated regression matrix
         run: python tools/run_test_matrix.py --mode shard --workers 1 --timeout 600 --out .test-artifacts/matrix.json
+      - name: Run GitHub Actions Semgrep policy
+        run: python tools/run_semgrep.py --source-commit ${{ github.sha }} --out .test-artifacts/semgrep-workflows.json
       - name: Summarize local quality evidence
-        run: python tools/quality_gate.py --identity .test-artifacts/identity.json --matrix .test-artifacts/matrix.json --out .test-artifacts/quality-gate.json
+        run: python tools/quality_gate.py --identity .test-artifacts/identity.json --matrix .test-artifacts/matrix.json --scanner semgrep=.test-artifacts/semgrep-workflows.json --require-scanner semgrep --expected-commit ${{ github.sha }} --out .test-artifacts/quality-gate.json
       - name: Upload verification artifacts
         if: always()
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7

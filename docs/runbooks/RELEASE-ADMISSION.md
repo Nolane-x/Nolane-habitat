@@ -2,6 +2,22 @@
 
 `tools/promote_release.py` evaluates a supplied release manifest and writes a machine-readable verdict. It never creates a Git tag, publishes a package, uploads an artifact, or creates a GitHub release.
 
+## CI scanner evidence
+
+CI runs the GitHub Actions Semgrep policy before its local quality gate. The scanner report is valid only for the exact Git commit it names: the gate rejects a missing report, a scanner identity mismatch, a non-passing status, findings, errors, a digest mismatch, or a different commit.
+
+To reproduce that check for the checked-out candidate:
+
+```powershell
+$commit = git rev-parse HEAD
+python tools\run_semgrep.py --source-commit $commit --out .test-artifacts\semgrep-workflows.json
+python tools\quality_gate.py --identity .test-artifacts\identity.json --matrix .test-artifacts\matrix.json `
+  --scanner semgrep=.test-artifacts\semgrep-workflows.json --require-scanner semgrep `
+  --expected-commit $commit --out .test-artifacts\quality-gate.json
+```
+
+The scanner report is CI evidence, not a release-admission verdict by itself. Release admission still requires the complete manifest and independent review described below.
+
 Build the manifest from the actual evidence and artifact files; the builder computes the SHA-256 bindings rather than accepting manually entered values:
 
 ```powershell
