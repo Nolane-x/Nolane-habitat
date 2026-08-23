@@ -25,6 +25,7 @@ class CiSecurityTests(unittest.TestCase):
         self.assertIn("python -m venv .semgrep-venv", workflow)
         self.assertIn("HABITAT_SEMGREP_EXECUTABLE", workflow)
         self.assertIn('"$semgrep_python" -m pip install "semgrep==1.168.0"', workflow)
+        self.assertIn('semgrep_env_path=".semgrep-venv\\Scripts\\semgrep.exe"', workflow)
         self.assertIn(
             "python tools/run_semgrep.py --source-commit ${{ github.sha }} --out .test-artifacts/semgrep-workflows.json",
             workflow,
