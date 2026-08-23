@@ -1,3 +1,4 @@
+import os
 import sys
 import tempfile
 import unittest
@@ -16,5 +17,26 @@ class ExecutionTests(unittest.TestCase):
             self.assertIn("hello", receipt.stdout)
             self.assertIn("made.txt", receipt.changed_paths)
             self.assertFalse(receipt.timed_out)
+
+    def test_python_verify_uses_an_isolated_bytecode_cache_for_same_timestamp_edits(self):
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            source = root / "calc.py"
+            test_root = root / "tests"
+            test_root.mkdir()
+            source.write_text("def add(a, b):\n    return a-b\n", encoding="utf-8")
+            (test_root / "test_calc.py").write_text(
+                "from calc import add\n\ndef test_add():\n    assert add(2, 3) == 5\n",
+                encoding="utf-8",
+            )
+            fixed_mtime = 1_700_000_000
+            os.utime(source, (fixed_mtime, fixed_mtime))
+            first = run_action(root, "python.pytest", [sys.executable, "-m", "pytest", "-q"], capability_kind="test")
+            self.assertNotEqual(first.exit_code, 0)
+
+            source.write_text("def add(a, b):\n    return a+b\n", encoding="utf-8")
+            os.utime(source, (fixed_mtime, fixed_mtime))
+            second = run_action(root, "python.pytest", [sys.executable, "-m", "pytest", "-q"], capability_kind="test")
+            self.assertEqual(second.exit_code, 0, second.stdout + second.stderr)
 
 if __name__ == "__main__": unittest.main()

@@ -205,6 +205,13 @@ def run_action(root: Path, capability: str, argv: list[str], timeout_s: int = 60
     else: popen_kwargs["creationflags"]=getattr(subprocess,"CREATE_NEW_PROCESS_GROUP",0)
     with tempfile.TemporaryDirectory(prefix="habitat-run-") as td:
         outp=Path(td)/"stdout.bin"; errp=Path(td)/"stderr.bin"
+        if capability.startswith("python."):
+            # CPython timestamp bytecode can be stale after a same-size source edit within one
+            # second. A per-run cache makes verification observe source state without mutating
+            # the project's own __pycache__ directories.
+            execution_env = dict(popen_kwargs.get("env") or os.environ)
+            execution_env["PYTHONPYCACHEPREFIX"] = str(Path(td) / "pycache")
+            popen_kwargs["env"] = execution_env
         with outp.open("wb") as out_f, errp.open("wb") as err_f:
             popen_kwargs["stdout"]=out_f; popen_kwargs["stderr"]=err_f
             proc=subprocess.Popen(effective_argv,**popen_kwargs)
