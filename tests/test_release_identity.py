@@ -44,3 +44,16 @@ class ReleaseIdentityTests(unittest.TestCase):
 
         self.assertFalse(report["ok"])
         self.assertIn("README.md", report["errors"][0])
+
+    def test_candidate_documentation_need_not_claim_an_unpublished_tag(self):
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            self._write_identity_fixture(root)
+            (root / "docs" / "CODEX-INTEGRATION.md").write_text(
+                "Install the plugin from the checkout being verified.\n",
+                encoding="utf-8",
+            )
+
+            report = check_identity(root)
+
+        self.assertTrue(report["ok"])

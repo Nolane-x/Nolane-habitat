@@ -10,8 +10,8 @@ from pathlib import Path
 
 CURRENT_DOCUMENTS = {
     "README.md": lambda version: version,
-    "docs/CODEX-INTEGRATION.md": lambda version: f"--ref v{version}",
 }
+RELEASE_REF = re.compile(r"--ref\s+v(\d+\.\d+\.\d+-alpha\.\d+)")
 
 
 def package_version(version: str) -> str:
@@ -44,6 +44,17 @@ def check_identity(root: Path) -> dict:
         content = path.read_text(encoding="utf-8") if path.is_file() else ""
         if expected not in content:
             errors.append(f"{relative} does not contain {expected!r}")
+
+    integration = root / "docs" / "CODEX-INTEGRATION.md"
+    if integration.is_file():
+        for referenced_version in RELEASE_REF.findall(
+            integration.read_text(encoding="utf-8")
+        ):
+            if referenced_version != version:
+                errors.append(
+                    "docs/CODEX-INTEGRATION.md references "
+                    f"v{referenced_version}, not v{version}"
+                )
 
     return {
         "ok": not errors,
