@@ -119,7 +119,10 @@ def _prepare_python_bytecode_cache(root: Path) -> Path:
                 if source.suffix.lower() != ".py":
                     continue
                 try:
-                    Path(importlib.util.cache_from_source(str(source))).unlink(missing_ok=True)
+                    cache_path = Path(importlib.util.cache_from_source(str(source)))
+                    for candidate in cache_path.parent.iterdir():
+                        if candidate.suffix == ".pyc" and candidate.name.startswith(f"{source.stem}."):
+                            candidate.unlink(missing_ok=True)
                 except (OSError, ValueError):
                     pass
         finally:

@@ -110,8 +110,7 @@ class PythonJediSemanticTests(unittest.TestCase):
                 root.mkdir()
                 project, _ = python_jedi._project_for(root)
                 environment = project.get_environment()
-                environment.get_sys_path()
-                compiled = environment._subprocess
+                compiled = environment._get_subprocess()
                 process = compiled._get_process()
                 self.assertIsNone(process.poll())
 
