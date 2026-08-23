@@ -25,6 +25,26 @@ class ReleasePromotionTests(unittest.TestCase):
         self.assertIn("truth-core", verdict.missing_reports)
         self.assertIn("matrix", verdict.missing_reports)
 
+    def test_promotion_rejects_empty_or_non_digest_evidence(self):
+        manifest = ReleaseManifest(
+            version="0.1.0-alpha.19",
+            commit="commit",
+            reports={
+                "truth-core": "not-a-digest",
+                "matrix": "also-not-a-digest",
+                "faults": "missing",
+                "artifacts": "placeholder",
+            },
+            artifact_hashes={},
+            residual_risks=(),
+        )
+
+        verdict = evaluate_promotion(manifest, target="alpha-candidate")
+
+        self.assertFalse(verdict.admitted)
+        self.assertIn("report:truth-core:invalid-digest", verdict.failed_gates)
+        self.assertIn("artifact_hashes:missing", verdict.failed_gates)
+
     def test_dry_run_writes_a_blocked_verdict_without_publication(self):
         with tempfile.TemporaryDirectory() as td:
             root = Path(td)

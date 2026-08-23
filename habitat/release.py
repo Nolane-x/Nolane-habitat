@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import asdict, dataclass
+import re
 from typing import Any, Mapping
 
 
@@ -10,6 +11,7 @@ REQUIRED_REPORTS = {
     "beta-candidate": frozenset({"coordination", "mcp-soak", "observatory", "scale"}),
     "production-candidate": frozenset({"security", "slo", "sbom", "reproducibility"}),
 }
+SHA256 = re.compile(r"^[0-9a-f]{64}$")
 
 
 @dataclass(frozen=True)
@@ -49,11 +51,24 @@ def evaluate_promotion(manifest: ReleaseManifest, target: str) -> PromotionVerdi
     except KeyError as exc:
         raise ValueError(f"unknown promotion target: {target}") from exc
     missing = tuple(sorted(required - manifest.reports.keys()))
-    failed = tuple(sorted(name for name in required if not manifest.reports.get(name)))
+    failed = {
+        f"report:{name}:invalid-digest"
+        for name in required & manifest.reports.keys()
+        if not SHA256.fullmatch(manifest.reports[name])
+    }
+    if "artifacts" in required:
+        if not manifest.artifact_hashes:
+            failed.add("artifact_hashes:missing")
+        else:
+            failed.update(
+                f"artifact:{name}:invalid-digest"
+                for name, digest in manifest.artifact_hashes.items()
+                if not SHA256.fullmatch(digest)
+            )
     return PromotionVerdict(
         target=target,
         admitted=not missing and not failed,
         missing_reports=missing,
-        failed_gates=failed,
+        failed_gates=tuple(sorted(failed)),
         residual_risks=manifest.residual_risks,
     )
