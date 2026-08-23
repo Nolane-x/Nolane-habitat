@@ -97,6 +97,8 @@ This loop makes context, changes, evidence, and handoffs durable across longer-r
 
 - [Install and run Habitat](docs/INSTALLATION.md)
 - [Connect Habitat to Codex](docs/CODEX-INTEGRATION.md)
+- [Understand execution capability boundaries](docs/security/CAPABILITY-MATRIX.md)
+- [Evaluate release admission without publishing](docs/runbooks/RELEASE-ADMISSION.md)
 - [Use the agent protocol](docs/AGENT-PROTOCOL.md)
 - [Explore the architecture](docs/architecture/ALPHA17-ARCHITECTURE.md)
 - [Review the changelog](CHANGELOG.md)

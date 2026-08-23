@@ -7,6 +7,8 @@
 - Added a read-only `habitat doctor <workspace>` health report for schema, integrity, foreign-key, and WAL state.
 - Made test-matrix cleanup failures structured CI evidence and made JSON report output create its artifact directory and replace atomically.
 - Added a checked release-identity command to keep runtime, package metadata, changelog, and current Codex documentation aligned.
+- Added a truthful execution-capability report to `enter` and `habitat capabilities`, with fail-closed checks for unverified containment.
+- Added a dry-run release-promotion gate that always writes a machine-readable verdict and never tags or publishes artifacts.
 
 ## 0.1.0-alpha.18 — 2026-08-09
 
