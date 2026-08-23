@@ -52,7 +52,11 @@ class Store:
         self.conn = sqlite3.connect(str(db_path), factory=_TransactionAwareConnection)
         self.conn.row_factory = sqlite3.Row
         self.conn.execute("PRAGMA busy_timeout = 5000")
-        self._init_schema()
+        try:
+            self._init_schema()
+        except BaseException:
+            self.conn.close()
+            raise
 
     @contextmanager
     def atomic(self):
@@ -95,10 +99,12 @@ class Store:
         if backup_version is not None:
             create_pre_migration_backup(self.conn, self.db_path, backup_version)
         c = self.conn.cursor()
-        c.executescript(
+        try:
+            c.executescript(
             """
             PRAGMA journal_mode=WAL;
             PRAGMA foreign_keys=ON;
+            BEGIN IMMEDIATE;
             CREATE TABLE IF NOT EXISTS meta(key TEXT PRIMARY KEY, value TEXT NOT NULL);
             CREATE TABLE IF NOT EXISTS files(
               id TEXT PRIMARY KEY, path TEXT UNIQUE NOT NULL, language TEXT NOT NULL,
@@ -403,13 +409,23 @@ class Store:
               title TEXT NOT NULL
             );
             """
-        )
+            )
+        except BaseException:
+            self._rollback_unfinished_schema_initialization()
+            raise
         try:
-            c.execute("CREATE VIRTUAL TABLE IF NOT EXISTS search_fts USING fts5(path,title,body,content='',contentless_delete=1)")
+            self._complete_schema_initialization(c)
+        except BaseException:
+            self._rollback_unfinished_schema_initialization()
+            raise
+
+    def _complete_schema_initialization(self, cursor: sqlite3.Cursor) -> None:
+        try:
+            cursor.execute("CREATE VIRTUAL TABLE IF NOT EXISTS search_fts USING fts5(path,title,body,content='',contentless_delete=1)")
             self._set_meta_uncommitted("fts5", "contentless")
         except sqlite3.OperationalError:
             try:
-                c.execute("CREATE VIRTUAL TABLE IF NOT EXISTS search_fts USING fts5(path,title,body)")
+                cursor.execute("CREATE VIRTUAL TABLE IF NOT EXISTS search_fts USING fts5(path,title,body)")
                 self._set_meta_uncommitted("fts5", "regular")
             except sqlite3.OperationalError:
                 self._set_meta_uncommitted("fts5", "0")
@@ -417,8 +433,12 @@ class Store:
         verify_required_structure(self.conn)
         self.conn.execute(f"PRAGMA user_version = {SCHEMA_VERSION}")
         self._set_meta_uncommitted("schema_version", str(SCHEMA_VERSION))
-        self.conn.commit()
         self._ensure_symbol_terms_index()
+        self.conn.commit()
+
+    def _rollback_unfinished_schema_initialization(self) -> None:
+        if self.conn.in_transaction:
+            self.conn.rollback()
 
     def _ensure_symbol_terms_index(self) -> None:
         version="symbol-terms-v1"
@@ -429,7 +449,8 @@ class Store:
             for term in _index_terms((row["qualified_name"] or "")+" "+(row["path"] or "")):
                 self.conn.execute("INSERT OR IGNORE INTO symbol_terms(term,symbol_id,path) VALUES(?,?,?)",(term,row["id"],row["path"]))
         self.conn.execute("INSERT OR REPLACE INTO meta(key,value) VALUES('symbol_terms_index_version',?)",(version,))
-        self.conn.commit()
+        if not self.conn.in_transaction:
+            self.conn.commit()
 
     # --- alpha.12 effect twin / counterfactual worlds ---
     def replace_effect_facts_for_path(self, path: str, facts: list[dict]) -> int:

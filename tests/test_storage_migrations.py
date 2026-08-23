@@ -2,6 +2,7 @@ import sqlite3
 import tempfile
 import unittest
 from pathlib import Path
+from unittest.mock import patch
 
 from habitat.model import FileRecord
 from habitat.storage import SCHEMA_VERSION, Store
@@ -161,3 +162,49 @@ class StorageMigrationTests(unittest.TestCase):
                 self.assertEqual("1", version)
             finally:
                 conn.close()
+
+    def test_failed_migration_restores_the_pre_migration_schema(self):
+        with tempfile.TemporaryDirectory() as td:
+            db_path = Path(td) / "rollback.sqlite3"
+            conn = sqlite3.connect(db_path)
+            conn.executescript(
+                """
+                CREATE TABLE meta(key TEXT PRIMARY KEY, value TEXT NOT NULL);
+                INSERT INTO meta VALUES('schema_version', '1');
+                CREATE TABLE files(
+                  id TEXT PRIMARY KEY,
+                  path TEXT UNIQUE NOT NULL,
+                  language TEXT NOT NULL,
+                  size INTEGER NOT NULL,
+                  digest TEXT NOT NULL,
+                  mtime_ns INTEGER NOT NULL
+                );
+                """
+            )
+            conn.close()
+
+            with patch(
+                "habitat.storage.verify_required_structure",
+                side_effect=RuntimeError("injected migration failure"),
+            ):
+                with self.assertRaisesRegex(RuntimeError, "injected migration failure"):
+                    Store(db_path)
+
+            conn = sqlite3.connect(db_path)
+            try:
+                tables = {
+                    row[0]
+                    for row in conn.execute(
+                        "SELECT name FROM sqlite_master WHERE type = 'table'"
+                    )
+                }
+                columns = {row[1] for row in conn.execute("PRAGMA table_info(files)")}
+                version = conn.execute(
+                    "SELECT value FROM meta WHERE key = 'schema_version'"
+                ).fetchone()[0]
+            finally:
+                conn.close()
+
+            self.assertEqual({"files", "meta"}, tables)
+            self.assertNotIn("indexed_bytes", columns)
+            self.assertEqual("1", version)
