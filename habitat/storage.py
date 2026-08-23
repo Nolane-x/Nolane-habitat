@@ -22,6 +22,10 @@ from .storage_migrations import (
 _JSON_TABLES = {"transactions", "runs", "context_slices", "sessions"}
 
 
+class StoreBusyError(RuntimeError):
+    """Raised when a separate SQLite writer exceeds Habitat's contention budget."""
+
+
 class _TransactionAwareConnection(sqlite3.Connection):
     """Prevent legacy helper commits from escaping an explicit Store transaction."""
 
@@ -47,6 +51,7 @@ class Store:
         self.db_path.parent.mkdir(parents=True, exist_ok=True)
         self.conn = sqlite3.connect(str(db_path), factory=_TransactionAwareConnection)
         self.conn.row_factory = sqlite3.Row
+        self.conn.execute("PRAGMA busy_timeout = 5000")
         self._init_schema()
 
     @contextmanager
@@ -55,10 +60,17 @@ class Store:
 
         nested = self.conn.in_transaction or self.conn._habitat_transaction_depth > 0
         savepoint = f"habitat_atomic_{self.conn._habitat_transaction_depth}"
-        if nested:
-            self.conn.execute(f"SAVEPOINT {savepoint}")
-        else:
-            self.conn.execute("BEGIN IMMEDIATE")
+        try:
+            if nested:
+                self.conn.execute(f"SAVEPOINT {savepoint}")
+            else:
+                self.conn.execute("BEGIN IMMEDIATE")
+        except sqlite3.OperationalError as exc:
+            if "busy" in str(exc).lower() or "locked" in str(exc).lower():
+                raise StoreBusyError(
+                    "Habitat workspace database is busy; retry after the active writer completes."
+                ) from exc
+            raise
         self.conn._habitat_transaction_depth += 1
         try:
             yield
