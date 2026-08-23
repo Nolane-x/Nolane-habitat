@@ -204,6 +204,15 @@ class HabitatWorkspace:
         info["substrate_composable"] = True
         return info
 
+    def capability_report(self) -> dict:
+        from .security.capabilities import build_capability_report
+
+        return build_capability_report(
+            source_authority=self.backend.source_authority.info.as_dict(),
+            execution_provider=self.backend.execution_provider.info.as_dict(),
+            generated_at_revision=self.revision,
+        ).as_dict()
+
     def agent_open(self, name: str, metadata: dict | None = None) -> dict:
         if not isinstance(name,str) or not name.strip(): raise ValueError("agent name must be a non-empty string")
         if metadata is not None and not isinstance(metadata,dict): raise TypeError("metadata must be an object")
@@ -1946,6 +1955,7 @@ class HabitatWorkspace:
             "startup_transaction_recovery": list(self._startup_recovery),
             "languages": {k: round(v / total, 3) for k, v in langs.most_common()},
             "capabilities": self.backend.discover_capabilities(),
+            "capability_report": self.capability_report(),
             "backend": self.backend_info(),
             "semantic_providers": {
                 "python-ast": {"available": True, "trust_ceiling": "semantic", "project_linking": True},

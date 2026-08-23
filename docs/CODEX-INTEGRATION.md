@@ -18,6 +18,14 @@ $workspace = "$source.habitat"
 
 The workspace path is separate from the source path. It holds the durable Habitat state for that project.
 
+Before assigning execution-heavy work to an agent, inspect the actual boundary in force:
+
+```powershell
+.\.venv\Scripts\habitat.exe capabilities $workspace
+```
+
+Treat `trusted-local-process` as an unsandboxed local process. Habitat only reports verified sandbox, filesystem, network, and process-isolation capabilities when the active execution provider supplies the corresponding containment evidence.
+
 ## Register the MCP server
 
 Use the virtual environment's Python executable so Codex launches the same verified installation:
@@ -46,13 +54,6 @@ For a checkout on this machine:
 ```powershell
 $repo = (Resolve-Path .).Path
 codex plugin marketplace add $repo
-codex plugin add nolane-habitat@personal
-```
-
-For the published release:
-
-```powershell
-codex plugin marketplace add Nolane-x/Nolane-habitat --ref v0.1.0-alpha.19
 codex plugin add nolane-habitat@personal
 ```
 

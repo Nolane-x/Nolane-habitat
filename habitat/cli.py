@@ -16,6 +16,7 @@ def main(argv=None):
     sp=sub.add_parser("enter"); sp.add_argument("workspace")
     sp=sub.add_parser("doctor"); sp.add_argument("workspace")
     sp=sub.add_parser("backend-info"); sp.add_argument("workspace")
+    sp=sub.add_parser("capabilities"); sp.add_argument("workspace")
     sp=sub.add_parser("refresh"); sp.add_argument("workspace")
     sp=sub.add_parser("orient"); sp.add_argument("workspace"); sp.add_argument("task"); sp.add_argument("--budget",type=int,default=18)
     sp=sub.add_parser("context-page"); sp.add_argument("workspace"); sp.add_argument("handle"); sp.add_argument("--offset",type=int,default=0); sp.add_argument("--limit",type=int,default=20)
@@ -52,6 +53,7 @@ def main(argv=None):
         try:
             if args.cmd=="enter": emit(ws.enter())
             elif args.cmd=="backend-info": emit(ws.backend_info())
+            elif args.cmd=="capabilities": emit(ws.capability_report())
             elif args.cmd=="refresh": emit(ws.refresh())
             elif args.cmd=="orient": emit(ws.orient(args.task,args.budget))
             elif args.cmd=="context-page": emit(ws.context_page(args.handle,args.offset,args.limit))

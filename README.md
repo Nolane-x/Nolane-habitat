@@ -45,6 +45,14 @@ Before handing an existing workspace to an agent, inspect its local state withou
 
 The report exposes schema version, SQLite integrity, foreign-key violations, and journal mode so a damaged or stale workspace is visible before it becomes agent context.
 
+Inspect the effective execution boundary before asking an agent to run verification or a provider action:
+
+```powershell
+.\.venv\Scripts\habitat.exe capabilities $workspace
+```
+
+The report is intentionally conservative. The normal local-process provider is shown as `trusted-local-process`, not as a sandbox; sandbox, network, filesystem, and process-isolation claims appear only when the active provider supplies all required containment evidence.
+
 ## Use it with Codex
 
 Register the initialized workspace as an MCP server:
@@ -79,7 +87,7 @@ This loop makes context, changes, evidence, and handoffs durable across longer-r
 
 | Surface | What it provides |
 | --- | --- |
-| CLI | Workspace creation, health inspection, orientation, mutation, verification, checkpoints, and resume. |
+| CLI | Workspace creation, health and capability inspection, orientation, mutation, verification, checkpoints, and resume. |
 | MCP | Codex tools for task context, source understanding, governed changes, verification, and handoff. |
 | Semantic providers | Python and TypeScript project evidence with source anchors and relationship data. |
 | Mutation engine | Journaled source writes, rollback support, and recovery-aware transaction handling. |
