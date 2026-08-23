@@ -1,10 +1,10 @@
-# Nolane Habitat Alpha.20 Evidence and Resilience Implementation Plan
+# Nolane Habitat Alpha.20+ Evidence, Resilience, and Trust Plan
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Make the next Habitat candidate easier to trust by removing dynamic SQL ambiguity, continuously proving CI supply-chain integrity, supervising semantic-provider lifecycles, and producing independently reviewable release evidence.
+**Goal:** Make the next Habitat candidate easier to trust by removing dynamic SQL ambiguity, continuously proving CI supply-chain integrity, supervising semantic-provider lifecycles, proving database recovery under contention, enforcing protocol compatibility and privacy boundaries, and producing independently reviewable release evidence.
 
-**Architecture:** Keep the public MCP and CLI envelopes unchanged. Place SQL identifier validation in one small module, make each CI scanner emit a hashable report, and make provider cleanup testable through the existing runtime lifecycle boundary. Promotion remains an evidence decision: CI success is necessary, but not sufficient for a public tag or release.
+**Architecture:** Keep the public MCP and CLI envelopes unchanged. Place SQL identifier validation in one small module, make each CI scanner emit a hashable report, and make provider cleanup testable through the existing runtime lifecycle boundary. Add a small set of deterministic, isolated test harnesses for SQLite recovery, wire contracts, redaction, resource limits, and distribution contents. Promotion remains an evidence decision: CI success is necessary, but not sufficient for a public tag or release.
 
 **Tech Stack:** Python 3.10+, SQLite, `unittest`, GitHub Actions, CodeQL, Semgrep, JSON evidence manifests, vanilla JavaScript Observatory.
 
@@ -36,6 +36,10 @@
 | `habitat/runtime_lifecycle.py` | report and close every registered semantic runtime | `shutdown_runtime_services`, `runtime_service_status` |
 | `habitat/release.py` | require reviewer and scanner bindings for promotion | `ReleaseManifest`, `evaluate_promotion` |
 | `tools/build_release_manifest.py` | build a manifest from local, hashable evidence files | `main(argv) -> int` |
+| `tools/run_db_recovery_suite.py` | prove lock, rollback, reopen, and integrity behavior | `main(argv) -> int` |
+| `tests/test_mcp_contracts.py` | protect public tool envelope compatibility | versioned request/response fixtures |
+| `habitat/redaction.py` | remove source and secret-bearing values from exported evidence | `redact_for_export(value) -> value` |
+| `tools/verify_distribution.py` | attest package contents and generated provenance | `main(argv) -> int` |
 
 ## Task 1: Introduce a tested SQLite identifier boundary
 
@@ -486,6 +490,126 @@ git commit -m "test(reliability): bind fault evidence to candidate commits"
 
 ---
 
+## Task 6: Prove SQLite concurrency, crash recovery, and integrity boundaries
+
+**Why this matters:** Habitat stores the project truth core in SQLite. A schema that is valid in a single process is not sufficient evidence that a busy writer, failed transaction, interrupted migration, or reopen preserves the same truth.
+
+**Files:**
+
+- Create: `tests/test_storage_recovery.py`
+- Create: `tools/run_db_recovery_suite.py`
+- Modify: `habitat/storage.py` only if a test exposes an unbounded or ambiguous recovery path
+- Modify: `.github/workflows/ci.yml`
+- Modify: `docs/runbooks/RELEASE-ADMISSION.md`
+
+**Required scenarios:**
+
+- [ ] Hold `BEGIN IMMEDIATE` in a second SQLite connection, perform a Habitat write, and prove that the public outcome is `StoreBusyError`, not a partial row or raw SQLite error.
+- [ ] Force exceptions at the start, middle, and end of a nested `Store.atomic` scope; reopen the database and prove the committed state equals the last known-good state.
+- [ ] Start from a pre-migration backup fixture, interrupt the repair path, reopen, and prove both the original backup and the live schema’s version-marker invariant are preserved.
+- [ ] Run `PRAGMA integrity_check` and `PRAGMA foreign_key_check` after every fault scenario; a non-`ok` result is a suite failure with the exact fixture name retained in the JSON report.
+- [ ] Run each scenario in a fresh temporary directory. The harness must never use a real project workspace or delete a user database.
+
+**Evidence contract:** `db-recovery.json` records `source_commit`, scenario names, SQLite version, checks executed, failures, and a canonical `report_sha256`. CI uploads it and promotion requires its hash in the release manifest.
+
+**Acceptance:** contention, rollback, migration recovery, reopen, and integrity checks are deterministic on Windows and Ubuntu; the report is bound to the exact candidate commit.
+
+## Task 7: Freeze the public MCP and CLI contract with compatibility fixtures
+
+**Why this matters:** An agent can be correct internally yet unusable when a stable tool name, input key, error shape, or read-only promise silently changes.
+
+**Files:**
+
+- Create: `tests/test_mcp_contracts.py`
+- Create: `tests/fixtures/contracts/agent-v1alpha2.json`
+- Create: `tools/verify_contracts.py`
+- Modify: `habitat/mcp_adapter.py`, `habitat/protocol.py`, and CLI entry modules only when a fixture finds a real divergence
+- Modify: `docs/COMPATIBILITY.md`
+
+**Required scenarios:**
+
+- [ ] Snapshot the sorted MCP tool catalogue, required input fields, response top-level fields, and error class for `habitat.agent.v1alpha2`.
+- [ ] Replay supported legacy fixture requests against a disposable workspace and compare semantic fields, not volatile timestamps, paths, or hash values.
+- [ ] Assert that unknown fields are either deliberately ignored or rejected with a documented typed error—never accepted with an accidental side effect.
+- [ ] Assert that read-only tools leave a before/after workspace digest unchanged, including the database and Observatory state files.
+- [ ] Require an explicit compatibility-policy entry, migration guide, and major/minor version decision for every fixture update.
+
+**Evidence contract:** `contract.json` contains the protocol version, fixture digest, candidate commit, compatible/breaking verdict, and a machine-readable list of intentional changes.
+
+**Acceptance:** no public surface regression can be introduced by refactoring alone; any compatibility break is visible, versioned, and blocks an alpha promotion until explicitly reviewed.
+
+## Task 8: Make exported evidence private by default and provenance-complete
+
+**Why this matters:** Debug and release evidence must help reviewers without silently exporting source bodies, local absolute paths, tokens, or environment-specific identities.
+
+**Files:**
+
+- Create: `habitat/redaction.py`
+- Create: `tests/test_export_redaction.py`
+- Modify: evidence/export/Observatory serializers that emit project-derived records
+- Modify: `tools/build_release_manifest.py`
+- Modify: `docs/SECURITY.md` and `docs/runbooks/RELEASE-ADMISSION.md`
+
+**Required scenarios:**
+
+- [ ] Treat source text, absolute filesystem paths outside the declared project root, authorization values, URLs with credentials, and configurable secret-pattern matches as sensitive export inputs.
+- [ ] Preserve the minimum reviewable facts: stable relative path where authorised, record type, digest, size, timestamp class, reason, and redaction count.
+- [ ] Test nested dictionaries, arrays, exception messages, Unicode, malformed values, and duplicate secret occurrences. Redaction must be idempotent.
+- [ ] Add negative fixtures containing representative credential-like strings; assert they never appear in JSON evidence, release manifests, CI artifacts, or Observatory export views.
+- [ ] Bind a redaction-policy digest and count summary into every candidate manifest, so a reviewer knows which policy produced the evidence.
+
+**Acceptance:** exported evidence is useful for audit but cannot be mistaken for permission to disclose project content; a failing negative fixture blocks packaging.
+
+## Task 9: Enforce runtime budgets, cancellation, and degradation semantics
+
+**Why this matters:** Semantic services and Observatory are valuable only while their failure modes stay bounded. A slow provider, oversized workspace, or disconnected client must degrade visibly rather than consume unbounded time, memory, or subprocesses.
+
+**Files:**
+
+- Create: `habitat/runtime_limits.py`
+- Create: `tests/test_runtime_limits.py`
+- Modify: semantic provider adapters, `runtime_lifecycle.py`, and Observatory transport only at verified boundary points
+- Create: `tools/run_resource_suite.py`
+- Modify: `docs/OPERATIONS.md`
+
+**Required scenarios:**
+
+- [ ] Define explicit budgets for provider response wait, stdout/stderr capture, request payload bytes, result item count, and owned-process shutdown grace period. Defaults must be conservative and documented.
+- [ ] Feed an unresponsive provider and an oversized synthetic response; prove a typed `unavailable` or `truncated` status is returned, the budget reason is observable, and all owned processes are reaped.
+- [ ] Cancel an in-flight request; prove cancellation is idempotent, does not commit a partial semantic result, and does not block a later healthy request.
+- [ ] Exercise 100 repeated timeout/cancel/restart cycles and measure that the runtime registry, temporary files, and child-process count return to baseline.
+- [ ] Ensure Observatory presents bounded status metadata and never infers a successful result from a timeout, cancellation, or truncation.
+
+**Evidence contract:** `resource-limits.json` records configured budgets, measured maxima, shutdown outcomes, known skips, and report hash. A result above its declared ceiling is a failure, not a warning.
+
+**Acceptance:** every intentionally bounded operation has an observable reason, deterministic test coverage, and a cleanup assertion.
+
+## Task 10: Attest distribution contents and dependency provenance before promotion
+
+**Why this matters:** A green source checkout does not prove that the wheel/sdist is complete, installable, free of generated secrets, or produced from the reviewed commit.
+
+**Files:**
+
+- Create: `tools/verify_distribution.py`
+- Create: `tests/test_distribution_verification.py`
+- Modify: package build workflow and `.gitignore` only as needed
+- Modify: `tools/build_release_manifest.py`
+- Modify: `docs/runbooks/RELEASE-ADMISSION.md`
+
+**Required scenarios:**
+
+- [ ] Build wheel and sdist in a clean temporary directory, install the wheel in an isolated environment, and run a small import/CLI smoke test without using the source tree.
+- [ ] Enumerate package members deterministically; reject `.env` files, `.test-artifacts`, local databases, private keys, absolute build paths, and files outside an allow-listed distribution policy.
+- [ ] Record SHA-256 values for wheel, sdist, package-member manifest, build interpreter, and declared runtime dependencies. The candidate commit must match release identity metadata.
+- [ ] Generate an SBOM or a deterministic dependency inventory from package metadata; its digest becomes a manifest report and its generation command is recorded.
+- [ ] Re-run content verification from the generated artifacts, not a mutable checkout. A mismatch between source identity and artifact identity blocks promotion.
+
+**Evidence contract:** `distribution.json` binds artifact hashes, member-manifest hash, dependency-inventory hash, source commit, and smoke-test result into the candidate manifest.
+
+**Acceptance:** the released package is independently inspectable and installable, its contents are deliberate, and reviewers can distinguish source evidence from artifact evidence.
+
+---
+
 ## Final verification
 
 - [ ] Run `python -m compileall -q habitat tests tools`.
@@ -494,9 +618,10 @@ git commit -m "test(reliability): bind fault evidence to candidate commits"
 - [ ] Confirm every workflow `uses:` reference matches `@[0-9a-f]{40}` with `python -m unittest -v tests.test_ci_security`.
 - [ ] Confirm the matrix passes on Ubuntu and Windows for Python 3.10 and 3.14, with artifact upload succeeding on every job.
 - [ ] Confirm CodeQL passes for Python and JavaScript/TypeScript on the exact candidate commit.
+- [ ] Run database recovery, contract, export-redaction, resource-limit, and distribution suites; retain their commit-bound reports.
 - [ ] Build a release manifest and run `promote_release.py --dry-run`; retain a blocked verdict when independent reviewer evidence is absent.
 - [ ] Update README only if a verified, user-visible behavior changed; do not describe planned fault injection, scanner policy, or release promotion as shipped until its task is complete.
 
 ## Completion definition
 
-The plan is complete when all dynamic SQLite identifiers are allow-listed, the CI scanner report and reliability report are commit-bound evidence, semantic providers cannot outlive their lifecycle boundary, and release promotion rejects every candidate missing independent reviewer evidence. A public tag or GitHub release remains a separate action after an independent reviewer approves the exact manifest.
+The plan is complete when all dynamic SQLite identifiers are allow-listed; database recovery, compatibility, privacy, resource limits, scanner, reliability, and distribution reports are commit-bound evidence; semantic providers cannot outlive their lifecycle boundary; and release promotion rejects every candidate missing independent reviewer evidence. A public tag or GitHub release remains a separate action after an independent reviewer approves the exact manifest.
