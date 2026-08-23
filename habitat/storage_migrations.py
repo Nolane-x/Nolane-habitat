@@ -4,31 +4,37 @@ from __future__ import annotations
 
 import sqlite3
 from pathlib import Path
+from types import MappingProxyType
+
+from .sql_safety import quote_identifier
 
 
 SCHEMA_VERSION = 22
 
-_ADDITIVE_COLUMNS = {
-    "files": {
+_ADDITIVE_COLUMNS = MappingProxyType({
+    "files": MappingProxyType({
         "indexed_bytes": "INTEGER NOT NULL DEFAULT 0",
         "index_truncated": "INTEGER NOT NULL DEFAULT 0",
         "parse_complete": "INTEGER NOT NULL DEFAULT 1",
-    },
-    "context_faults": {
+    }),
+    "context_faults": MappingProxyType({
         "authority_bytes_read": "INTEGER NOT NULL DEFAULT 0",
-    },
-}
+    }),
+})
 
-_REQUIRED_COLUMNS = {
-    "files": {
+_REQUIRED_COLUMNS = MappingProxyType({
+    "files": frozenset({
         "id", "path", "language", "size", "digest", "mtime_ns",
         "indexed_bytes", "index_truncated", "parse_complete",
-    },
-    "context_faults": {
+    }),
+    "context_faults": frozenset({
         "seq", "handle", "page_id", "object_id", "path", "source_bytes",
         "authority_bytes_read", "revision", "episode_id", "fetched_at",
-    },
-}
+    }),
+})
+
+_ADDITIVE_TABLES = frozenset(_ADDITIVE_COLUMNS)
+_REQUIRED_TABLES = frozenset(_REQUIRED_COLUMNS)
 
 
 def preflight_schema_version(conn: sqlite3.Connection) -> None:
@@ -103,7 +109,10 @@ def repair_additive_columns(conn: sqlite3.Connection) -> None:
 
     for issue in additive_schema_issues(conn):
         table, column = issue.split(".", 1)
-        conn.execute(f"ALTER TABLE {table} ADD COLUMN {column} {_ADDITIVE_COLUMNS[table][column]}")
+        table_name = quote_identifier(table, _ADDITIVE_TABLES)
+        column_name = quote_identifier(column, frozenset(_ADDITIVE_COLUMNS[table]))
+        definition = _ADDITIVE_COLUMNS[table][column]
+        conn.execute("ALTER TABLE " + table_name + " ADD COLUMN " + column_name + " " + definition)
 
 
 def additive_schema_issues(conn: sqlite3.Connection) -> list[str]:
@@ -111,9 +120,10 @@ def additive_schema_issues(conn: sqlite3.Connection) -> list[str]:
 
     issues: list[str] = []
     for table, columns in _ADDITIVE_COLUMNS.items():
+        table_name = quote_identifier(table, _ADDITIVE_TABLES)
         present = {
             row["name"]
-            for row in conn.execute(f"PRAGMA table_info({table})").fetchall()
+            for row in conn.execute("PRAGMA table_info(" + table_name + ")").fetchall()
         }
         issues.extend(f"{table}.{name}" for name in columns if name not in present)
     return issues
@@ -124,9 +134,10 @@ def required_schema_issues(conn: sqlite3.Connection) -> list[str]:
 
     issues: list[str] = []
     for table, required in _REQUIRED_COLUMNS.items():
+        table_name = quote_identifier(table, _REQUIRED_TABLES)
         present = {
             row["name"]
-            for row in conn.execute(f"PRAGMA table_info({table})").fetchall()
+            for row in conn.execute("PRAGMA table_info(" + table_name + ")").fetchall()
         }
         issues.extend(f"{table}.{name}" for name in sorted(required - present))
     return issues

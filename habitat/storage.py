@@ -9,6 +9,7 @@ from typing import Iterable
 
 from .database_health import inspect_connection
 from .model import DiagnosticRecord, EventRecord, FileRecord, OccurrenceRecord, RelationRecord, Revision, SymbolRecord
+from .sql_safety import quote_identifier, savepoint_identifier, user_version_pragma
 from .storage_migrations import (
     SCHEMA_VERSION,
     additive_schema_issues,
@@ -19,7 +20,7 @@ from .storage_migrations import (
     verify_required_structure,
 )
 
-_JSON_TABLES = {"transactions", "runs", "context_slices", "sessions"}
+_JSON_TABLES = frozenset({"transactions", "runs", "context_slices", "sessions"})
 
 
 class StoreBusyError(RuntimeError):
@@ -63,10 +64,10 @@ class Store:
         """Commit all workspace updates together, or roll them all back on failure."""
 
         nested = self.conn.in_transaction or self.conn._habitat_transaction_depth > 0
-        savepoint = f"habitat_atomic_{self.conn._habitat_transaction_depth}"
+        savepoint = savepoint_identifier(self.conn._habitat_transaction_depth)
         try:
             if nested:
-                self.conn.execute(f"SAVEPOINT {savepoint}")
+                self.conn.execute("SAVEPOINT " + savepoint)
             else:
                 self.conn.execute("BEGIN IMMEDIATE")
         except sqlite3.OperationalError as exc:
@@ -80,14 +81,14 @@ class Store:
             yield
         except BaseException:
             if nested:
-                self.conn.execute(f"ROLLBACK TO SAVEPOINT {savepoint}")
-                self.conn.execute(f"RELEASE SAVEPOINT {savepoint}")
+                self.conn.execute("ROLLBACK TO SAVEPOINT " + savepoint)
+                self.conn.execute("RELEASE SAVEPOINT " + savepoint)
             else:
                 self.conn.rollback()
             raise
         else:
             if nested:
-                self.conn.execute(f"RELEASE SAVEPOINT {savepoint}")
+                self.conn.execute("RELEASE SAVEPOINT " + savepoint)
             else:
                 self.conn.commit_atomic()
         finally:
@@ -431,7 +432,7 @@ class Store:
                 self._set_meta_uncommitted("fts5", "0")
         repair_additive_columns(self.conn)
         verify_required_structure(self.conn)
-        self.conn.execute(f"PRAGMA user_version = {SCHEMA_VERSION}")
+        self.conn.execute(user_version_pragma(SCHEMA_VERSION))
         self._set_meta_uncommitted("schema_version", str(SCHEMA_VERSION))
         self._ensure_symbol_terms_index()
         self.conn.commit()
@@ -1399,15 +1400,13 @@ class Store:
         return self.get_meta("head_revision")
 
     def save_json(self, table: str, id_: str, value: dict) -> None:
-        if table not in _JSON_TABLES:
-            raise ValueError("unsupported JSON table")
-        self.conn.execute(f"INSERT OR REPLACE INTO {table}(id,value_json) VALUES(?,?)", (id_, json.dumps(value)))
+        table_name = quote_identifier(table, _JSON_TABLES)
+        self.conn.execute(f"INSERT OR REPLACE INTO {table_name}(id,value_json) VALUES(?,?)", (id_, json.dumps(value)))
         self.conn.commit()
 
     def load_json(self, table: str, id_: str) -> dict | None:
-        if table not in _JSON_TABLES:
-            raise ValueError("unsupported JSON table")
-        row = self.conn.execute(f"SELECT value_json FROM {table} WHERE id=?", (id_,)).fetchone()
+        table_name = quote_identifier(table, _JSON_TABLES)
+        row = self.conn.execute(f"SELECT value_json FROM {table_name} WHERE id=?", (id_,)).fetchone()
         return json.loads(row[0]) if row else None
 
 

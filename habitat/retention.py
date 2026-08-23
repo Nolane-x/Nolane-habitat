@@ -5,6 +5,21 @@ from dataclasses import dataclass, asdict
 from pathlib import Path
 from typing import Any
 
+from .sql_safety import quote_identifier
+
+
+_COMPACTION_RULES = frozenset(
+    {
+        ("trace_calls", "seq", None),
+        ("context_faults", "seq", None),
+        ("evidence", "created_at", "active=0"),
+        ("agent_sessions", "updated_at", "status='closed'"),
+        ("agent_notifications", "created_at", "status='acked'"),
+    }
+)
+_COMPACTION_TABLES = frozenset(rule[0] for rule in _COMPACTION_RULES)
+_COMPACTION_ORDER_COLUMNS = frozenset(rule[1] for rule in _COMPACTION_RULES)
+
 
 @dataclass(frozen=True)
 class RetentionPolicy:
@@ -29,6 +44,20 @@ def _count(conn, sql: str, args=()) -> int:
 
 def _excess(total: int, limit: int) -> int:
     return max(0,total-limit)
+
+
+def _compaction_delete_sql(table: str, order_column: str, where: str | None) -> str:
+    """Build a deletion query solely from the fixed retention policy metadata."""
+
+    if (table, order_column, where) not in _COMPACTION_RULES:
+        raise ValueError("unsupported retention compaction rule")
+    table_name = quote_identifier(table, _COMPACTION_TABLES)
+    order_name = quote_identifier(order_column, _COMPACTION_ORDER_COLUMNS)
+    clause = f" WHERE {where}" if where else ""
+    return (
+        f"DELETE FROM {table_name} WHERE rowid IN "
+        f"(SELECT rowid FROM {table_name}{clause} ORDER BY {order_name} ASC LIMIT ?)"
+    )
 
 
 def plan(store, policy: RetentionPolicy) -> dict[str, Any]:
@@ -60,20 +89,18 @@ def compact(store, policy: RetentionPolicy, *, dry_run: bool = True) -> dict[str
         return {**p,"dry_run":True,"deleted":{k:0 for k in p["deletable"]}}
     c=store.conn; deleted={}
     specs=[
-        ("trace_calls","seq",None),
-        ("context_faults","seq",None),
-        ("resolved_evidence","created_at","active=0"),
-        ("closed_agents","updated_at","status='closed'"),
-        ("acked_notifications","created_at","status='acked'"),
+        ("trace_calls", "trace_calls", "seq", None),
+        ("context_faults", "context_faults", "seq", None),
+        ("resolved_evidence", "evidence", "created_at", "active=0"),
+        ("closed_agents", "agent_sessions", "updated_at", "status='closed'"),
+        ("acked_notifications", "agent_notifications", "created_at", "status='acked'"),
     ]
-    table_map={"resolved_evidence":"evidence","closed_agents":"agent_sessions","acked_notifications":"agent_notifications"}
-    for key,order,where in specs:
-        n=int(p["deletable"][key]); table=table_map.get(key,key)
+    for key, table, order, where in specs:
+        n=int(p["deletable"][key])
         if n<=0:
             deleted[key]=0; continue
-        clause=f" WHERE {where}" if where else ""
         # rowid deletion works for all selected SQLite tables and avoids assuming PK shape.
-        cur=c.execute(f"DELETE FROM {table} WHERE rowid IN (SELECT rowid FROM {table}{clause} ORDER BY {order} ASC LIMIT ?)",(n,))
+        cur=c.execute(_compaction_delete_sql(table, order, where), (n,))
         deleted[key]=int(cur.rowcount or 0)
     c.commit()
     if policy.vacuum:
