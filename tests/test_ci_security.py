@@ -70,6 +70,13 @@ class CiSecurityTests(unittest.TestCase):
         )
         self.assertIn("--out .test-artifacts/truth-core.json", workflow)
 
+    def test_ci_installs_the_declared_build_backend_before_no_isolation_build(self) -> None:
+        root = Path(__file__).parents[1]
+        workflow = (root / ".github" / "workflows" / "ci.yml").read_text(encoding="utf-8")
+
+        self.assertIn('python -m pip install -U pip "setuptools>=68"', workflow)
+        self.assertIn("python -m build --no-isolation --outdir .test-artifacts/dist", workflow)
+
 
 if __name__ == "__main__":
     unittest.main()
