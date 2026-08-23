@@ -52,9 +52,10 @@ def _write_json_atomically(path: Path, value: Mapping[str, Any]) -> None:
 
 
 def _run_semgrep(ruleset: str, target: str) -> dict[str, Any]:
+    executable = os.environ.get("HABITAT_SEMGREP_EXECUTABLE", "semgrep")
     try:
         completed = subprocess.run(
-            ["semgrep", "scan", "--error", "--config", ruleset, "--json", target],
+            [executable, "scan", "--error", "--config", ruleset, "--json", target],
             capture_output=True,
             check=False,
             encoding="utf-8",

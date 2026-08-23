@@ -21,7 +21,10 @@ class CiSecurityTests(unittest.TestCase):
         workflow = (root / ".github" / "workflows" / "ci.yml").read_text(encoding="utf-8")
         pyproject = (root / "pyproject.toml").read_text(encoding="utf-8")
 
-        self.assertIn('"semgrep>=1.168,<2"', pyproject)
+        self.assertNotIn('"semgrep>=', pyproject)
+        self.assertIn("python -m venv .semgrep-venv", workflow)
+        self.assertIn("HABITAT_SEMGREP_EXECUTABLE", workflow)
+        self.assertIn('"$semgrep_python" -m pip install "semgrep==1.168.0"', workflow)
         self.assertIn(
             "python tools/run_semgrep.py --source-commit ${{ github.sha }} --out .test-artifacts/semgrep-workflows.json",
             workflow,

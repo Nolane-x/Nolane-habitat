@@ -4,6 +4,7 @@ import json
 import tempfile
 import unittest
 from pathlib import Path
+from subprocess import CompletedProcess
 from unittest.mock import patch
 
 from tools.run_semgrep import main, normalize_semgrep_report
@@ -60,6 +61,29 @@ class SemgrepEvidenceTests(unittest.TestCase):
             self.assertEqual(1, result)
             self.assertEqual("failed", report["status"])
             self.assertGreater(report["errors"], 0)
+
+    def test_runner_uses_the_isolated_semgrep_executable_from_its_environment(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            output = Path(directory) / "semgrep.json"
+            with (
+                patch.dict(
+                    "tools.run_semgrep.os.environ",
+                    {"HABITAT_SEMGREP_EXECUTABLE": "isolated-semgrep"},
+                ),
+                patch(
+                    "tools.run_semgrep.subprocess.run",
+                    return_value=CompletedProcess(
+                        args=[], returncode=0, stdout='{"results": [], "errors": []}'
+                    ),
+                ) as run,
+            ):
+                result = main([
+                    "--source-commit", "d" * 40,
+                    "--out", str(output),
+                ])
+
+            self.assertEqual(0, result)
+            self.assertEqual("isolated-semgrep", run.call_args.args[0][0])
 
 
 if __name__ == "__main__":

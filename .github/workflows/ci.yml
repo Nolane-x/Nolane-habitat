@@ -34,6 +34,20 @@ jobs:
         run: python -m unittest discover -q
       - name: Run isolated regression matrix
         run: python tools/run_test_matrix.py --mode shard --workers 1 --timeout 600 --out .test-artifacts/matrix.json
+      - name: Install isolated Semgrep
+        shell: bash
+        run: |
+          python -m venv .semgrep-venv
+          if [ "$RUNNER_OS" = "Windows" ]; then
+            semgrep_python=".semgrep-venv/Scripts/python.exe"
+            semgrep_executable="$PWD/.semgrep-venv/Scripts/semgrep.exe"
+          else
+            semgrep_python=".semgrep-venv/bin/python"
+            semgrep_executable="$PWD/.semgrep-venv/bin/semgrep"
+          fi
+          "$semgrep_python" -m pip install "semgrep==1.168.0"
+          "$semgrep_executable" --version
+          echo "HABITAT_SEMGREP_EXECUTABLE=$semgrep_executable" >> "$GITHUB_ENV"
       - name: Run GitHub Actions Semgrep policy
         run: python tools/run_semgrep.py --source-commit ${{ github.sha }} --out .test-artifacts/semgrep-workflows.json
       - name: Summarize local quality evidence
