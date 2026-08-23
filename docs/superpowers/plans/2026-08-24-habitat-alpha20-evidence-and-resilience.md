@@ -305,7 +305,7 @@ git add habitat/runtime_lifecycle.py habitat/semantic/ts_language_service.py hab
 git commit -m "fix(semantic): supervise provider lifecycle cleanup"
 ```
 
-## Task 4: Produce promotion-ready release evidence without publishing
+## Task 4: Produce promotion-ready release evidence without publishing — delivered in Alpha.19 candidate
 
 **Files:**
 

@@ -45,6 +45,48 @@ class ReleasePromotionTests(unittest.TestCase):
         self.assertIn("report:truth-core:invalid-digest", verdict.failed_gates)
         self.assertIn("artifact_hashes:missing", verdict.failed_gates)
 
+    def test_alpha_candidate_requires_scanner_and_independent_reviewer_binding(self):
+        manifest = ReleaseManifest(
+            version="0.1.0-alpha.20",
+            commit="a" * 40,
+            reports={
+                "truth-core": "1" * 64,
+                "matrix": "2" * 64,
+                "faults": "3" * 64,
+                "artifacts": "4" * 64,
+                "scanner": "5" * 64,
+            },
+            artifact_hashes={"wheel": "b" * 64},
+            residual_risks=(),
+        )
+
+        verdict = evaluate_promotion(manifest, target="alpha-candidate")
+
+        self.assertFalse(verdict.admitted)
+        self.assertIn("reviewer_hashes:missing", verdict.failed_gates)
+
+    def test_alpha_candidate_rejects_reviewer_hash_that_equals_an_artifact_hash(self):
+        digest = "b" * 64
+        manifest = ReleaseManifest(
+            version="0.1.0-alpha.20",
+            commit="a" * 40,
+            reports={
+                "truth-core": "1" * 64,
+                "matrix": "2" * 64,
+                "faults": "3" * 64,
+                "artifacts": "4" * 64,
+                "scanner": "5" * 64,
+            },
+            artifact_hashes={"wheel": digest},
+            residual_risks=(),
+            reviewer_hashes=(digest,),
+        )
+
+        verdict = evaluate_promotion(manifest, target="alpha-candidate")
+
+        self.assertFalse(verdict.admitted)
+        self.assertIn("reviewer_hashes:not-independent", verdict.failed_gates)
+
     def test_dry_run_writes_a_blocked_verdict_without_publication(self):
         with tempfile.TemporaryDirectory() as td:
             root = Path(td)
@@ -79,7 +121,7 @@ class ReleasePromotionTests(unittest.TestCase):
             self.assertEqual(1, exit_code)
             self.assertEqual("not-attempted", verdict["publication"])
             self.assertEqual(
-                ["artifacts", "faults", "matrix", "truth-core"],
+                ["artifacts", "faults", "matrix", "scanner", "truth-core"],
                 verdict["required_reports"],
             )
             self.assertFalse(verdict["verdict"]["admitted"])

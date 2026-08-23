@@ -2,6 +2,8 @@
 
 `tools/promote_release.py` evaluates a supplied release manifest and writes a machine-readable verdict. It never creates a Git tag, publishes a package, uploads an artifact, or creates a GitHub release.
 
+For an alpha candidate, the gate requires hash-bound `truth-core`, `matrix`, `faults`, `artifacts`, and `scanner` reports, at least one artifact, and at least one review record. The review record is hashed by the builder; its digest must not be reused from any report or artifact. This is a binding check, not a claim that a filename proves reviewer identity—follow the independent-review procedure before supplying the record.
+
 ## CI scanner evidence
 
 CI runs the GitHub Actions Semgrep policy before its local quality gate. The scanner report is valid only for the exact Git commit it names: the gate rejects a missing report, a scanner identity mismatch, a non-passing status, findings, errors, a digest mismatch, or a different commit.
@@ -27,7 +29,9 @@ python tools\build_release_manifest.py --version 0.1.0-alpha.19 --commit $commit
   --report matrix=.test-artifacts\matrix.json `
   --report faults=.test-artifacts\faults.json `
   --report artifacts=.test-artifacts\artifacts.json `
+  --report scanner=.test-artifacts\semgrep-workflows.json `
   --artifact wheel=dist\nolane_habitat-0.1.0a19-py3-none-any.whl `
+  --review independent-review=reports\independent-review.json `
   --out dist\release-manifest.json
 ```
 
@@ -37,4 +41,4 @@ Evaluate the alpha gate and retain the verdict beside the other evidence:
 python tools\promote_release.py --manifest dist\release-manifest.json --target alpha-candidate --dry-run --out .test-artifacts\promotion-verdict.json
 ```
 
-The command exits `0` only when every report required by the selected target is present and non-empty; it exits `1` after writing a blocked verdict otherwise. A blocked verdict is evidence of a safe stop, not a publishing failure. External publication remains a separate, explicit action after the required evidence has been independently reviewed.
+The command exits `0` only when every report required by the selected target has a valid digest, artifacts are present, and the review binding is valid; it exits `1` after writing a blocked verdict otherwise. A blocked verdict is evidence of a safe stop, not a publishing failure. External publication remains a separate, explicit action after the required evidence has been independently reviewed.

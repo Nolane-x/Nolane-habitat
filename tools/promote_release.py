@@ -38,7 +38,11 @@ def main(argv: list[str] | None = None) -> int:
     write_json_atomically(
         args.out,
         {
-            "manifest": {"version": manifest.version, "commit": manifest.commit},
+            "manifest": {
+                "version": manifest.version,
+                "commit": manifest.commit,
+                "reviewers": manifest.reviewers,
+            },
             "dry_run": args.dry_run,
             "publication": "not-attempted",
             "required_reports": sorted(REQUIRED_REPORTS[args.target]),

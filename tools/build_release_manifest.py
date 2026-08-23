@@ -41,6 +41,7 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--commit", required=True)
     parser.add_argument("--report", action="append", default=[], metavar="NAME=PATH")
     parser.add_argument("--artifact", action="append", default=[], metavar="NAME=PATH")
+    parser.add_argument("--review", action="append", default=[], metavar="NAME=PATH")
     parser.add_argument("--risk", action="append", default=[])
     parser.add_argument("--out", type=Path, required=True)
     args = parser.parse_args(argv)
@@ -51,6 +52,7 @@ def main(argv: list[str] | None = None) -> int:
         reports=_named_paths(args.report),
         artifacts=_named_paths(args.artifact),
         residual_risks=tuple(args.risk),
+        reviewers=_named_paths(args.review),
     )
     _write_json_atomically(args.out, manifest.as_dict())
     return 0

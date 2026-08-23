@@ -68,6 +68,32 @@ class ReleaseManifestTests(unittest.TestCase):
             self.assertEqual("0.1.0-alpha.19", value["version"])
             self.assertEqual(hashlib.sha256(b"matrix").hexdigest(), value["reports"]["matrix"])
 
+    def test_manifest_cli_binds_a_named_independent_review_record(self):
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            review = root / "independent-review.json"
+            output = root / "release-manifest.json"
+            review.write_text('{"reviewer":"independent"}', encoding="utf-8")
+
+            exit_code = main(
+                [
+                    "--version",
+                    "0.1.0-alpha.20",
+                    "--commit",
+                    "a" * 40,
+                    "--review",
+                    f"independent-review={review}",
+                    "--out",
+                    str(output),
+                ]
+            )
+
+            value = json.loads(output.read_text(encoding="utf-8"))
+            digest = hashlib.sha256(review.read_bytes()).hexdigest()
+            self.assertEqual(0, exit_code)
+            self.assertEqual([digest], value["reviewer_hashes"])
+            self.assertEqual({"independent-review": digest}, value["reviewers"])
+
     def test_manifest_script_runs_from_a_checkout(self):
         with tempfile.TemporaryDirectory() as td:
             root = Path(td)

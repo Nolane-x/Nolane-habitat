@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from dataclasses import asdict, dataclass
+from dataclasses import asdict, dataclass, field
 import hashlib
 from pathlib import Path
 import re
@@ -8,7 +8,7 @@ from typing import Any, Mapping
 
 
 REQUIRED_REPORTS = {
-    "alpha-candidate": frozenset({"truth-core", "matrix", "faults", "artifacts"}),
+    "alpha-candidate": frozenset({"truth-core", "matrix", "faults", "artifacts", "scanner"}),
     "beta-readiness": frozenset({"semantic", "context", "memory", "privacy"}),
     "beta-candidate": frozenset({"coordination", "mcp-soak", "observatory", "scale"}),
     "production-candidate": frozenset({"security", "slo", "sbom", "reproducibility"}),
@@ -23,15 +23,26 @@ class ReleaseManifest:
     reports: dict[str, str]
     artifact_hashes: dict[str, str]
     residual_risks: tuple[str, ...]
+    reviewer_hashes: tuple[str, ...] = ()
+    reviewers: dict[str, str] = field(default_factory=dict)
 
     @classmethod
     def from_dict(cls, value: Mapping[str, Any]) -> "ReleaseManifest":
+        reviewers = {
+            str(name): str(digest)
+            for name, digest in dict(value.get("reviewers") or {}).items()
+        }
+        reviewer_hashes = tuple(
+            str(digest) for digest in value.get("reviewer_hashes") or ()
+        )
         return cls(
             version=str(value["version"]),
             commit=str(value["commit"]),
             reports={str(key): str(digest) for key, digest in dict(value.get("reports") or {}).items()},
             artifact_hashes={str(key): str(digest) for key, digest in dict(value.get("artifact_hashes") or {}).items()},
             residual_risks=tuple(str(risk) for risk in value.get("residual_risks") or ()),
+            reviewer_hashes=reviewer_hashes or tuple(reviewers.values()),
+            reviewers=reviewers,
         )
 
     def as_dict(self) -> dict[str, Any]:
@@ -77,13 +88,17 @@ def build_release_manifest(
     reports: Mapping[str, Path],
     artifacts: Mapping[str, Path],
     residual_risks: tuple[str, ...] = (),
+    reviewers: Mapping[str, Path] | None = None,
 ) -> ReleaseManifest:
+    reviewer_records = _hash_named_files(reviewers or {})
     return ReleaseManifest(
         version=version,
         commit=commit,
         reports=_hash_named_files(reports),
         artifact_hashes=_hash_named_files(artifacts),
         residual_risks=tuple(residual_risks),
+        reviewer_hashes=tuple(reviewer_records.values()),
+        reviewers=reviewer_records,
     )
 
 
@@ -107,6 +122,20 @@ def evaluate_promotion(manifest: ReleaseManifest, target: str) -> PromotionVerdi
                 for name, digest in manifest.artifact_hashes.items()
                 if not SHA256.fullmatch(digest)
             )
+    if target == "alpha-candidate":
+        if not manifest.reviewer_hashes:
+            failed.add("reviewer_hashes:missing")
+        else:
+            if any(not SHA256.fullmatch(digest) for digest in manifest.reviewer_hashes):
+                failed.add("reviewer_hashes:invalid-digest")
+            evidence_hashes = set(manifest.reports.values()) | set(manifest.artifact_hashes.values())
+            if any(digest in evidence_hashes for digest in manifest.reviewer_hashes):
+                failed.add("reviewer_hashes:not-independent")
+        if manifest.reviewers:
+            if any(not name or not SHA256.fullmatch(digest) for name, digest in manifest.reviewers.items()):
+                failed.add("reviewers:invalid-record")
+            if set(manifest.reviewers.values()) != set(manifest.reviewer_hashes):
+                failed.add("reviewers:hash-mismatch")
     return PromotionVerdict(
         target=target,
         admitted=not missing and not failed,
