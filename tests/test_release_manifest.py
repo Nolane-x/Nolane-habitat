@@ -1,0 +1,103 @@
+import hashlib
+import json
+import subprocess
+import sys
+import tempfile
+import unittest
+from pathlib import Path
+
+from habitat.release import build_release_manifest
+from tools.build_release_manifest import main
+
+
+class ReleaseManifestTests(unittest.TestCase):
+    def test_manifest_binds_evidence_and_artifacts_to_file_hashes(self):
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            report = root / "matrix.json"
+            artifact = root / "habitat.whl"
+            report.write_bytes(b'{"passed": true}\n')
+            artifact.write_bytes(b"wheel bytes")
+
+            manifest = build_release_manifest(
+                version="0.1.0-alpha.19",
+                commit="commit",
+                reports={"matrix": report},
+                artifacts={"wheel": artifact},
+                residual_risks=("scanner unavailable",),
+            )
+
+            self.assertEqual(
+                hashlib.sha256(report.read_bytes()).hexdigest(),
+                manifest.reports["matrix"],
+            )
+            self.assertEqual(
+                hashlib.sha256(artifact.read_bytes()).hexdigest(),
+                manifest.artifact_hashes["wheel"],
+            )
+            self.assertEqual(("scanner unavailable",), manifest.residual_risks)
+
+    def test_manifest_cli_writes_hash_bound_json(self):
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            report = root / "matrix.json"
+            artifact = root / "habitat.whl"
+            output = root / "release-manifest.json"
+            report.write_text("matrix", encoding="utf-8")
+            artifact.write_text("wheel", encoding="utf-8")
+
+            exit_code = main(
+                [
+                    "--version",
+                    "0.1.0-alpha.19",
+                    "--commit",
+                    "commit",
+                    "--report",
+                    f"matrix={report}",
+                    "--artifact",
+                    f"wheel={artifact}",
+                    "--risk",
+                    "scanner unavailable",
+                    "--out",
+                    str(output),
+                ]
+            )
+
+            value = json.loads(output.read_text(encoding="utf-8"))
+            self.assertEqual(0, exit_code)
+            self.assertEqual("0.1.0-alpha.19", value["version"])
+            self.assertEqual(hashlib.sha256(b"matrix").hexdigest(), value["reports"]["matrix"])
+
+    def test_manifest_script_runs_from_a_checkout(self):
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            report = root / "matrix.json"
+            output = root / "release-manifest.json"
+            report.write_text("matrix", encoding="utf-8")
+            repository = Path(__file__).parents[1]
+
+            result = subprocess.run(
+                [
+                    sys.executable,
+                    "tools/build_release_manifest.py",
+                    "--version",
+                    "0.1.0-alpha.19",
+                    "--commit",
+                    "commit",
+                    "--report",
+                    f"matrix={report}",
+                    "--out",
+                    str(output),
+                ],
+                cwd=repository,
+                capture_output=True,
+                text=True,
+                check=False,
+            )
+
+            self.assertEqual(0, result.returncode, result.stderr)
+            self.assertTrue(output.is_file())
+
+
+if __name__ == "__main__":
+    unittest.main()

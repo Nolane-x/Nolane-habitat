@@ -1,6 +1,8 @@
 from __future__ import annotations
 
 from dataclasses import asdict, dataclass
+import hashlib
+from pathlib import Path
 import re
 from typing import Any, Mapping
 
@@ -32,6 +34,9 @@ class ReleaseManifest:
             residual_risks=tuple(str(risk) for risk in value.get("residual_risks") or ()),
         )
 
+    def as_dict(self) -> dict[str, Any]:
+        return asdict(self)
+
 
 @dataclass(frozen=True)
 class PromotionVerdict:
@@ -43,6 +48,43 @@ class PromotionVerdict:
 
     def as_dict(self) -> dict[str, Any]:
         return asdict(self)
+
+
+def _sha256_file(path: Path) -> str:
+    digest = hashlib.sha256()
+    with path.open("rb") as handle:
+        for block in iter(lambda: handle.read(1024 * 1024), b""):
+            digest.update(block)
+    return digest.hexdigest()
+
+
+def _hash_named_files(values: Mapping[str, Path]) -> dict[str, str]:
+    hashes: dict[str, str] = {}
+    for name, path in values.items():
+        if not name:
+            raise ValueError("evidence names must be non-empty")
+        resolved = Path(path)
+        if not resolved.is_file():
+            raise FileNotFoundError(resolved)
+        hashes[str(name)] = _sha256_file(resolved)
+    return hashes
+
+
+def build_release_manifest(
+    *,
+    version: str,
+    commit: str,
+    reports: Mapping[str, Path],
+    artifacts: Mapping[str, Path],
+    residual_risks: tuple[str, ...] = (),
+) -> ReleaseManifest:
+    return ReleaseManifest(
+        version=version,
+        commit=commit,
+        reports=_hash_named_files(reports),
+        artifact_hashes=_hash_named_files(artifacts),
+        residual_risks=tuple(residual_risks),
+    )
 
 
 def evaluate_promotion(manifest: ReleaseManifest, target: str) -> PromotionVerdict:

@@ -9,6 +9,7 @@
 - Added a checked release-identity command to keep runtime, package metadata, changelog, and current Codex documentation aligned.
 - Added a truthful execution-capability report to `enter` and `habitat capabilities`, with fail-closed checks for unverified containment.
 - Added a dry-run release-promotion gate that always writes a machine-readable verdict and never tags or publishes artifacts.
+- Added a release-manifest builder that derives SHA-256 evidence and artifact bindings directly from supplied files.
 
 ## 0.1.0-alpha.18 — 2026-08-09
 
