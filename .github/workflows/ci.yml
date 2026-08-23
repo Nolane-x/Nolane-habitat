@@ -1,0 +1,45 @@
+name: Habitat CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    name: ${{ matrix.os }} / Python ${{ matrix.python }}
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+        python: ['3.10', '3.14']
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: ${{ matrix.python }}
+      - name: Install test dependencies
+        run: python -m pip install -U pip && python -m pip install -e ".[dev,mcp,python-semantic]"
+      - name: Compile source and tests
+        run: python -m compileall -q habitat tests tools
+      - name: Verify release identity
+        run: python tools/check_release_identity.py --out .test-artifacts/identity.json
+      - name: Run full regression suite
+        run: python -m unittest discover -q
+      - name: Run isolated regression matrix
+        run: python tools/run_test_matrix.py --mode shard --workers 1 --timeout 600 --out .test-artifacts/matrix.json
+      - name: Summarize local quality evidence
+        run: python tools/quality_gate.py --identity .test-artifacts/identity.json --matrix .test-artifacts/matrix.json --out .test-artifacts/quality-gate.json
+      - name: Upload verification artifacts
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: habitat-verification-${{ matrix.os }}-py${{ matrix.python }}
+          path: .test-artifacts/
+          if-no-files-found: warn

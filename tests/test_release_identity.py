@@ -1,8 +1,9 @@
+import json
 import tempfile
 import unittest
 from pathlib import Path
 
-from tools.check_release_identity import check_identity
+from tools.check_release_identity import check_identity, main
 
 
 class ReleaseIdentityTests(unittest.TestCase):
@@ -57,3 +58,14 @@ class ReleaseIdentityTests(unittest.TestCase):
             report = check_identity(root)
 
         self.assertTrue(report["ok"])
+
+    def test_identity_cli_writes_machine_readable_report(self):
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            self._write_identity_fixture(root)
+            output = root / "artifacts" / "identity.json"
+
+            exit_code = main(["--root", str(root), "--out", str(output)])
+
+            self.assertEqual(0, exit_code)
+            self.assertTrue(json.loads(output.read_text(encoding="utf-8"))["ok"])

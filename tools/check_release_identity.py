@@ -4,8 +4,10 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 import re
 from pathlib import Path
+from tempfile import NamedTemporaryFile
 
 
 CURRENT_DOCUMENTS = {
@@ -67,9 +69,19 @@ def check_identity(root: Path) -> dict:
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--root", type=Path, default=Path(__file__).resolve().parents[1])
+    parser.add_argument("--out", type=Path)
     args = parser.parse_args(argv)
     report = check_identity(args.root)
-    print(json.dumps(report, ensure_ascii=False, sort_keys=True))
+    text = json.dumps(report, ensure_ascii=False, sort_keys=True)
+    if args.out:
+        args.out.parent.mkdir(parents=True, exist_ok=True)
+        with NamedTemporaryFile(
+            "w", encoding="utf-8", dir=args.out.parent, delete=False
+        ) as handle:
+            handle.write(text + "\n")
+            temporary = Path(handle.name)
+        os.replace(temporary, args.out)
+    print(text)
     return 0 if report["ok"] else 1
 
 
