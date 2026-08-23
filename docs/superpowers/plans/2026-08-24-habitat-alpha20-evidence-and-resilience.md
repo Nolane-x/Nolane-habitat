@@ -1,0 +1,502 @@
+# Nolane Habitat Alpha.20 Evidence and Resilience Implementation Plan
+
+> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
+
+**Goal:** Make the next Habitat candidate easier to trust by removing dynamic SQL ambiguity, continuously proving CI supply-chain integrity, supervising semantic-provider lifecycles, and producing independently reviewable release evidence.
+
+**Architecture:** Keep the public MCP and CLI envelopes unchanged. Place SQL identifier validation in one small module, make each CI scanner emit a hashable report, and make provider cleanup testable through the existing runtime lifecycle boundary. Promotion remains an evidence decision: CI success is necessary, but not sufficient for a public tag or release.
+
+**Tech Stack:** Python 3.10+, SQLite, `unittest`, GitHub Actions, CodeQL, Semgrep, JSON evidence manifests, vanilla JavaScript Observatory.
+
+**Spec:** `docs/superpowers/specs/2026-08-23-habitat-production-grade-evolution-design.md`
+
+## Global Constraints
+
+- Preserve `habitat.agent.v1alpha2`, existing MCP tool names, JSON field names, CLI entry points, and Observatory read-only behavior.
+- Support Ubuntu and Windows on Python 3.10 and 3.14; every new behavior has a platform-neutral regression test and runs in the four-way CI matrix.
+- SQL values always use SQLite placeholders. A dynamic SQLite identifier is accepted only after membership in a module-local immutable allow-list.
+- Do not infer release admission from a green check. A candidate needs hash-bound evidence, an independent review record, and a dry-run verdict before any tag or GitHub release action.
+- Keep scanner artifacts under `.test-artifacts/` and do not commit generated reports, manifests, or downloaded CI artifacts.
+- Pin every `uses:` entry in a workflow to a 40-character commit SHA and retain a human-readable major-version comment.
+- A provider timeout or close must not leave an owned process alive; an unavailable provider must be reported as unavailable rather than represented as a successful semantic result.
+- User-facing README copy names only shipped, verified behavior. Engineering boundaries and residual risks stay in versioned docs and release evidence.
+
+---
+
+## File and interface map
+
+| Unit | Responsibility | Interface introduced or strengthened |
+|---|---|---|
+| `habitat/sql_safety.py` | safe composition of SQLite identifiers and placeholder groups | `quote_identifier`, `placeholder_group` |
+| `habitat/storage.py` | Store query construction through allow-listed identifiers | `Store.save_json`, `Store.load_json`, evidence and feedback selectors |
+| `habitat/storage_migrations.py` | migration DDL through immutable schema metadata | `schema_identifier` |
+| `habitat/retention.py` | retention cleanup using static table metadata | `apply` |
+| `tools/run_semgrep.py` | deterministic scanner invocation and report normalization | `main(argv) -> int` |
+| `tools/quality_gate.py` | require a current scanner report when configured | `collect_quality_evidence` |
+| `habitat/runtime_lifecycle.py` | report and close every registered semantic runtime | `shutdown_runtime_services`, `runtime_service_status` |
+| `habitat/release.py` | require reviewer and scanner bindings for promotion | `ReleaseManifest`, `evaluate_promotion` |
+| `tools/build_release_manifest.py` | build a manifest from local, hashable evidence files | `main(argv) -> int` |
+
+## Task 1: Introduce a tested SQLite identifier boundary
+
+**Files:**
+
+- Create: `habitat/sql_safety.py`
+- Modify: `habitat/storage.py`
+- Modify: `habitat/storage_migrations.py`
+- Modify: `habitat/retention.py`
+- Create: `tests/test_sql_safety.py`
+
+**Interfaces:**
+
+- Consumes: immutable table and column names owned by `Store`, migration metadata, and retention specs.
+- Produces: `quote_identifier(value: str, allowed: frozenset[str]) -> str` and `placeholder_group(count: int) -> str`.
+
+- [ ] **Step 1: Write the failing identifier and placeholder tests.**
+
+```python
+from habitat.sql_safety import placeholder_group, quote_identifier
+
+
+def test_quote_identifier_accepts_only_allow_list_members(self):
+    allowed = frozenset({"sessions", "runs"})
+    self.assertEqual('"sessions"', quote_identifier("sessions", allowed))
+    with self.assertRaisesRegex(ValueError, "unsupported SQLite identifier"):
+        quote_identifier("sessions; DROP TABLE files;--", allowed)
+
+
+def test_placeholder_group_has_one_placeholder_per_value(self):
+    self.assertEqual("?", placeholder_group(1))
+    self.assertEqual("?,?,?", placeholder_group(3))
+    with self.assertRaisesRegex(ValueError, "positive"):
+        placeholder_group(0)
+```
+
+- [ ] **Step 2: Run the test to verify the boundary is absent.**
+
+Run: `python -m unittest -v tests.test_sql_safety`
+
+Expected: FAIL with `ModuleNotFoundError: No module named 'habitat.sql_safety'`.
+
+- [ ] **Step 3: Implement the minimal boundary.**
+
+```python
+from __future__ import annotations
+
+import re
+
+
+_IDENTIFIER = re.compile(r"^[A-Za-z_][A-Za-z0-9_]*$")
+
+
+def quote_identifier(value: str, allowed: frozenset[str]) -> str:
+    if value not in allowed or not _IDENTIFIER.fullmatch(value):
+        raise ValueError(f"unsupported SQLite identifier: {value!r}")
+    return f'"{value}"'
+
+
+def placeholder_group(count: int) -> str:
+    if count < 1:
+        raise ValueError("placeholder count must be positive")
+    return ",".join("?" for _ in range(count))
+```
+
+- [ ] **Step 4: Move every formatted identifier in the listed storage modules behind the boundary.**
+
+Use immutable `frozenset` declarations beside the data they protect. For example, `Store.save_json` and `Store.load_json` pass `_JSON_TABLES` to `quote_identifier`; `active_evidence_ids`, `resolve_evidence`, `context_utility_for`, and `agent_context_utility_for` use `placeholder_group(len(values))` only after returning early for empty lists. `repair_additive_columns` validates table and column names against `_ADDITIVE_COLUMNS` before composing its `ALTER TABLE` statement. Retention keeps its table map immutable and validates before composing `DELETE`.
+
+- [ ] **Step 5: Add an integration test against a temporary database.**
+
+```python
+def test_store_rejects_untrusted_json_table_without_executing_sql(self):
+    with tempfile.TemporaryDirectory() as td:
+        store = Store(Path(td) / "habitat.sqlite3")
+        self.addCleanup(store.close)
+        with self.assertRaisesRegex(ValueError, "unsupported JSON table"):
+            store.save_json("sessions; DROP TABLE files;--", "x", {"ok": True})
+        self.assertIsNotNone(store.conn.execute("SELECT name FROM sqlite_master WHERE name='files'").fetchone())
+```
+
+- [ ] **Step 6: Verify and commit the isolated change.**
+
+Run: `python -m unittest -v tests.test_sql_safety tests.test_storage tests.test_storage_migrations`
+
+Run: `semgrep scan --config p/default --exclude .venv --exclude .git habitat`
+
+Commit:
+
+```powershell
+git add habitat/sql_safety.py habitat/storage.py habitat/storage_migrations.py habitat/retention.py tests/test_sql_safety.py
+git commit -m "fix(storage): constrain dynamic SQLite identifiers"
+```
+
+## Task 2: Make Semgrep a hashable CI evidence producer
+
+**Files:**
+
+- Create: `tools/run_semgrep.py`
+- Modify: `tools/quality_gate.py`
+- Modify: `.github/workflows/ci.yml`
+- Modify: `docs/runbooks/RELEASE-ADMISSION.md`
+- Create: `tests/test_semgrep_evidence.py`
+- Modify: `tests/test_quality_gate.py`
+
+**Interfaces:**
+
+- Consumes: a semgrep executable, an immutable ruleset selector, a target directory, and the Git commit supplied by CI.
+- Produces: a JSON report with `scanner`, `ruleset`, `source_commit`, `target`, `findings`, `status`, and `report_sha256` fields; `collect_quality_evidence` accepts an optional scanner report path.
+
+- [ ] **Step 1: Write the failing report-normalization test.**
+
+```python
+def test_normalize_semgrep_report_binds_the_scanned_commit(self):
+    raw = {"results": [{"check_id": "rule", "path": "x.yml"}]}
+    report = normalize_semgrep_report(raw, ruleset="p/github-actions", source_commit="a" * 40, target=".github")
+    self.assertEqual("semgrep", report["scanner"])
+    self.assertEqual(1, report["findings"])
+    self.assertEqual("a" * 40, report["source_commit"])
+    self.assertRegex(report["report_sha256"], r"^[0-9a-f]{64}$")
+```
+
+- [ ] **Step 2: Run the test to verify the report producer is absent.**
+
+Run: `python -m unittest -v tests.test_semgrep_evidence`
+
+Expected: FAIL with `ImportError` for `normalize_semgrep_report`.
+
+- [ ] **Step 3: Implement deterministic report normalization and CLI exit behavior.**
+
+```python
+def normalize_semgrep_report(raw: dict, *, ruleset: str, source_commit: str, target: str) -> dict:
+    findings = len(raw.get("results", []))
+    report = {
+        "scanner": "semgrep",
+        "ruleset": ruleset,
+        "source_commit": source_commit,
+        "target": target,
+        "findings": findings,
+        "status": "passed" if findings == 0 else "failed",
+    }
+    encoded = json.dumps(report, sort_keys=True, separators=(",", ":")).encode("utf-8")
+    return {**report, "report_sha256": hashlib.sha256(encoded).hexdigest()}
+```
+
+`main` runs `semgrep scan --config p/github-actions --json .github`, writes the normalized result atomically, and returns `0` only when `findings == 0`.
+
+- [ ] **Step 4: Require the scanner report in CI without replacing CodeQL.**
+
+Add a `Run GitHub Actions Semgrep policy` step after release identity and before tests:
+
+```yaml
+- name: Run GitHub Actions Semgrep policy
+  run: python tools/run_semgrep.py --source-commit ${{ github.sha }} --out .test-artifacts/semgrep-workflows.json
+```
+
+Pass `--scanner .test-artifacts/semgrep-workflows.json` to `tools/quality_gate.py`. Update the quality gate so malformed, wrong-commit, nonzero-finding, or missing scanner reports are failures with explicit reasons.
+
+- [ ] **Step 5: Add quality-gate failure coverage.**
+
+```python
+def test_quality_gate_blocks_a_scanner_report_for_another_commit(self):
+    scanner = self.write_json({"scanner": "semgrep", "source_commit": "b" * 40, "findings": 0, "status": "passed"})
+    result = main(["--identity", str(self.identity), "--matrix", str(self.matrix), "--scanner", str(scanner), "--expected-commit", "a" * 40, "--out", str(self.out)])
+    self.assertEqual(1, result)
+    self.assertIn("scanner source commit mismatch", self.read_out()["reasons"])
+```
+
+- [ ] **Step 6: Verify and commit.**
+
+Run: `python -m unittest -v tests.test_semgrep_evidence tests.test_quality_gate tests.test_ci_security`
+
+Run: `python tools/run_semgrep.py --source-commit $(git rev-parse HEAD) --out .test-artifacts/semgrep-workflows.json`
+
+Commit:
+
+```powershell
+git add tools/run_semgrep.py tools/quality_gate.py .github/workflows/ci.yml docs/runbooks/RELEASE-ADMISSION.md tests/test_semgrep_evidence.py tests/test_quality_gate.py
+git commit -m "ci: bind Semgrep policy evidence to candidate commits"
+```
+
+## Task 3: Supervise semantic provider ownership and cleanup
+
+**Files:**
+
+- Modify: `habitat/runtime_lifecycle.py`
+- Modify: `habitat/semantic/ts_language_service.py`
+- Modify: `habitat/semantic/python_jedi.py`
+- Create: `tests/test_semantic_lifecycle.py`
+- Modify: `tests/test_ts_language_service.py`
+- Modify: `tests/test_python_jedi.py`
+
+**Interfaces:**
+
+- Consumes: provider-specific `close` routines and current `runtime_service_status` data.
+- Produces: `register_runtime_service(name: str, close: Callable[[], None], status: Callable[[], dict]) -> None`, `shutdown_runtime_services() -> dict[str, dict]`, and a status record containing `state`, `owned_processes`, and `last_error`.
+
+- [ ] **Step 1: Write the failing supervisor test using an owned child process.**
+
+```python
+def test_shutdown_closes_each_registered_runtime_once(self):
+    closed: list[str] = []
+    register_runtime_service("fixture", lambda: closed.append("fixture"), lambda: {"state": "ready", "owned_processes": 0})
+    report = shutdown_runtime_services()
+    self.assertEqual(["fixture"], closed)
+    self.assertEqual("closed", report["fixture"]["state"])
+```
+
+- [ ] **Step 2: Run the test to verify registration is absent.**
+
+Run: `python -m unittest -v tests.test_semantic_lifecycle.SemanticLifecycleTests.test_shutdown_closes_each_registered_runtime_once`
+
+Expected: FAIL with `ImportError` for `register_runtime_service`.
+
+- [ ] **Step 3: Implement a small idempotent registry in `runtime_lifecycle.py`.**
+
+```python
+_SERVICES: dict[str, tuple[Callable[[], None], Callable[[], dict]]] = {}
+
+
+def register_runtime_service(name: str, close: Callable[[], None], status: Callable[[], dict]) -> None:
+    _SERVICES[name] = (close, status)
+
+
+def shutdown_runtime_services() -> dict[str, dict]:
+    report: dict[str, dict] = {}
+    for name, (close, status) in tuple(_SERVICES.items()):
+        try:
+            close()
+            report[name] = {**status(), "state": "closed"}
+        except Exception as exc:
+            report[name] = {"state": "close-failed", "last_error": str(exc)[:300]}
+    _SERVICES.clear()
+    return report
+```
+
+- [ ] **Step 4: Register the TypeScript and Jedi providers at creation, and prove process cleanup.**
+
+Extend existing provider tests so an unresponsive TypeScript process and a Jedi compiler subprocess are both observed alive before close and not alive after `shutdown_runtime_services`. The test uses `poll() is None` before shutdown and `poll() is not None` after shutdown, with a bounded retry of 2 seconds.
+
+- [ ] **Step 5: Verify repeated lifecycle behavior.**
+
+```python
+def test_repeated_register_shutdown_cycles_leave_no_services(self):
+    for _ in range(100):
+        register_runtime_service("fixture", lambda: None, lambda: {"owned_processes": 0})
+        self.assertEqual("closed", shutdown_runtime_services()["fixture"]["state"])
+    self.assertEqual({}, runtime_service_status())
+```
+
+- [ ] **Step 6: Verify and commit.**
+
+Run: `python -m unittest -v tests.test_semantic_lifecycle tests.test_ts_language_service tests.test_python_jedi`
+
+Commit:
+
+```powershell
+git add habitat/runtime_lifecycle.py habitat/semantic/ts_language_service.py habitat/semantic/python_jedi.py tests/test_semantic_lifecycle.py tests/test_ts_language_service.py tests/test_python_jedi.py
+git commit -m "fix(semantic): supervise provider lifecycle cleanup"
+```
+
+## Task 4: Produce promotion-ready release evidence without publishing
+
+**Files:**
+
+- Modify: `habitat/release.py`
+- Modify: `tools/build_release_manifest.py`
+- Modify: `tools/promote_release.py`
+- Modify: `docs/runbooks/RELEASE-ADMISSION.md`
+- Modify: `tests/test_release_manifest.py`
+- Modify: `tests/test_release_promotion.py`
+
+**Interfaces:**
+
+- Consumes: hashable truth-core, matrix, fault, artifact, and scanner reports plus a reviewer record.
+- Produces: `ReleaseManifest(..., reviewer_hashes: tuple[str, ...])` and a dry-run verdict that lists missing evidence, invalid hashes, and reviewer binding failures.
+
+- [ ] **Step 1: Write the failing independent-review test.**
+
+```python
+def test_alpha_candidate_requires_an_independent_reviewer_binding(self):
+    manifest = ReleaseManifest(
+        version="0.1.0-alpha.20",
+        commit="a" * 40,
+        reports={
+            "truth-core": "1" * 64,
+            "matrix": "2" * 64,
+            "faults": "3" * 64,
+            "artifacts": "4" * 64,
+            "scanner": "5" * 64,
+        },
+        artifact_hashes={"wheel": "b" * 64},
+        residual_risks=(),
+        reviewer_hashes=(),
+    )
+    verdict = evaluate_promotion(manifest, target="alpha-candidate")
+    self.assertFalse(verdict.admitted)
+    self.assertIn("reviewer_hashes:missing", verdict.failed_gates)
+```
+
+- [ ] **Step 2: Run the test to verify the reviewer binding is not yet enforced.**
+
+Run: `python -m unittest -v tests.test_release_promotion.ReleasePromotionTests.test_alpha_candidate_requires_an_independent_reviewer_binding`
+
+Expected: FAIL because `ReleaseManifest` does not accept `reviewer_hashes` or promotion admits without it.
+
+- [ ] **Step 3: Extend the manifest and verifier.**
+
+```python
+@dataclass(frozen=True)
+class ReleaseManifest:
+    version: str
+    commit: str
+    reports: dict[str, str]
+    artifact_hashes: dict[str, str]
+    residual_risks: tuple[str, ...]
+    reviewer_hashes: tuple[str, ...] = ()
+```
+
+For `alpha-candidate`, add `scanner` to `REQUIRED_REPORTS` and require at least one 64-hex reviewer hash distinct from every report and artifact hash. `build_release_manifest.py` accepts repeatable `--review NAME=PATH` arguments, hashes each file, and serializes both the name and digest. `promote_release.py` remains dry-run-only and still never creates a tag, uploads an artifact, or creates a GitHub release.
+
+- [ ] **Step 4: Add exact negative-path tests.**
+
+```python
+def test_alpha_candidate_rejects_reviewer_hash_that_equals_an_artifact_hash(self):
+    digest = "b" * 64
+    manifest = ReleaseManifest(
+        version="0.1.0-alpha.20",
+        commit="a" * 40,
+        reports={
+            "truth-core": "1" * 64,
+            "matrix": "2" * 64,
+            "faults": "3" * 64,
+            "artifacts": "4" * 64,
+            "scanner": "5" * 64,
+        },
+        artifact_hashes={"wheel": digest},
+        residual_risks=(),
+        reviewer_hashes=(digest,),
+    )
+    verdict = evaluate_promotion(manifest, target="alpha-candidate")
+    self.assertIn("reviewer_hashes:not-independent", verdict.failed_gates)
+```
+
+- [ ] **Step 5: Update the runbook with an executable, non-publishing sequence.**
+
+```powershell
+python tools\build_release_manifest.py --version 0.1.0-alpha.20 --commit (git rev-parse HEAD) `
+  --report truth-core=.test-artifacts\truth-core.json --report matrix=.test-artifacts\matrix.json `
+  --report faults=.test-artifacts\faults.json --report artifacts=.test-artifacts\artifacts.json `
+  --report scanner=.test-artifacts\semgrep-workflows.json --artifact wheel=dist\nolane_habitat-0.1.0a20-py3-none-any.whl `
+  --review independent-review=reports\independent-review.json --out dist\release-manifest.json
+python tools\promote_release.py --manifest dist\release-manifest.json --target alpha-candidate --dry-run --out .test-artifacts\promotion-verdict.json
+```
+
+- [ ] **Step 6: Verify and commit.**
+
+Run: `python -m unittest -v tests.test_release_manifest tests.test_release_promotion`
+
+Run: `python tools/promote_release.py --help`
+
+Commit:
+
+```powershell
+git add habitat/release.py tools/build_release_manifest.py tools/promote_release.py docs/runbooks/RELEASE-ADMISSION.md tests/test_release_manifest.py tests/test_release_promotion.py
+git commit -m "release: require independent review evidence"
+```
+
+## Task 5: Add deterministic storage and provider fault evidence
+
+**Files:**
+
+- Create: `habitat/operations/faults.py`
+- Create: `habitat/operations/__init__.py`
+- Modify: `habitat/storage.py`
+- Modify: `habitat/runtime_lifecycle.py`
+- Create: `tests/test_fault_injection.py`
+- Create: `tools/run_reliability_suite.py`
+- Modify: `.github/workflows/ci.yml`
+
+**Interfaces:**
+
+- Consumes: named fault points, an occurrence schedule, temporary workspace fixtures, and release evidence output paths.
+- Produces: `FaultInjector(schedule: dict[str, int])`, `FaultInjector.hit(point: str) -> None`, and a JSON reliability report with the candidate commit, executed fault points, and zero/positive failures.
+
+- [ ] **Step 1: Write the failing atomic rollback test.**
+
+```python
+def test_fault_after_begin_immediate_rolls_back_the_store_transaction(self):
+    injector = FaultInjector({"storage.atomic.after_begin": 1})
+    with self.assertRaisesRegex(RuntimeError, "injected fault: storage.atomic.after_begin"):
+        with self.store.atomic(fault_injector=injector):
+            self.store.set_meta("probe", "changed")
+    self.assertIsNone(self.store.get_meta("probe"))
+```
+
+- [ ] **Step 2: Run the test to verify the injector is absent.**
+
+Run: `python -m unittest -v tests.test_fault_injection.FaultInjectionTests.test_fault_after_begin_immediate_rolls_back_the_store_transaction`
+
+Expected: FAIL with `ModuleNotFoundError: No module named 'habitat.operations'`.
+
+- [ ] **Step 3: Implement the test-only injector and explicit Store hook.**
+
+```python
+@dataclass
+class FaultInjector:
+    schedule: dict[str, int]
+    counts: dict[str, int] = field(default_factory=dict)
+
+    def hit(self, point: str) -> None:
+        self.counts[point] = self.counts.get(point, 0) + 1
+        if self.schedule.get(point) == self.counts[point]:
+            raise RuntimeError(f"injected fault: {point}")
+```
+
+`Store.atomic` receives `fault_injector: FaultInjector | None = None`; the no-injector path is unchanged. Call `hit("storage.atomic.after_begin")` after `BEGIN IMMEDIATE`, `hit("storage.atomic.before_commit")` before commit, and `hit("semantic.shutdown.before_close")` before each registered provider close.
+
+- [ ] **Step 4: Add recovery and close tests.**
+
+```python
+def test_fault_before_provider_close_reports_failure_and_continues_other_services(self):
+    closed: list[str] = []
+    register_runtime_service("first", lambda: closed.append("first"), lambda: {})
+    register_runtime_service("second", lambda: closed.append("second"), lambda: {})
+    report = shutdown_runtime_services(fault_injector=FaultInjector({"semantic.shutdown.before_close": 1}))
+    self.assertEqual(["second"], closed)
+    self.assertEqual("close-failed", report["first"]["state"])
+    self.assertEqual("closed", report["second"]["state"])
+```
+
+- [ ] **Step 5: Produce an evidence report from only temporary fixtures.**
+
+`tools/run_reliability_suite.py` creates a temporary workspace, runs the transaction and provider-fault tests through `unittest`, writes `source_commit`, `executed_fault_points`, `failures`, and `report_sha256`, then exits nonzero if any reliability test fails. CI runs it after the isolated matrix and uploads `.test-artifacts/reliability.json`.
+
+- [ ] **Step 6: Verify and commit.**
+
+Run: `python -m unittest -v tests.test_fault_injection tests.test_semantic_lifecycle`
+
+Run: `python tools/run_reliability_suite.py --source-commit $(git rev-parse HEAD) --out .test-artifacts/reliability.json`
+
+Commit:
+
+```powershell
+git add habitat/operations habitat/storage.py habitat/runtime_lifecycle.py tests/test_fault_injection.py tools/run_reliability_suite.py .github/workflows/ci.yml
+git commit -m "test(reliability): bind fault evidence to candidate commits"
+```
+
+---
+
+## Final verification
+
+- [ ] Run `python -m compileall -q habitat tests tools`.
+- [ ] Run `python -m unittest discover -q` on the implementation host.
+- [ ] Run `semgrep scan --config p/github-actions .github` and retain the generated report only under `.test-artifacts/`.
+- [ ] Confirm every workflow `uses:` reference matches `@[0-9a-f]{40}` with `python -m unittest -v tests.test_ci_security`.
+- [ ] Confirm the matrix passes on Ubuntu and Windows for Python 3.10 and 3.14, with artifact upload succeeding on every job.
+- [ ] Confirm CodeQL passes for Python and JavaScript/TypeScript on the exact candidate commit.
+- [ ] Build a release manifest and run `promote_release.py --dry-run`; retain a blocked verdict when independent reviewer evidence is absent.
+- [ ] Update README only if a verified, user-visible behavior changed; do not describe planned fault injection, scanner policy, or release promotion as shipped until its task is complete.
+
+## Completion definition
+
+The plan is complete when all dynamic SQLite identifiers are allow-listed, the CI scanner report and reliability report are commit-bound evidence, semantic providers cannot outlive their lifecycle boundary, and release promotion rejects every candidate missing independent reviewer evidence. A public tag or GitHub release remains a separate action after an independent reviewer approves the exact manifest.
