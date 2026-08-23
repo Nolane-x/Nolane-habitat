@@ -139,9 +139,12 @@ class TypeScriptLanguageServiceProcess:
         if self._closed: return
         self._closed=True
         try:
-            if self.proc.poll() is None and self.proc.stdin is not None:
-                self.proc.stdin.write('{"cmd":"close"}\n'); self.proc.stdin.flush()
-                self.proc.wait(timeout=1.5)
+            if self.proc.poll() is None:
+                if self.proc.stdin is not None:
+                    self.proc.stdin.write('{"cmd":"close"}\n'); self.proc.stdin.flush()
+                    self.proc.wait(timeout=1.5)
+                else:
+                    self.proc.kill(); self.proc.wait(timeout=1.0)
         except Exception:
             try: self.proc.kill(); self.proc.wait(timeout=1.0)
             except Exception: pass

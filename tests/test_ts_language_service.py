@@ -74,6 +74,21 @@ class TypeScriptLanguageServiceTests(unittest.TestCase):
         self.assertTrue(service._closed)
         self.assertTrue(process.killed)
 
+    def test_close_kills_a_live_service_without_a_stdin_channel(self):
+        process = _StuckProcess(delay=0)
+        process.stdin = None
+        service = ts_language_service.TypeScriptLanguageServiceProcess.__new__(
+            ts_language_service.TypeScriptLanguageServiceProcess
+        )
+        service._closed = False
+        service.proc = process
+
+        service.close()
+
+        self.assertTrue(service._closed)
+        self.assertTrue(process.killed)
+        self.assertIsNotNone(process.poll())
+
 
 if __name__ == "__main__":
     unittest.main()
