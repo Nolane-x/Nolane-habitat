@@ -40,8 +40,12 @@
 | `tests/test_mcp_contracts.py` | protect public tool envelope compatibility | versioned request/response fixtures |
 | `habitat/redaction.py` | remove source and secret-bearing values from exported evidence | `redact_for_export(value) -> value` |
 | `tools/verify_distribution.py` | attest package contents and generated provenance | `main(argv) -> int` |
+| `habitat/authorization.py` | make every active capability explicit, bounded, and auditable | `authorize_operation(request, policy) -> Decision` |
+| `tools/run_upgrade_recovery_suite.py` | prove upgrade, restore, and downgrade safety from fixtures | `main(argv) -> int` |
+| `tools/run_scale_suite.py` | measure bounded behavior on a deterministic project corpus | `main(argv) -> int` |
+| `tools/verify_provenance.py` | verify that a release receipt binds source, CI, evidence, and artifacts | `main(argv) -> int` |
 
-## Task 1: Introduce a tested SQLite identifier boundary
+## Task 1: Introduce a tested SQLite identifier boundary — delivered in Alpha.19 candidate
 
 **Files:**
 
@@ -134,7 +138,7 @@ git add habitat/sql_safety.py habitat/storage.py habitat/storage_migrations.py h
 git commit -m "fix(storage): constrain dynamic SQLite identifiers"
 ```
 
-## Task 2: Make Semgrep a hashable CI evidence producer
+## Task 2: Make Semgrep a hashable CI evidence producer — delivered in Alpha.19 candidate
 
 **Files:**
 
@@ -610,6 +614,114 @@ git commit -m "test(reliability): bind fault evidence to candidate commits"
 
 ---
 
+## Task 11: Enforce an explicit capability boundary for every state-changing operation
+
+**Why this matters:** Habitat is useful because it can orient agents and govern changes. That same capability becomes unsafe if a tool, path, command, or outbound request is trusted merely because it arrived through an MCP or CLI envelope. The system needs a single place to answer: *who may act, on what, with which limits, and how is the decision recorded?*
+
+**Files:**
+
+- Create: `habitat/authorization.py`
+- Create: `tests/test_authorization_boundary.py`
+- Modify: MCP mutation handlers, CLI mutation entry points, and workspace lifecycle boundaries only where they currently make an authorization decision
+- Modify: `docs/SECURITY.md`, `docs/OPERATIONS.md`, and `docs/COMPATIBILITY.md`
+
+**Required scenarios:**
+
+- [ ] Define a declarative capability policy for read, workspace-write, configuration-write, process-spawn, network, export, and release actions. The default is deny; every grant has a concrete workspace scope, operation budget, expiry or lifecycle boundary, and reason.
+- [ ] Canonicalize and validate every filesystem target before a mutation. Reject path traversal, symlink escape, drive/UNC aliases, and writes outside the selected workspace; test on Windows and POSIX path forms.
+- [ ] Treat shell invocation, package installation, network retrieval, and external publication as distinct capabilities. A read-only MCP request must never gain any of them as a side effect.
+- [ ] Emit a compact decision receipt containing the policy digest, operation class, workspace-relative target, allow/deny decision, and redacted reason. Do not include tokens, source text, or absolute paths.
+- [ ] Add adversarial fixtures for malformed JSON, duplicate keys, unexpected nested fields, encoded traversal, cancellation immediately before a write, and a stale authorization receipt.
+
+**Evidence contract:** `authorization.json` binds the policy digest, negative-fixture catalogue digest, allowed/denied counts, candidate commit, and report hash. A new mutation surface cannot be promoted until it is classified by the policy and covered by a deny-path test.
+
+**Acceptance:** no active operation relies on implied authority. A reviewer can prove that a request was either denied safely or performed exactly within an explicit, bounded capability.
+
+## Task 12: Make upgrade, backup, restore, and rollback a first-class recovery contract
+
+**Why this matters:** Database integrity after one process failure is necessary, but Habitat also needs to survive version change. A user must be able to make a backup, upgrade through supported versions, verify the result, and recover without relying on undocumented local state.
+
+**Files:**
+
+- Create: `tests/fixtures/upgrades/` with minimal versioned workspaces and databases
+- Create: `tests/test_upgrade_recovery.py`
+- Create: `tools/run_upgrade_recovery_suite.py`
+- Modify: migration, backup, restore, and version-reporting code only if the fixtures reveal a real ambiguity
+- Modify: `docs/runbooks/RECOVERY.md` and `docs/COMPATIBILITY.md`
+
+**Required scenarios:**
+
+- [ ] Build immutable fixtures for the oldest supported schema plus each supported intermediate schema. Upgrade each fixture to the candidate, reopen it twice, and compare a semantic state digest with the expected result.
+- [ ] Before every migration, create a verified backup with a manifest containing format version, source schema version, relative members, and hashes. Simulate interruption before swap, during swap, and after swap; prove a known-good backup remains recoverable.
+- [ ] Make restore an explicit command with a dry-run mode. It must refuse mismatched project identity, corrupt manifests, path escapes, schema versions outside policy, and a destination that is not empty or explicitly approved.
+- [ ] Define the rollback promise precisely: data migrations that are not reversible must be reported as such before mutation; a code rollback must never silently reinterpret newer state as older state.
+- [ ] Test locale-sensitive paths, long paths, interrupted writes, read-only destinations, disk-full-like write failures through a controlled writer, and SQLite journal modes supported by Habitat.
+
+**Evidence contract:** `upgrade-recovery.json` includes fixture hashes, from/to schema versions, backup and restore outcomes, semantic state digests, recovery timing class, candidate commit, and report hash.
+
+**Acceptance:** a supported upgrade has a deterministic recovery path with a tested negative path, and the user can distinguish an unsupported rollback from a successful restore before data changes.
+
+## Task 13: Establish scale, latency, and resource-regression budgets from deterministic corpora
+
+**Why this matters:** Timeout handling prevents one bad request from running forever, but it does not show whether a healthy large workspace stays usable. Habitat needs performance evidence that is repeatable enough to catch regressions without turning CI into a flaky benchmark.
+
+**Files:**
+
+- Create: `tests/fixtures/scale/` or a deterministic corpus generator with only synthetic files
+- Create: `tests/test_scale_contracts.py`
+- Create: `tools/run_scale_suite.py`
+- Modify: indexing, storage, semantic providers, or Observatory only after a profiled regression is reproduced
+- Modify: `docs/OPERATIONS.md`
+
+**Required scenarios:**
+
+- [ ] Define three synthetic workspace tiers by file count, aggregate bytes, symbol count, and database record count. The generator must be seed-based, offline, and never include customer or repository source.
+- [ ] Measure cold and warm orientation, a representative semantic request, an evidence query, cancellation latency, and shutdown latency. Record count/size inputs and measured maxima rather than a single opaque score.
+- [ ] Set broad, platform-specific ceilings for CI and stricter trending baselines for scheduled runs. A ceiling breach is a failure; a baseline regression opens a review item rather than silently changing the threshold.
+- [ ] Repeat the small tier enough times to reveal descriptor, process, temporary-file, cache, and transaction growth. Assert that cleanup returns each observable counter to baseline within a bounded grace period.
+- [ ] Store only aggregate timings and resource counters in reports. Do not export corpus paths, file bodies, or process environment data.
+
+**Evidence contract:** `scale.json` records corpus generator digest and seed, platform/runtime, declared ceilings, measured maxima, cleanup counters, candidate commit, and report hash.
+
+**Acceptance:** performance changes are intentional and reviewable; an increase in work or resource use cannot hide behind a green functional test suite.
+
+## Task 14: Bind every promotion to verifiable provenance and an operational response path
+
+**Why this matters:** Package hashing proves bytes but not the entire chain that produced them. A trustworthy release also needs a clear response when a dependency vulnerability, compromised workflow, or serious regression is discovered after publication.
+
+**Files:**
+
+- Create: `tools/verify_provenance.py`
+- Create: `tests/test_provenance_verification.py`
+- Modify: release workflow, `tools/build_release_manifest.py`, and `tools/promote_release.py`
+- Create: `docs/runbooks/INCIDENT-RESPONSE.md`
+- Modify: `docs/runbooks/RELEASE-ADMISSION.md` and `docs/SECURITY.md`
+
+**Required scenarios:**
+
+- [ ] Create a canonical release receipt that binds the commit SHA, protected CI run identifiers, report hashes, wheel/sdist hashes, dependency-inventory hash, reviewer record hashes, and release manifest hash. Reject a receipt with a substituted report, artifact, commit, or workflow identity.
+- [ ] Generate a signed provenance attestation using the repository's supported CI identity. Verification must use public metadata and must not depend on a developer's local secret or mutable branch name.
+- [ ] Maintain a dependency policy: approved sources, lock or resolution digest, update cadence, vulnerability triage severity and response target, and an explicit exception record with expiry. New unresolved critical/high findings block promotion unless a documented, reviewed exception exists.
+- [ ] Exercise the operational response path: revoke a candidate before publication; publish a correction advisory after a simulated defect; preserve evidence; identify affected artifact hashes; and verify that a rollback notice never deletes a user workspace or rewrites history.
+- [ ] Test that release tooling defaults to dry-run and cannot tag, upload, or publish when the receipt is absent, invalid, expired, or for a different commit.
+
+**Evidence contract:** `provenance.json` contains receipt digest, attestation verification result, dependency-policy digest, known-exception summary, response-drill result, candidate commit, and report hash.
+
+**Acceptance:** a public release can be traced from artifact back to reviewed source and CI evidence, and there is a rehearsed, non-destructive response when that trust chain is challenged.
+
+## Delivery sequence and non-negotiable gates
+
+| Milestone | Work | Promotion rule |
+|---|---|---|
+| Alpha.19 safety baseline | Tasks 1–2 | Delivered only with four-way CI and CodeQL on the exact commit. This is an engineering baseline, not release admission. |
+| Alpha.20 recovery core | Tasks 3, 5, 6, 12 | No candidate while semantic cleanup, transaction recovery, or upgrade/restore reports are missing or nonzero. |
+| Contract and privacy boundary | Tasks 7, 8, 9, 11 | No candidate while a public-surface, redaction, limit, or authorization deny-path test fails. |
+| Distribution and provenance | Tasks 4, 10, 13, 14 | No tag or GitHub release without independent review, artifact verification, scale evidence, and a verified provenance receipt. |
+
+The implementation order is intentionally safety-first: fix a failing boundary with its smallest deterministic test; attach a commit-bound report; then widen coverage to recovery, compatibility, privacy, and scale. A green test run never substitutes for the next gate's evidence.
+
+---
+
 ## Final verification
 
 - [ ] Run `python -m compileall -q habitat tests tools`.
@@ -619,9 +731,10 @@ git commit -m "test(reliability): bind fault evidence to candidate commits"
 - [ ] Confirm the matrix passes on Ubuntu and Windows for Python 3.10 and 3.14, with artifact upload succeeding on every job.
 - [ ] Confirm CodeQL passes for Python and JavaScript/TypeScript on the exact candidate commit.
 - [ ] Run database recovery, contract, export-redaction, resource-limit, and distribution suites; retain their commit-bound reports.
+- [ ] Run authorization, upgrade-recovery, scale, and provenance suites; retain their commit-bound reports.
 - [ ] Build a release manifest and run `promote_release.py --dry-run`; retain a blocked verdict when independent reviewer evidence is absent.
 - [ ] Update README only if a verified, user-visible behavior changed; do not describe planned fault injection, scanner policy, or release promotion as shipped until its task is complete.
 
 ## Completion definition
 
-The plan is complete when all dynamic SQLite identifiers are allow-listed; database recovery, compatibility, privacy, resource limits, scanner, reliability, and distribution reports are commit-bound evidence; semantic providers cannot outlive their lifecycle boundary; and release promotion rejects every candidate missing independent reviewer evidence. A public tag or GitHub release remains a separate action after an independent reviewer approves the exact manifest.
+The plan is complete when all dynamic SQLite identifiers are allow-listed; database recovery, upgrade/restore, compatibility, privacy, explicit authorization, resource limits, scanner, reliability, scale, distribution, and provenance reports are commit-bound evidence; semantic providers cannot outlive their lifecycle boundary; and release promotion rejects every candidate missing independent reviewer evidence. A public tag or GitHub release remains a separate action after an independent reviewer approves the exact manifest.
