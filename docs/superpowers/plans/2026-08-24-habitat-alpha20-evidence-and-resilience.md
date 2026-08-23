@@ -412,7 +412,7 @@ git add habitat/release.py tools/build_release_manifest.py tools/promote_release
 git commit -m "release: require independent review evidence"
 ```
 
-## Task 5: Add deterministic storage and provider fault evidence
+## Task 5: Add deterministic storage and provider fault evidence — delivered in Alpha.19 candidate
 
 **Files:**
 
@@ -494,7 +494,7 @@ git commit -m "test(reliability): bind fault evidence to candidate commits"
 
 ---
 
-## Task 6: Prove SQLite concurrency, crash recovery, and integrity boundaries
+## Task 6: Prove SQLite concurrency, crash recovery, and integrity boundaries — delivered in Alpha.19 candidate
 
 **Why this matters:** Habitat stores the project truth core in SQLite. A schema that is valid in a single process is not sufficient evidence that a busy writer, failed transaction, interrupted migration, or reopen preserves the same truth.
 

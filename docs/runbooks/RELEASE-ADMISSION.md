@@ -20,6 +20,13 @@ python tools\quality_gate.py --identity .test-artifacts\identity.json --matrix .
 
 The scanner report is CI evidence, not a release-admission verdict by itself. Release admission still requires the complete manifest and independent review described below.
 
+Generate the SQLite recovery and fault-injection reports from the same checked-out candidate. These commands use temporary fixtures only and do not open or modify a user workspace:
+
+```powershell
+python tools\run_db_recovery_suite.py --source-commit $commit --out .test-artifacts\db-recovery.json
+python tools\run_reliability_suite.py --source-commit $commit --out .test-artifacts\faults.json
+```
+
 Build the manifest from the actual evidence and artifact files; the builder computes the SHA-256 bindings rather than accepting manually entered values:
 
 ```powershell

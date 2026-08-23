@@ -35,6 +35,19 @@ class CiSecurityTests(unittest.TestCase):
             workflow,
         )
 
+    def test_ci_binds_recovery_and_fault_evidence_to_the_github_commit(self) -> None:
+        root = Path(__file__).parents[1]
+        workflow = (root / ".github" / "workflows" / "ci.yml").read_text(encoding="utf-8")
+
+        self.assertIn(
+            "python tools/run_db_recovery_suite.py --source-commit ${{ github.sha }} --out .test-artifacts/db-recovery.json",
+            workflow,
+        )
+        self.assertIn(
+            "python tools/run_reliability_suite.py --source-commit ${{ github.sha }} --out .test-artifacts/faults.json",
+            workflow,
+        )
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -36,6 +36,8 @@ jobs:
         run: python tools/run_test_matrix.py --mode shard --workers 1 --timeout 600 --out .test-artifacts/matrix.json
       - name: Run database recovery evidence
         run: python tools/run_db_recovery_suite.py --source-commit ${{ github.sha }} --out .test-artifacts/db-recovery.json
+      - name: Run fault-injection reliability evidence
+        run: python tools/run_reliability_suite.py --source-commit ${{ github.sha }} --out .test-artifacts/faults.json
       - name: Install isolated Semgrep
         shell: bash
         run: |

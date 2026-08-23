@@ -9,6 +9,7 @@ from typing import Iterable
 
 from .database_health import inspect_connection
 from .model import DiagnosticRecord, EventRecord, FileRecord, OccurrenceRecord, RelationRecord, Revision, SymbolRecord
+from .operations.faults import FaultInjector
 from .sql_safety import quote_identifier, savepoint_identifier, user_version_pragma
 from .storage_migrations import (
     SCHEMA_VERSION,
@@ -60,7 +61,7 @@ class Store:
             raise
 
     @contextmanager
-    def atomic(self):
+    def atomic(self, fault_injector: FaultInjector | None = None):
         """Commit all workspace updates together, or roll them all back on failure."""
 
         nested = self.conn.in_transaction or self.conn._habitat_transaction_depth > 0
@@ -78,7 +79,11 @@ class Store:
             raise
         self.conn._habitat_transaction_depth += 1
         try:
+            if fault_injector is not None:
+                fault_injector.hit("storage.atomic.after_begin")
             yield
+            if fault_injector is not None:
+                fault_injector.hit("storage.atomic.before_commit")
         except BaseException:
             if nested:
                 self.conn.execute("ROLLBACK TO SAVEPOINT " + savepoint)

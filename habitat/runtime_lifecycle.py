@@ -3,11 +3,13 @@ from __future__ import annotations
 import atexit
 import threading
 
+from .operations.faults import FaultInjector
+
 _LOCK = threading.RLock()
 _SHUTDOWN_COUNT = 0
 
 
-def shutdown_runtime_services() -> dict:
+def shutdown_runtime_services(fault_injector: FaultInjector | None = None) -> dict:
     """Close process-shared optional runtime services deterministically.
 
     Workspace.close() remains the narrow cleanup boundary. This host-level boundary exists because
@@ -20,11 +22,15 @@ def shutdown_runtime_services() -> dict:
         errors: list[dict[str, str]] = []
         try:
             from .semantic.ts_language_service import close_all_typescript_sessions
+            if fault_injector is not None:
+                fault_injector.hit("semantic.shutdown.before_close")
             close_all_typescript_sessions(); closed.append("typescript-language-services")
         except Exception as exc:  # shutdown is best-effort but observable
             errors.append({"service": "typescript-language-services", "error": f"{type(exc).__name__}: {exc}"})
         try:
             from .semantic.python_jedi import close_all_jedi_projects
+            if fault_injector is not None:
+                fault_injector.hit("semantic.shutdown.before_close")
             close_all_jedi_projects(); closed.append("jedi-project-cache")
         except Exception as exc:
             errors.append({"service": "jedi-project-cache", "error": f"{type(exc).__name__}: {exc}"})
