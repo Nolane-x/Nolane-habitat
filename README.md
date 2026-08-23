@@ -37,6 +37,14 @@ $workspace = "$source.habitat"
 
 The workspace is intentionally separate from the source directory, keeping Habitat state independent from the project it understands.
 
+Before handing an existing workspace to an agent, inspect its local state without refreshing or migrating it:
+
+```powershell
+.\.venv\Scripts\habitat.exe doctor $workspace
+```
+
+The report exposes schema version, SQLite integrity, foreign-key violations, and journal mode so a damaged or stale workspace is visible before it becomes agent context.
+
 ## Use it with Codex
 
 Register the initialized workspace as an MCP server:
@@ -71,7 +79,7 @@ This loop makes context, changes, evidence, and handoffs durable across longer-r
 
 | Surface | What it provides |
 | --- | --- |
-| CLI | Workspace creation, orientation, inspection, mutation, verification, checkpoints, and resume. |
+| CLI | Workspace creation, health inspection, orientation, mutation, verification, checkpoints, and resume. |
 | MCP | Codex tools for task context, source understanding, governed changes, verification, and handoff. |
 | Semantic providers | Python and TypeScript project evidence with source anchors and relationship data. |
 | Mutation engine | Journaled source writes, rollback support, and recovery-aware transaction handling. |
