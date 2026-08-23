@@ -1,4 +1,5 @@
 import json
+import hashlib
 import subprocess
 import sys
 import tempfile
@@ -10,6 +11,23 @@ from tools.promote_release import main
 
 
 class ReleasePromotionTests(unittest.TestCase):
+    @staticmethod
+    def _provenance(commit: str, *, status: str = "passed") -> dict[str, str]:
+        payload = {
+            "schema": 1,
+            "suite": "release-evidence",
+            "source_commit": commit,
+            "status": status,
+        }
+        digest = hashlib.sha256(
+            json.dumps(payload, sort_keys=True, separators=(",", ":")).encode("utf-8")
+        ).hexdigest()
+        return {
+            "source_commit": commit,
+            "status": status,
+            "report_sha256": digest,
+        }
+
     def test_promotion_blocks_when_required_evidence_is_missing(self):
         manifest = ReleaseManifest(
             version="0.1.0-alpha.19",
@@ -86,6 +104,48 @@ class ReleasePromotionTests(unittest.TestCase):
 
         self.assertFalse(verdict.admitted)
         self.assertIn("reviewer_hashes:not-independent", verdict.failed_gates)
+
+    def test_alpha_candidate_rejects_reports_without_matching_passed_provenance(self):
+        commit = "a" * 40
+        required = {
+            "truth-core", "matrix", "faults", "artifacts", "scanner", "db-recovery", "contract"
+        }
+        manifest = ReleaseManifest(
+            version="0.1.0-alpha.20",
+            commit=commit,
+            reports={name: str(index) * 64 for index, name in enumerate(sorted(required), start=1)},
+            artifact_hashes={"wheel": "b" * 64},
+            residual_risks=(),
+            reviewer_hashes=("c" * 64,),
+            report_provenance={
+                name: self._provenance(commit) for name in required if name != "contract"
+            } | {"contract": self._provenance("d" * 40, status="failed")},
+        )
+
+        verdict = evaluate_promotion(manifest, target="alpha-candidate")
+
+        self.assertFalse(verdict.admitted)
+        self.assertIn("report:contract:source-commit-mismatch", verdict.failed_gates)
+        self.assertIn("report:contract:status", verdict.failed_gates)
+
+    def test_alpha_candidate_accepts_complete_passed_commit_bound_evidence(self):
+        commit = "a" * 40
+        required = {
+            "truth-core", "matrix", "faults", "artifacts", "scanner", "db-recovery", "contract"
+        }
+        manifest = ReleaseManifest(
+            version="0.1.0-alpha.20",
+            commit=commit,
+            reports={name: f"{index:x}" * 64 for index, name in enumerate(sorted(required), start=1)},
+            artifact_hashes={"wheel": "b" * 64},
+            residual_risks=(),
+            reviewer_hashes=("c" * 64,),
+            report_provenance={name: self._provenance(commit) for name in required},
+        )
+
+        verdict = evaluate_promotion(manifest, target="alpha-candidate")
+
+        self.assertTrue(verdict.admitted, verdict.failed_gates)
 
     def test_dry_run_writes_a_blocked_verdict_without_publication(self):
         with tempfile.TemporaryDirectory() as td:

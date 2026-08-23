@@ -29,17 +29,21 @@ jobs:
       - name: Compile source and tests
         run: python -m compileall -q habitat tests tools
       - name: Verify release identity
-        run: python tools/check_release_identity.py --out .test-artifacts/identity.json
+        run: python tools/check_release_identity.py --source-commit ${{ github.sha }} --out .test-artifacts/identity.json
       - name: Run full regression suite
         run: python -m unittest discover -q
       - name: Run isolated regression matrix
-        run: python tools/run_test_matrix.py --mode shard --workers 1 --timeout 600 --out .test-artifacts/matrix.json
+        run: python tools/run_test_matrix.py --mode shard --workers 1 --timeout 600 --source-commit ${{ github.sha }} --out .test-artifacts/matrix.json
       - name: Verify public compatibility contract
         run: python tools/verify_contracts.py --source-commit ${{ github.sha }} --fixture tests/fixtures/contracts/agent-v1alpha2.json --out .test-artifacts/contract.json
       - name: Run database recovery evidence
         run: python tools/run_db_recovery_suite.py --source-commit ${{ github.sha }} --out .test-artifacts/db-recovery.json
       - name: Run fault-injection reliability evidence
         run: python tools/run_reliability_suite.py --source-commit ${{ github.sha }} --out .test-artifacts/faults.json
+      - name: Build distributable release artifacts
+        run: python -m build --no-isolation --outdir .test-artifacts/dist
+      - name: Verify distributable release artifacts
+        run: python tools/verify_distribution.py --source-commit ${{ github.sha }} --dist .test-artifacts/dist --out .test-artifacts/artifacts.json
       - name: Install isolated Semgrep
         shell: bash
         run: |
@@ -59,7 +63,7 @@ jobs:
       - name: Run GitHub Actions Semgrep policy
         run: python tools/run_semgrep.py --source-commit ${{ github.sha }} --out .test-artifacts/semgrep-workflows.json
       - name: Summarize local quality evidence
-        run: python tools/quality_gate.py --identity .test-artifacts/identity.json --matrix .test-artifacts/matrix.json --scanner semgrep=.test-artifacts/semgrep-workflows.json --require-scanner semgrep --expected-commit ${{ github.sha }} --out .test-artifacts/quality-gate.json
+        run: python tools/quality_gate.py --identity .test-artifacts/identity.json --matrix .test-artifacts/matrix.json --scanner semgrep=.test-artifacts/semgrep-workflows.json --require-scanner semgrep --expected-commit ${{ github.sha }} --out .test-artifacts/truth-core.json
       - name: Upload verification artifacts
         if: always()
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7

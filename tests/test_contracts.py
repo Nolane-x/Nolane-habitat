@@ -45,4 +45,5 @@ class ContractCompatibilityTests(unittest.TestCase):
             self.assertEqual(0, exit_code)
             self.assertTrue(report["compatible"])
             self.assertEqual("a" * 40, report["source_commit"])
+            self.assertEqual("passed", report["status"])
             self.assertRegex(report["report_sha256"], r"^[0-9a-f]{64}$")

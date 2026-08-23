@@ -51,6 +51,24 @@ class CiSecurityTests(unittest.TestCase):
             "python tools/verify_contracts.py --source-commit ${{ github.sha }} --fixture tests/fixtures/contracts/agent-v1alpha2.json --out .test-artifacts/contract.json",
             workflow,
         )
+        self.assertIn(
+            "python tools/verify_distribution.py --source-commit ${{ github.sha }} --dist .test-artifacts/dist --out .test-artifacts/artifacts.json",
+            workflow,
+        )
+
+    def test_ci_binds_identity_and_matrix_evidence_to_the_github_commit(self) -> None:
+        root = Path(__file__).parents[1]
+        workflow = (root / ".github" / "workflows" / "ci.yml").read_text(encoding="utf-8")
+
+        self.assertIn(
+            "python tools/check_release_identity.py --source-commit ${{ github.sha }} --out .test-artifacts/identity.json",
+            workflow,
+        )
+        self.assertIn(
+            "python tools/run_test_matrix.py --mode shard --workers 1 --timeout 600 --source-commit ${{ github.sha }} --out .test-artifacts/matrix.json",
+            workflow,
+        )
+        self.assertIn("--out .test-artifacts/truth-core.json", workflow)
 
 
 if __name__ == "__main__":

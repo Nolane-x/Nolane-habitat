@@ -1,4 +1,5 @@
 import importlib.util
+import json
 import subprocess
 import sys
 import tempfile
@@ -52,6 +53,7 @@ class TestMatrixTests(unittest.TestCase):
                         "--mode", "module",
                         "--match", "test_toml_compat",
                         "--timeout", "20",
+                        "--source-commit", "a" * 40,
                         "--out", str(output),
                     ],
                     cwd=Path(__file__).resolve().parents[1],
@@ -62,4 +64,7 @@ class TestMatrixTests(unittest.TestCase):
                 )
 
             self.assertEqual(0, result.returncode, log.read_text(encoding="utf-8"))
-            self.assertTrue(output.is_file())
+            report = json.loads(output.read_text(encoding="utf-8"))
+            self.assertEqual("a" * 40, report["source_commit"])
+            self.assertEqual("passed", report["status"])
+            self.assertRegex(report["report_sha256"], r"^[0-9a-f]{64}$")

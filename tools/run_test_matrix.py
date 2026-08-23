@@ -6,7 +6,7 @@ inside a bounded process without coupling the whole historical suite. `--mode mo
 forensic mode that isolates every test file. Reports never relabel timeout as pass.
 """
 from __future__ import annotations
-import argparse, concurrent.futures, json, os, re, signal, subprocess, sys, tempfile, time
+import argparse, concurrent.futures, hashlib, json, os, re, signal, subprocess, sys, tempfile, time
 from pathlib import Path
 RAN=re.compile(r"Ran\s+(\d+)\s+tests?")
 
@@ -63,10 +63,11 @@ def _run_group(root: Path, name: str, qualified: list[str], timeout: int, starte
             return {"group":name,"modules":qualified,"status":"infra-error","returncode":None,"tests":None,"wall_ms":round((time.monotonic()-started)*1000,2),"error":f"{type(exc).__name__}: {exc}"}
 
 def main():
-    ap=argparse.ArgumentParser(); ap.add_argument('--mode',choices=['shard','module'],default='shard'); ap.add_argument('--workers',type=int,default=1); ap.add_argument('--timeout',type=int,default=180); ap.add_argument('--match'); ap.add_argument('--out')
+    ap=argparse.ArgumentParser(); ap.add_argument('--mode',choices=['shard','module'],default='shard'); ap.add_argument('--workers',type=int,default=1); ap.add_argument('--timeout',type=int,default=180); ap.add_argument('--match'); ap.add_argument('--source-commit'); ap.add_argument('--out')
     args=ap.parse_args(); root=Path(__file__).resolve().parents[1]
     if args.workers<1 or args.workers>8: raise ValueError('workers must be in [1,8]')
     if args.timeout<5 or args.timeout>1800: raise ValueError('timeout must be in [5,1800]')
+    if args.source_commit is not None and not re.fullmatch(r'[0-9a-f]{40}',args.source_commit): raise ValueError('source commit must be a 40-character lowercase SHA')
     if args.mode=='shard':
         groups=[(k,v) for k,v in SHARDS.items() if not args.match or args.match in k or any(args.match in x for x in v)]
     else:
@@ -84,6 +85,9 @@ def main():
     rows.sort(key=lambda x:x['group']); statuses={k:sum(r['status']==k for r in rows) for k in ('passed','failed','timeout','infra-error')}; known=sum(r['tests'] or 0 for r in rows)
     report={"schema":2,"mode":args.mode,"group_count":len(rows),"known_test_count":known,"statuses":statuses,"wall_ms":round((time.monotonic()-started)*1000,2),"groups":rows,
             "claim_boundary":"Default balanced-shard CI feedback. Every selected unittest module is executed, but a separate monolithic long-lived-host probe remains useful for lifecycle/pathological-state testing."}
+    if args.source_commit is not None:
+        report.update({"suite":"isolated-regression-matrix","source_commit":args.source_commit,"status":"passed" if not any(statuses[key] for key in ('failed','timeout','infra-error')) else "failed"})
+        report["report_sha256"]=hashlib.sha256(json.dumps(report,sort_keys=True,separators=(',',':')).encode('utf-8')).hexdigest()
     text=json.dumps(report,indent=2,sort_keys=True)
     if args.out:
         output=Path(args.out); output.parent.mkdir(parents=True,exist_ok=True)

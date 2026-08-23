@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from dataclasses import asdict, dataclass, field
 import hashlib
+import json
 from pathlib import Path
 import re
 from typing import Any, Mapping
@@ -25,6 +26,7 @@ class ReleaseManifest:
     residual_risks: tuple[str, ...]
     reviewer_hashes: tuple[str, ...] = ()
     reviewers: dict[str, str] = field(default_factory=dict)
+    report_provenance: dict[str, dict[str, str]] = field(default_factory=dict)
 
     @classmethod
     def from_dict(cls, value: Mapping[str, Any]) -> "ReleaseManifest":
@@ -43,6 +45,11 @@ class ReleaseManifest:
             residual_risks=tuple(str(risk) for risk in value.get("residual_risks") or ()),
             reviewer_hashes=reviewer_hashes or tuple(reviewers.values()),
             reviewers=reviewers,
+            report_provenance={
+                str(name): {str(key): str(item) for key, item in dict(record).items()}
+                for name, record in dict(value.get("report_provenance") or {}).items()
+                if isinstance(record, Mapping)
+            },
         )
 
     def as_dict(self) -> dict[str, Any]:
@@ -81,6 +88,41 @@ def _hash_named_files(values: Mapping[str, Path]) -> dict[str, str]:
     return hashes
 
 
+def _canonical_report_digest(value: Mapping[str, Any]) -> str:
+    return hashlib.sha256(
+        json.dumps(value, sort_keys=True, separators=(",", ":")).encode("utf-8")
+    ).hexdigest()
+
+
+def _report_provenance(values: Mapping[str, Path]) -> dict[str, dict[str, str]]:
+    provenance: dict[str, dict[str, str]] = {}
+    for name, path in values.items():
+        try:
+            value = json.loads(Path(path).read_text(encoding="utf-8"))
+        except (OSError, UnicodeDecodeError, json.JSONDecodeError):
+            continue
+        if not isinstance(value, Mapping):
+            continue
+        source_commit = value.get("source_commit")
+        status = value.get("status")
+        reported_digest = value.get("report_sha256")
+        unsigned = {key: item for key, item in value.items() if key != "report_sha256"}
+        if (
+            not isinstance(source_commit, str)
+            or not isinstance(status, str)
+            or not isinstance(reported_digest, str)
+            or not SHA256.fullmatch(reported_digest)
+            or reported_digest != _canonical_report_digest(unsigned)
+        ):
+            continue
+        provenance[str(name)] = {
+            "source_commit": source_commit,
+            "status": status,
+            "report_sha256": reported_digest,
+        }
+    return provenance
+
+
 def build_release_manifest(
     *,
     version: str,
@@ -99,6 +141,7 @@ def build_release_manifest(
         residual_risks=tuple(residual_risks),
         reviewer_hashes=tuple(reviewer_records.values()),
         reviewers=reviewer_records,
+        report_provenance=_report_provenance(reports),
     )
 
 
@@ -123,6 +166,19 @@ def evaluate_promotion(manifest: ReleaseManifest, target: str) -> PromotionVerdi
                 if not SHA256.fullmatch(digest)
             )
     if target == "alpha-candidate":
+        if not re.fullmatch(r"[0-9a-f]{40}", manifest.commit):
+            failed.add("manifest:commit:invalid-sha")
+        for name in required & manifest.reports.keys():
+            provenance = manifest.report_provenance.get(name)
+            if not provenance:
+                failed.add(f"report:{name}:provenance:missing-or-invalid")
+                continue
+            if provenance.get("source_commit") != manifest.commit:
+                failed.add(f"report:{name}:source-commit-mismatch")
+            if provenance.get("status") != "passed":
+                failed.add(f"report:{name}:status")
+            if not SHA256.fullmatch(provenance.get("report_sha256", "")):
+                failed.add(f"report:{name}:report-hash-invalid")
         if not manifest.reviewer_hashes:
             failed.add("reviewer_hashes:missing")
         else:

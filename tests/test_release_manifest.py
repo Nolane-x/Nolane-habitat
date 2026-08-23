@@ -11,6 +11,19 @@ from tools.build_release_manifest import main
 
 
 class ReleaseManifestTests(unittest.TestCase):
+    @staticmethod
+    def _commit_bound_report(commit: str, *, status: str = "passed") -> dict:
+        report = {
+            "schema": 1,
+            "suite": "release-evidence",
+            "source_commit": commit,
+            "status": status,
+        }
+        report["report_sha256"] = hashlib.sha256(
+            json.dumps(report, sort_keys=True, separators=(",", ":")).encode("utf-8")
+        ).hexdigest()
+        return report
+
     def test_manifest_binds_evidence_and_artifacts_to_file_hashes(self):
         with tempfile.TemporaryDirectory() as td:
             root = Path(td)
@@ -93,6 +106,31 @@ class ReleaseManifestTests(unittest.TestCase):
             self.assertEqual(0, exit_code)
             self.assertEqual([digest], value["reviewer_hashes"])
             self.assertEqual({"independent-review": digest}, value["reviewers"])
+
+    def test_manifest_records_verified_report_provenance(self):
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            report = root / "matrix.json"
+            commit = "a" * 40
+            report.write_text(
+                json.dumps(self._commit_bound_report(commit)), encoding="utf-8"
+            )
+
+            manifest = build_release_manifest(
+                version="0.1.0-alpha.20",
+                commit=commit,
+                reports={"matrix": report},
+                artifacts={},
+            )
+
+            self.assertEqual(
+                {
+                    "source_commit": commit,
+                    "status": "passed",
+                    "report_sha256": self._commit_bound_report(commit)["report_sha256"],
+                },
+                manifest.report_provenance["matrix"],
+            )
 
     def test_manifest_script_runs_from_a_checkout(self):
         with tempfile.TemporaryDirectory() as td:

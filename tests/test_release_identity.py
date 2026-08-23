@@ -1,4 +1,5 @@
 import json
+import hashlib
 import tempfile
 import unittest
 from pathlib import Path
@@ -69,3 +70,28 @@ class ReleaseIdentityTests(unittest.TestCase):
 
             self.assertEqual(0, exit_code)
             self.assertTrue(json.loads(output.read_text(encoding="utf-8"))["ok"])
+
+    def test_identity_cli_can_emit_commit_bound_release_evidence(self):
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            self._write_identity_fixture(root)
+            output = root / "artifacts" / "identity.json"
+            commit = "a" * 40
+
+            exit_code = main(
+                [
+                    "--root", str(root), "--source-commit", commit, "--out", str(output)
+                ]
+            )
+
+            report = json.loads(output.read_text(encoding="utf-8"))
+            unsigned = {key: value for key, value in report.items() if key != "report_sha256"}
+            self.assertEqual(0, exit_code)
+            self.assertEqual(commit, report["source_commit"])
+            self.assertEqual("passed", report["status"])
+            self.assertEqual(
+                hashlib.sha256(
+                    json.dumps(unsigned, sort_keys=True, separators=(",", ":")).encode("utf-8")
+                ).hexdigest(),
+                report["report_sha256"],
+            )

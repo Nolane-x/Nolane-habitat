@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 import os
 import re
@@ -20,7 +21,13 @@ def package_version(version: str) -> str:
     return re.sub(r"-alpha\.(\d+)$", r"a\1", version)
 
 
-def check_identity(root: Path) -> dict:
+def _report_digest(value: dict) -> str:
+    return hashlib.sha256(
+        json.dumps(value, ensure_ascii=False, sort_keys=True, separators=(",", ":")).encode("utf-8")
+    ).hexdigest()
+
+
+def check_identity(root: Path, *, source_commit: str | None = None) -> dict:
     root = root.resolve()
     errors: list[str] = []
     version_path = root / "VERSION"
@@ -58,20 +65,35 @@ def check_identity(root: Path) -> dict:
                     f"v{referenced_version}, not v{version}"
                 )
 
-    return {
+    report = {
         "ok": not errors,
         "version": version,
         "package_version": expected_package_version,
         "errors": errors,
     }
+    if source_commit is not None:
+        if not re.fullmatch(r"[0-9a-f]{40}", source_commit):
+            errors.append("source commit must be a 40-character lowercase SHA")
+        report.update(
+            {
+                "schema": 1,
+                "suite": "release-identity",
+                "source_commit": source_commit,
+                "status": "passed" if not errors else "failed",
+                "ok": not errors,
+            }
+        )
+        report["report_sha256"] = _report_digest(report)
+    return report
 
 
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--root", type=Path, default=Path(__file__).resolve().parents[1])
+    parser.add_argument("--source-commit")
     parser.add_argument("--out", type=Path)
     args = parser.parse_args(argv)
-    report = check_identity(args.root)
+    report = check_identity(args.root, source_commit=args.source_commit)
     text = json.dumps(report, ensure_ascii=False, sort_keys=True)
     if args.out:
         args.out.parent.mkdir(parents=True, exist_ok=True)

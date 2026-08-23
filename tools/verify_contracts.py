@@ -97,6 +97,7 @@ def main(argv: list[str] | None = None) -> int:
         "source_commit": args.source_commit,
         **verify_contract(fixture, collect_contract()),
     }
+    report["status"] = "passed" if report["compatible"] else "failed"
     report["report_sha256"] = _canonical_digest(report)
     _write_json_atomically(args.out, report)
     return 0 if report["compatible"] else 1

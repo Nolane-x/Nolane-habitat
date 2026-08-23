@@ -590,6 +590,8 @@ git commit -m "test(reliability): bind fault evidence to candidate commits"
 
 ## Task 10: Attest distribution contents and dependency provenance before promotion
 
+**Partial foundation delivered in the Alpha.19 candidate:** CI builds a wheel and sdist without implicit network resolution, verifies both filenames and hashes against the repository version, and smoke-installs the wheel offline into a temporary target before isolated import. The remaining member allow-list, dependency inventory/SBOM, and artifact-vs-source identity proof stay required before this task is complete.
+
 **Why this matters:** A green source checkout does not prove that the wheel/sdist is complete, installable, free of generated secrets, or produced from the reviewed commit.
 
 **Files:**
@@ -686,6 +688,8 @@ git commit -m "test(reliability): bind fault evidence to candidate commits"
 **Acceptance:** performance changes are intentional and reviewable; an increase in work or resource use cannot hide behind a green functional test suite.
 
 ## Task 14: Bind every promotion to verifiable provenance and an operational response path
+
+**Partial foundation delivered in the Alpha.19 candidate:** the release manifest builder accepts only report payloads whose embedded canonical digest verifies, and the alpha gate rejects required reports that are absent, non-passing, or bound to a different commit. A signed receipt and response drill are still required before this task is complete.
 
 **Why this matters:** Package hashing proves bytes but not the entire chain that produced them. A trustworthy release also needs a clear response when a dependency vulnerability, compromised workflow, or serious regression is discovered after publication.
 

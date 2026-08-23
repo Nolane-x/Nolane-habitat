@@ -58,7 +58,7 @@ def evaluate_quality_gate(
             if digest != expected_digest:
                 failed.append(f"scanner:{name}:report-hash-mismatch")
 
-    return {
+    report = {
         "schema": 1,
         "ok": not failed,
         "failed_gates": failed,
@@ -69,6 +69,18 @@ def evaluate_quality_gate(
         "expected_commit": expected_commit,
         "claim_boundary": "This gate evaluates only supplied artifacts. Missing or unreadable required evidence is not a pass.",
     }
+    if expected_commit is not None:
+        report.update(
+            {
+                "suite": "truth-core",
+                "source_commit": expected_commit,
+                "status": "passed" if not failed else "failed",
+            }
+        )
+        report["report_sha256"] = hashlib.sha256(
+            json.dumps(report, sort_keys=True, separators=(",", ":")).encode("utf-8")
+        ).hexdigest()
+    return report
 
 
 def _load_json(path: Path) -> dict[str, Any]:
