@@ -237,7 +237,8 @@ class Alpha10DeepEvolutionTests(unittest.TestCase):
 
 
     def test_release_identity_is_consistent_across_runtime_version_and_package_metadata(self):
-        import habitat, tomllib, re
+        import habitat, re
+        from habitat.toml_compat import tomllib
         base=Path(__file__).parents[1]
         version=(base/'VERSION').read_text().strip()
         self.assertEqual(habitat.__version__,version)

@@ -1,6 +1,8 @@
-import json, tempfile, unittest, tomllib
+import json, tempfile, unittest
 from pathlib import Path
 import jsonschema
+
+from habitat.toml_compat import tomllib
 from habitat.workspace import HabitatWorkspace
 import habitat
 

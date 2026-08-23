@@ -3,8 +3,9 @@ import unittest
 import zipfile
 import stat
 from pathlib import Path
+from unittest import mock
 
-from habitat.source_bridge import ArchiveLimits, ImportErrorUnsafe, prepare_source, safe_extract_zip
+from habitat.source_bridge import ArchiveLimits, ImportErrorUnsafe, prepare_source, safe_extract_zip, snapshot_metadata
 
 
 class SourceBridgeTests(unittest.TestCase):
@@ -49,5 +50,15 @@ class SourceBridgeTests(unittest.TestCase):
             root = Path(td); z = root / "bad.zip"
             with zipfile.ZipFile(z, "w") as f: f.writestr("../escape.txt", "bad")
             with self.assertRaises(ImportErrorUnsafe): safe_extract_zip(z, root / "out")
+
+    def test_snapshot_metadata_normalizes_equivalent_root_spellings(self):
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            source = root / "made.txt"
+            source.write_text("x")
+            alias = root.parent / "placeholder" / ".." / root.name
+            with mock.patch("habitat.source_bridge.iter_project_files", return_value=[source.resolve()]):
+                snapshot = snapshot_metadata(alias)
+            self.assertEqual(snapshot, {"made.txt": (1, source.stat().st_mtime_ns)})
 
 if __name__ == "__main__": unittest.main()

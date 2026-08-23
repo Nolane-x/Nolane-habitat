@@ -5,10 +5,7 @@ import re
 from pathlib import Path
 from typing import Any
 
-try:
-    import tomllib
-except ImportError:  # pragma: no cover
-    tomllib=None
+from .toml_compat import tomllib
 
 
 def _item(ecosystem: str, name: str, spec: str | None, source: str, scope: str="runtime") -> dict[str,Any]:
@@ -18,7 +15,7 @@ def _item(ecosystem: str, name: str, spec: str | None, source: str, scope: str="
 def snapshot(root: Path) -> dict[str,Any]:
     root=root.resolve(); deps=[]; manifests=[]; lockfiles=[]; parse_errors=[]
     pyproject=root/"pyproject.toml"
-    if pyproject.is_file() and tomllib:
+    if pyproject.is_file():
         manifests.append("pyproject.toml")
         try:
             data=tomllib.loads(pyproject.read_text(encoding="utf-8"))
@@ -89,14 +86,14 @@ def lock_snapshot(root: Path) -> dict[str,Any]:
                     if isinstance(val,dict) and val.get("version"): locked.append({"ecosystem":"npm","name":name,"version":str(val["version"]),"source":"package-lock.json"})
         except Exception as exc: parse_errors.append({"path":"package-lock.json","error":str(exc)})
     poetry=root/"poetry.lock"
-    if poetry.is_file() and tomllib:
+    if poetry.is_file():
         try:
             data=tomllib.loads(poetry.read_text(encoding="utf-8"))
             for pkg in data.get("package") or []:
                 if pkg.get("name") and pkg.get("version"): locked.append({"ecosystem":"python","name":str(pkg["name"]),"version":str(pkg["version"]),"source":"poetry.lock"})
         except Exception as exc: parse_errors.append({"path":"poetry.lock","error":str(exc)})
     uv=root/"uv.lock"
-    if uv.is_file() and tomllib:
+    if uv.is_file():
         try:
             data=tomllib.loads(uv.read_text(encoding="utf-8"))
             for pkg in data.get("package") or []:

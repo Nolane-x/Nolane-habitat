@@ -124,7 +124,8 @@ class Alpha11ObservatoryRuntimeTests(unittest.TestCase):
         self.assertTrue(snap['read_only'])
 
     def test_observatory_assets_are_packaged_source_and_release_identity_is_consistent(self):
-        import habitat, tomllib, re
+        import habitat, re
+        from habitat.toml_compat import tomllib
         base=Path(__file__).parents[1]
         self.assertTrue((base/'habitat'/'observatory_assets'/'index.html').is_file()); self.assertTrue((base/'habitat'/'observatory_assets'/'app.js').is_file())
         version=(base/'VERSION').read_text().strip(); self.assertEqual(habitat.__version__,version)

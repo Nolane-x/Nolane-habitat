@@ -144,6 +144,31 @@ class Alpha17StabilityCompletionTests(unittest.TestCase):
             self.assertEqual(path.read_bytes(), b"updated")
             self.assertEqual(attempts, 2)
 
+    def test_atomic_write_survives_extended_transient_windows_sharing_violations(self):
+        with tempfile.TemporaryDirectory() as td:
+            path = Path(td) / "state.txt"
+            path.write_bytes(b"seed")
+            original_replace = source_bridge.os.replace
+            error = PermissionError(13, "Access is denied")
+            error.winerror = 32
+            attempts = 0
+
+            def replace_after_extended_sharing_violation(src, dst):
+                nonlocal attempts
+                attempts += 1
+                if attempts <= 6:
+                    raise error
+                return original_replace(src, dst)
+
+            with mock.patch(
+                "habitat.source_bridge.os.replace",
+                side_effect=replace_after_extended_sharing_violation,
+            ), mock.patch("habitat.source_bridge.time.sleep"):
+                atomic_write(path, b"updated")
+
+            self.assertEqual(attempts, 7)
+            self.assertEqual(path.read_bytes(), b"updated")
+
 
     def test_ui_input_validation_fails_before_playwright_semantics(self):
         self.assertEqual(BrowserRuntime._normalize_viewport(None), {"width": 1440, "height": 900})

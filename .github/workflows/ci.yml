@@ -42,4 +42,5 @@ jobs:
         with:
           name: habitat-verification-${{ matrix.os }}-py${{ matrix.python }}
           path: .test-artifacts/
+          include-hidden-files: true
           if-no-files-found: warn

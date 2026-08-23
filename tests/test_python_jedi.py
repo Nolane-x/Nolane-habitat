@@ -1,7 +1,8 @@
 import tempfile
-import tomllib
 import unittest
 from pathlib import Path
+
+from habitat.toml_compat import tomllib
 
 from habitat.workspace import HabitatWorkspace
 from habitat.semantic.python_jedi import probe

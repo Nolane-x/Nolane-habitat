@@ -12,7 +12,7 @@ from pathlib import Path, PurePosixPath
 from .util import iter_project_files
 
 
-_WINDOWS_REPLACE_RETRY_DELAYS = (0.005, 0.01, 0.02, 0.04, 0.08)
+_WINDOWS_REPLACE_RETRY_DELAYS = (0.005, 0.01, 0.02, 0.04, 0.08, 0.16, 0.32, 0.64)
 
 
 def _replace_with_retry(tmp: Path, path: Path) -> None:
@@ -105,13 +105,16 @@ def prepare_source(source: Path, habitat_dir: Path) -> tuple[Path, str]:
 
 
 def snapshot_metadata(root: Path) -> dict[str, tuple[int, int]]:
+    canonical_root = root.resolve()
     out: dict[str, tuple[int, int]] = {}
     for path in iter_project_files(root):
         try:
-            st = path.stat()
-        except OSError:
+            canonical_path = path.resolve()
+            st = canonical_path.stat()
+            relative_path = canonical_path.relative_to(canonical_root).as_posix()
+        except (OSError, ValueError):
             continue
-        out[path.relative_to(root).as_posix()] = (st.st_size, st.st_mtime_ns)
+        out[relative_path] = (st.st_size, st.st_mtime_ns)
     return out
 
 
