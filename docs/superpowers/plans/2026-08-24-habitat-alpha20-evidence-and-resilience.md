@@ -44,6 +44,12 @@
 | `tools/run_upgrade_recovery_suite.py` | prove upgrade, restore, and downgrade safety from fixtures | `main(argv) -> int` |
 | `tools/run_scale_suite.py` | measure bounded behavior on a deterministic project corpus | `main(argv) -> int` |
 | `tools/verify_provenance.py` | verify that a release receipt binds source, CI, evidence, and artifacts | `main(argv) -> int` |
+| `habitat/activity_integrity.py` | canonical, redacted hash-chain records for durable activity and checkpoints | `append_activity_record`, `verify_activity_chain` |
+| `tools/run_mutation_recovery_suite.py` | exercise source-mutation journal recovery at each crash boundary | `main(argv) -> int` |
+| `tools/run_protocol_conformance_suite.py` | replay valid and hostile MCP/CLI fixtures without external services | `main(argv) -> int` |
+| `tools/run_semantic_conformance_suite.py` | compare provider-labelled semantic answers to a synthetic truth corpus | `main(argv) -> int` |
+| `tools/run_observatory_budget_suite.py` | prove bounded, redacted, monotonic Observatory read projections | `main(argv) -> int` |
+| `tools/verify_reproducible_build.py` | compare two clean local builds from one immutable candidate | `main(argv) -> int` |
 
 ## Task 1: Introduce a tested SQLite identifier boundary — delivered in Alpha.19 candidate
 
@@ -713,14 +719,185 @@ git commit -m "test(reliability): bind fault evidence to candidate commits"
 
 **Acceptance:** a public release can be traced from artifact back to reviewed source and CI evidence, and there is a rehearsed, non-destructive response when that trust chain is challenged.
 
+## Task 15: Make the workspace activity trail tamper-evident without retaining private reasoning
+
+**Why this matters:** Habitat already records task, mutation, evidence, checkpoint, and Observatory activity. Those records become misleading if a truncated, reordered, or manually altered history can still look authoritative. The integrity layer must prove record continuity while preserving the existing rule that private reasoning and secret-bearing payloads are never exported.
+
+**Files:**
+
+- Create: `habitat/activity_integrity.py`
+- Create: `tests/test_activity_integrity.py`
+- Create: `tools/verify_workspace_ledger.py`
+- Modify: activity emission and checkpoint persistence only at their existing durable write boundary
+- Modify: `docs/OPERATIONS.md` and `docs/runbooks/RECOVERY.md`
+
+**Interfaces:**
+
+- Consumes: a prior digest, a strictly increasing activity sequence, a record class, a redacted payload, and a workspace identity digest.
+- Produces: `append_activity_record(previous_digest: str, sequence: int, record: Mapping[str, object]) -> dict[str, object]` and `verify_activity_chain(records: Sequence[Mapping[str, object]], workspace_digest: str) -> ChainVerdict`.
+
+**Required scenarios:**
+
+- [ ] Canonicalize one public record with its sequence, record class, redacted payload digest, prior digest, and workspace identity digest; calculate the record digest over exactly those fields. Exclude source bodies, prompts, environment values, tokens, absolute paths, and private reasoning before hashing.
+- [ ] Verify a valid chain after workspace close/reopen and bind every checkpoint to the exact last ledger digest. A checkpoint must be rejected when it names an earlier sequence, a different workspace digest, or a mismatched chain head.
+- [ ] Create negative fixtures for a deleted middle record, record reordering, a substituted payload digest, a substituted predecessor digest, an incremented sequence without a valid predecessor, and a foreign-workspace checkpoint. Each must name the first failing sequence and never repair or rewrite the ledger automatically.
+- [ ] Ensure repeated verification is read-only: it opens the workspace, emits no activity event, changes no modification time in the chain store, and returns the same verdict digest.
+- [ ] Provide an export projection containing only record class, sequence, timestamps, bounded redacted summary, and cryptographic bindings. The export must preserve verification while omitting all prohibited values.
+
+**Evidence contract:** `workspace-ledger.json` records fixture digests, verified sequence range, foreign/tamper rejection counts, redaction scan result, candidate commit, and report hash.
+
+**Acceptance:** a reviewer can distinguish a complete, authentic public activity history from an incomplete or altered one without being given private model content or workspace secrets.
+
+## Task 16: Prove crash recovery for source mutation at every journal transition
+
+**Why this matters:** SQLite recovery alone does not prove that the journaled source mutation engine cannot leave a project half-edited. The mutation engine already persists a prepared/applying/committed journal, so its promises need deterministic interruption tests that operate on synthetic projects only.
+
+**Files:**
+
+- Create: `tests/test_mutation_recovery.py`
+- Create: `tools/run_mutation_recovery_suite.py`
+- Modify: `habitat/mutation.py` only if a failure fixture reveals an incomplete recovery transition
+- Modify: `docs/runbooks/RECOVERY.md`
+
+**Interfaces:**
+
+- Consumes: `MutationEngine.apply`, its persisted journal, a synthetic source tree digest, an injected transition name, and a fresh `HabitatWorkspace` reopen.
+- Produces: `run_recovery_case(case: str, crash_at: str) -> dict[str, object]` where `crash_at` is one of `journal-prepared`, `journal-applying`, `after-write`, `after-structural-change`, or `before-commit-marker`.
+
+**Required scenarios:**
+
+- [ ] Start from a fixture containing a replacement, file creation, move, and deletion. Interrupt exactly after each named journal transition, close all workspace handles, reopen in a new process, and assert one of only two terminal states: the original tree digest or the complete intended tree digest. A mixed digest is a failure.
+- [ ] Verify journal recovery is idempotent: reopen and recover twice; the second pass reports no additional work, preserves the terminal digest, and does not create a new transaction.
+- [ ] Stage two disjoint mutations from the same revision and prove their rebased result matches the ordered application of both changes. Stage two overlapping mutations and prove one receives a typed conflict without changing the other mutation's files.
+- [ ] Force controlled failures from source write, rename/move, permission update, journal write, and refresh/reindex boundaries. The report must preserve the original exception class but never store source body text.
+- [ ] Run path fixtures for Windows drive-style, backslash, Unicode, spaces, and POSIX separators through the same relative-path normalizer; traversal, UNC/drive escape, and a symlink escape must fail before any journal is written.
+
+**Evidence contract:** `mutation-recovery.json` records case names, pre/post tree digests, journal states, recovery actions, conflict outcomes, cleanup assertions, candidate commit, and report hash.
+
+**Acceptance:** every supported source mutation has an all-or-nothing recovery outcome after a simulated process interruption, and unsafe paths cannot reach the journal or filesystem writer.
+
+## Task 17: Replay hostile protocol inputs and prove read-only calls stay read-only
+
+**Why this matters:** MCP and CLI requests are boundary inputs, not trusted in-process calls. Static happy-path fixtures protect compatibility, but they do not show that malformed, oversized, duplicated, or stale inputs preserve the tool's capability boundary and disclose only safe diagnostics.
+
+**Files:**
+
+- Create: `tests/fixtures/protocol/adversarial-v1alpha2.json`
+- Create: `tests/test_protocol_conformance.py`
+- Create: `tools/run_protocol_conformance_suite.py`
+- Modify: `habitat/mcp_adapter.py`, CLI request parsing, or request validators only when a fixture exposes a boundary failure
+- Modify: `docs/COMPATIBILITY.md` and `docs/SECURITY.md`
+
+**Interfaces:**
+
+- Consumes: versioned request fixtures, a temporary workspace digest, an agent handle, and the public MCP/CLI request adapters.
+- Produces: `replay_protocol_case(case: Mapping[str, object]) -> ProtocolResult` with `outcome`, `error_class`, `response_shape`, `workspace_digest_before`, and `workspace_digest_after`.
+
+**Required scenarios:**
+
+- [ ] Maintain a deterministic corpus covering missing required fields, wrong scalar/container types, unknown fields, duplicate JSON keys, invalid UTF-8 surrogate forms, stale/foreign agent and checkpoint handles, oversized strings/lists, empty change payloads, encoded path traversal, and invalid semantic identifiers.
+- [ ] For every declared read-only tool, compare the workspace tree digest, SQLite logical-state digest, transaction count, agent-session count, and activity sequence before/after replay. A request may add an explicitly documented activity event only if the contract says it can; it must never create source or configuration writes.
+- [ ] For mutation tools, prove validation failures occur before transaction preparation, backup creation, journal writing, source writes, process spawn, or network access. A failure response must have a stable typed envelope and omit paths outside the workspace, source text, secrets, and stack traces.
+- [ ] Apply deterministic bounded mutation-style transformations to every fixture field (delete, duplicate, type swap, boundary length, Unicode normalization, and key reorder). Persist only the seed, corpus digest, case count, aggregate outcomes, and first counterexample digest.
+- [ ] Replay the exact corpus against the current contract fixture and the prior supported fixture. A response-shape difference requires an explicit version change or a compatibility exception record; silent drift blocks promotion.
+
+**Evidence contract:** `protocol-conformance.json` records fixture and generator digests, executed case count, state-change violations, disclosure scan result, version-pair comparison, candidate commit, and report hash.
+
+**Acceptance:** public boundary behavior is both backwards-auditable and hostile-input-safe; an invalid request cannot acquire mutation authority or leak sensitive context.
+
+## Task 18: Calibrate semantic answers against a provider-labelled truth corpus
+
+**Why this matters:** A semantic system can appear useful while returning unsupported, stale, or fallback-derived claims as though they came from an authoritative provider. Habitat must measure provider availability, source anchors, and answer correctness separately, then expose a truthful degraded state.
+
+**Files:**
+
+- Create: `tests/fixtures/semantic-conformance/` with synthetic Python and TypeScript projects
+- Create: `tests/test_semantic_conformance.py`
+- Create: `tools/run_semantic_conformance_suite.py`
+- Modify: semantic provider result envelopes and provider-status handling only if the corpus exposes an ambiguity
+- Modify: `docs/COMPATIBILITY.md` and `docs/OPERATIONS.md`
+
+**Interfaces:**
+
+- Consumes: a fixture manifest containing expected symbols, definitions, references, ambiguous names, unsupported constructs, provider availability, and expected trust labels.
+- Produces: `evaluate_semantic_case(case: SemanticCase, provider: Provider) -> SemanticVerdict` with `matches`, `missing`, `unexpected`, `provider`, `availability`, `trust`, and `anchor_digest`.
+
+**Required scenarios:**
+
+- [ ] Create compact synthetic fixtures for nested scopes, same-name symbols, aliases/imports, renames, generated-looking paths, unsupported language constructs, malformed source, and a provider that is intentionally unavailable. Fixtures must contain no third-party or user source.
+- [ ] Require every returned definition/reference/mutation anchor to resolve to an exact fixture location and expected provider/trust label. A heuristic or fallback answer may be returned only when marked as such; it must never be labelled authoritative or semantic-provider verified.
+- [ ] Compare cold and warm provider runs, then edit one fixture file and prove stale anchors are rejected or revalidated. Do not treat a cached answer as fresh merely because its symbol name still exists.
+- [ ] Kill or timeout the TypeScript/Jedi child provider in a controlled test; report `unavailable` or `degraded`, prove cleanup succeeds, and assert that no partial result is reported as a passed semantic answer.
+- [ ] Keep pass-rate thresholds meaningful: every required corpus assertion is exact, while optional-provider skips are counted and separately bounded. A new skip or a provider-label mismatch fails the evidence gate rather than improving a percentage.
+
+**Evidence contract:** `semantic-conformance.json` records corpus digest, per-provider availability and exact-match counts, stale-anchor results, degradation/cleanup results, skip reasons, candidate commit, and report hash.
+
+**Acceptance:** users and agents can tell whether a semantic fact is exact, heuristic, unavailable, stale, or unsupported, and the system has regression evidence for every distinction.
+
+## Task 19: Make the Observatory a bounded, private, truthful operational projection
+
+**Why this matters:** The Observatory is a human-facing read model. Its current read-only intention is valuable, but it must retain that property under large state, malformed stored metadata, concurrent activity, and provider failure. A visual dashboard that blocks work or quietly hides an error is not trustworthy observability.
+
+**Files:**
+
+- Create: `tests/test_observatory_budget.py`
+- Create: `tools/run_observatory_budget_suite.py`
+- Modify: `habitat/workspace.py`, `habitat/storage.py`, and `habitat/observatory.py` only to introduce bounded read queries, explicit snapshot metadata, or safe serialization
+- Modify: `docs/OBSERVATORY.md` and `docs/OPERATIONS.md`
+
+**Interfaces:**
+
+- Consumes: a workspace with synthetic files, symbols, agents, episodes, evidence, activity, malformed metadata, and concurrent append activity.
+- Produces: `observatory_snapshot() -> dict` extended only with `snapshot_bounds`, `snapshot_status`, `activity_seq`, and a redacted error summary when a bounded subprojection cannot be read.
+
+**Required scenarios:**
+
+- [ ] Replace fetch-all-then-slice behavior at each projection boundary with storage queries that apply a stable order and limit before materializing rows. Record declared limits in `snapshot_bounds`; no field is permitted to grow with total project size without an explicit reviewed budget.
+- [ ] Verify the snapshot remains read-only: compare tree, logical database, transaction, agent-session, and activity state before/after repeated HTTP snapshot fetches. The local server may serve a snapshot but cannot mint agents, mutate source, or execute verification.
+- [ ] Feed malformed JSON metadata, redaction candidates, oversized labels, and a failed semantic provider into the projection. The response must remain valid JSON, redact sensitive values, cap labels/summaries, and expose a typed bounded failure/degraded status rather than a false success.
+- [ ] Interleave activity appends with repeated snapshots. `activity_seq` must be monotonic; each response declares its observed range; a client can detect a gap without interpreting a gap as a completed action.
+- [ ] Measure snapshot latency and materialized row/byte counts for the small and medium synthetic corpora. Enforce broad platform-specific ceilings and assert that the server and workspace close with no live listener, provider, or SQLite handle.
+
+**Evidence contract:** `observatory-budget.json` records limits, corpora digests, maximum materialized rows/bytes, latency maxima, privacy scan result, degradation cases, cleanup result, candidate commit, and report hash.
+
+**Acceptance:** the Observatory remains a useful read-only view as a workspace grows, makes degradation visible, and never becomes a hidden control plane or a source of private data disclosure.
+
+## Task 20: Require reproducible, hermetic package builds in addition to artifact inspection
+
+**Why this matters:** Package member inspection proves that a single artifact looks intentional. It does not prove that the reviewed source produced it consistently. A candidate needs two independent clean builds with pinned build inputs and a clear verdict when byte-for-byte reproducibility is not yet possible.
+
+**Files:**
+
+- Create: `tools/verify_reproducible_build.py`
+- Create: `tests/test_reproducible_build.py`
+- Modify: `pyproject.toml`, CI build steps, and release manifest builder only when needed to declare/replay immutable build inputs
+- Modify: `docs/runbooks/RELEASE-ADMISSION.md` and `docs/OPERATIONS.md`
+
+**Interfaces:**
+
+- Consumes: an exact commit, declared Python/build-backend versions, a fixed `SOURCE_DATE_EPOCH`, clean temporary source copies, and wheel/sdist artifact bytes.
+- Produces: `build_twice_and_compare(source_commit: str, build_spec: BuildSpec) -> ReproducibilityVerdict` with artifact hashes, build-input digest, reproducibility status, and normalized-difference reason.
+
+**Required scenarios:**
+
+- [ ] Build the wheel and sdist twice from separate clean copies of the same checkout using no source-tree import, no implicit dependency resolution, the declared build backend, and a fixed timestamp source. Compare artifact SHA-256 values byte-for-byte on the same OS/Python lane.
+- [ ] If a format cannot yet be byte-reproducible, require a deterministic member-and-metadata comparison that enumerates the exact differing fields. The verdict is `not-reproducible`, not `passed`, until an explicit temporary exception with expiry is independently reviewed.
+- [ ] Reject a changed `VERSION`, build backend, dependency declaration, build environment marker, generated file, or source commit between the two builds. Test each substitution by making one input differ and asserting the first failing binding is reported.
+- [ ] Persist the build interpreter version, backend distribution/version/hash, project metadata digest, environment allow-list digest, fixed epoch, command digest, and both artifact hashes. Never persist home paths, environment secrets, tokens, or arbitrary environment variables.
+- [ ] Run the produced artifacts through the existing offline install/member checks after comparison. A reproducible but uninstallable package and an installable but non-reproducible package both block promotion.
+
+**Evidence contract:** `reproducible-build.json` records both build-input digests, artifact hashes, comparison result, allowed difference rationale if any, downstream install/member verdicts, candidate commit, and report hash.
+
+**Acceptance:** release evidence can show whether the package was rebuilt from the reviewed source under declared inputs, rather than merely asserting that one CI-generated archive exists.
+
 ## Delivery sequence and non-negotiable gates
 
 | Milestone | Work | Promotion rule |
 |---|---|---|
 | Alpha.19 safety baseline | Tasks 1–2 | Delivered only with four-way CI and CodeQL on the exact commit. This is an engineering baseline, not release admission. |
-| Alpha.20 recovery core | Tasks 3, 5, 6, 12 | No candidate while semantic cleanup, transaction recovery, or upgrade/restore reports are missing or nonzero. |
-| Contract and privacy boundary | Tasks 7, 8, 9, 11 | No candidate while a public-surface, redaction, limit, or authorization deny-path test fails. |
-| Distribution and provenance | Tasks 4, 10, 13, 14 | No tag or GitHub release without independent review, artifact verification, scale evidence, and a verified provenance receipt. |
+| Alpha.20 recovery core | Tasks 3, 5, 6, 12, 16 | No candidate while semantic cleanup, database/source-transaction recovery, or upgrade/restore reports are missing or nonzero. |
+| Contract, truth, and privacy boundary | Tasks 7, 8, 9, 11, 15, 17, 18, 19 | No candidate while a public-surface, ledger, semantic truth, redaction, resource-limit, Observatory, or authorization deny-path test fails. |
+| Distribution and provenance | Tasks 4, 10, 13, 14, 20 | No tag or GitHub release without independent review, artifact inspection, reproducible-build, scale, and verified provenance evidence. |
 
 The implementation order is intentionally safety-first: fix a failing boundary with its smallest deterministic test; attach a commit-bound report; then widen coverage to recovery, compatibility, privacy, and scale. A green test run never substitutes for the next gate's evidence.
 
@@ -736,9 +913,10 @@ The implementation order is intentionally safety-first: fix a failing boundary w
 - [ ] Confirm CodeQL passes for Python and JavaScript/TypeScript on the exact candidate commit.
 - [ ] Run database recovery, contract, export-redaction, resource-limit, and distribution suites; retain their commit-bound reports.
 - [ ] Run authorization, upgrade-recovery, scale, and provenance suites; retain their commit-bound reports.
+- [ ] Run workspace-ledger, source-mutation recovery, protocol conformance, semantic conformance, Observatory budget, and reproducible-build suites; retain their commit-bound reports.
 - [ ] Build a release manifest and run `promote_release.py --dry-run`; retain a blocked verdict when independent reviewer evidence is absent.
 - [ ] Update README only if a verified, user-visible behavior changed; do not describe planned fault injection, scanner policy, or release promotion as shipped until its task is complete.
 
 ## Completion definition
 
-The plan is complete when all dynamic SQLite identifiers are allow-listed; database recovery, upgrade/restore, compatibility, privacy, explicit authorization, resource limits, scanner, reliability, scale, distribution, and provenance reports are commit-bound evidence; semantic providers cannot outlive their lifecycle boundary; and release promotion rejects every candidate missing independent reviewer evidence. A public tag or GitHub release remains a separate action after an independent reviewer approves the exact manifest.
+The plan is complete when all dynamic SQLite identifiers are allow-listed; database and source-mutation recovery, upgrade/restore, compatibility, hostile-input conformance, semantic truth calibration, privacy, tamper-evident activity history, explicit authorization, Observatory budgets, resource limits, scanner, reliability, scale, distribution, reproducible-build, and provenance reports are commit-bound evidence; semantic providers cannot outlive their lifecycle boundary; and release promotion rejects every candidate missing independent reviewer evidence. A public tag or GitHub release remains a separate action after an independent reviewer approves the exact manifest.
