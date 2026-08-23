@@ -22,6 +22,13 @@ SHARDS={
 
 def run_group(root: Path, name: str, modules: list[str], timeout: int) -> dict:
     qualified=["tests."+m for m in modules]; started=time.monotonic()
+    try:
+        return _run_group(root, name, qualified, timeout, started)
+    except Exception as exc:
+        return {"group":name,"modules":qualified,"status":"infra-error","returncode":None,"tests":None,"wall_ms":round((time.monotonic()-started)*1000,2),"error":f"{type(exc).__name__}: {exc}"}
+
+
+def _run_group(root: Path, name: str, qualified: list[str], timeout: int, started: float) -> dict:
     # Do not capture through OS pipes: browser/Node/language-service descendants can inherit
     # those descriptors and keep communicate() waiting for EOF after unittest itself exits.
     with tempfile.TemporaryDirectory(prefix="habitat-test-matrix-") as td:
@@ -78,7 +85,11 @@ def main():
     report={"schema":2,"mode":args.mode,"group_count":len(rows),"known_test_count":known,"statuses":statuses,"wall_ms":round((time.monotonic()-started)*1000,2),"groups":rows,
             "claim_boundary":"Default balanced-shard CI feedback. Every selected unittest module is executed, but a separate monolithic long-lived-host probe remains useful for lifecycle/pathological-state testing."}
     text=json.dumps(report,indent=2,sort_keys=True)
-    if args.out: Path(args.out).write_text(text,encoding='utf-8')
+    if args.out:
+        output=Path(args.out); output.parent.mkdir(parents=True,exist_ok=True)
+        temporary=output.with_name(f".{output.name}.tmp")
+        temporary.write_text(text,encoding='utf-8')
+        temporary.replace(output)
     print(json.dumps({"mode":args.mode,"groups":len(rows),"known_tests":known,"statuses":statuses,"wall_ms":report['wall_ms']},sort_keys=True))
     if statuses['failed'] or statuses['timeout'] or statuses['infra-error']: raise SystemExit(1)
 if __name__=='__main__': main()

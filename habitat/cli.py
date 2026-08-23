@@ -13,6 +13,7 @@ def main(argv=None):
     sub=p.add_subparsers(dest="cmd",required=True)
     sp=sub.add_parser("create"); sp.add_argument("source"); sp.add_argument("workspace"); sp.add_argument("--backend",choices=["local","mirror"],default="local")
     sp=sub.add_parser("enter"); sp.add_argument("workspace")
+    sp=sub.add_parser("doctor"); sp.add_argument("workspace")
     sp=sub.add_parser("backend-info"); sp.add_argument("workspace")
     sp=sub.add_parser("refresh"); sp.add_argument("workspace")
     sp=sub.add_parser("orient"); sp.add_argument("workspace"); sp.add_argument("task"); sp.add_argument("--budget",type=int,default=18)
@@ -45,6 +46,7 @@ def main(argv=None):
         ws=HabitatWorkspace(Path(args.workspace))
         try:
             if args.cmd=="enter": emit(ws.enter())
+            elif args.cmd=="doctor": emit(ws.storage_doctor())
             elif args.cmd=="backend-info": emit(ws.backend_info())
             elif args.cmd=="refresh": emit(ws.refresh())
             elif args.cmd=="orient": emit(ws.orient(args.task,args.budget))

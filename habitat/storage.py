@@ -3,13 +3,38 @@ from __future__ import annotations
 import json
 import re
 import sqlite3
+from contextlib import contextmanager
 from pathlib import Path
 from typing import Iterable
 
 from .model import DiagnosticRecord, EventRecord, FileRecord, OccurrenceRecord, RelationRecord, Revision, SymbolRecord
+from .storage_migrations import (
+    SCHEMA_VERSION,
+    additive_schema_issues,
+    create_pre_migration_backup,
+    migration_backup_version,
+    preflight_schema_version,
+    repair_additive_columns,
+    required_schema_issues,
+    verify_required_structure,
+)
 
-SCHEMA_VERSION = 22
 _JSON_TABLES = {"transactions", "runs", "context_slices", "sessions"}
+
+
+class _TransactionAwareConnection(sqlite3.Connection):
+    """Prevent legacy helper commits from escaping an explicit Store transaction."""
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self._habitat_transaction_depth = 0
+
+    def commit(self) -> None:
+        if self._habitat_transaction_depth == 0:
+            super().commit()
+
+    def commit_atomic(self) -> None:
+        super().commit()
 
 
 def _index_terms(value: str) -> list[str]:
@@ -20,11 +45,43 @@ class Store:
     def __init__(self, db_path: Path):
         self.db_path = db_path
         self.db_path.parent.mkdir(parents=True, exist_ok=True)
-        self.conn = sqlite3.connect(str(db_path))
+        self.conn = sqlite3.connect(str(db_path), factory=_TransactionAwareConnection)
         self.conn.row_factory = sqlite3.Row
         self._init_schema()
 
+    @contextmanager
+    def atomic(self):
+        """Commit all workspace updates together, or roll them all back on failure."""
+
+        nested = self.conn.in_transaction or self.conn._habitat_transaction_depth > 0
+        savepoint = f"habitat_atomic_{self.conn._habitat_transaction_depth}"
+        if nested:
+            self.conn.execute(f"SAVEPOINT {savepoint}")
+        else:
+            self.conn.execute("BEGIN IMMEDIATE")
+        self.conn._habitat_transaction_depth += 1
+        try:
+            yield
+        except BaseException:
+            if nested:
+                self.conn.execute(f"ROLLBACK TO SAVEPOINT {savepoint}")
+                self.conn.execute(f"RELEASE SAVEPOINT {savepoint}")
+            else:
+                self.conn.rollback()
+            raise
+        else:
+            if nested:
+                self.conn.execute(f"RELEASE SAVEPOINT {savepoint}")
+            else:
+                self.conn.commit_atomic()
+        finally:
+            self.conn._habitat_transaction_depth -= 1
+
     def _init_schema(self) -> None:
+        preflight_schema_version(self.conn)
+        backup_version = migration_backup_version(self.conn)
+        if backup_version is not None:
+            create_pre_migration_backup(self.conn, self.db_path, backup_version)
         c = self.conn.cursor()
         c.executescript(
             """
@@ -337,17 +394,17 @@ class Store:
         )
         try:
             c.execute("CREATE VIRTUAL TABLE IF NOT EXISTS search_fts USING fts5(path,title,body,content='',contentless_delete=1)")
-            self.set_meta("fts5", "contentless")
+            self._set_meta_uncommitted("fts5", "contentless")
         except sqlite3.OperationalError:
             try:
                 c.execute("CREATE VIRTUAL TABLE IF NOT EXISTS search_fts USING fts5(path,title,body)")
-                self.set_meta("fts5", "regular")
+                self._set_meta_uncommitted("fts5", "regular")
             except sqlite3.OperationalError:
-                self.set_meta("fts5", "0")
-        cols={r["name"] for r in self.conn.execute("PRAGMA table_info(context_faults)").fetchall()}
-        if "authority_bytes_read" not in cols:
-            self.conn.execute("ALTER TABLE context_faults ADD COLUMN authority_bytes_read INTEGER NOT NULL DEFAULT 0")
-        self.set_meta("schema_version", str(SCHEMA_VERSION))
+                self._set_meta_uncommitted("fts5", "0")
+        repair_additive_columns(self.conn)
+        verify_required_structure(self.conn)
+        self.conn.execute(f"PRAGMA user_version = {SCHEMA_VERSION}")
+        self._set_meta_uncommitted("schema_version", str(SCHEMA_VERSION))
         self.conn.commit()
         self._ensure_symbol_terms_index()
 
@@ -456,14 +513,47 @@ class Store:
             finally:
                 self.conn = None
 
+    def doctor(self) -> dict:
+        """Return a read-only health report for the Habitat workspace database."""
+
+        integrity = [row[0] for row in self.conn.execute("PRAGMA integrity_check")]
+        foreign_key_violations = [
+            dict(row) for row in self.conn.execute("PRAGMA foreign_key_check")
+        ]
+        meta_version = self.get_meta("schema_version")
+        user_version = self.conn.execute("PRAGMA user_version").fetchone()[0]
+        missing_columns = required_schema_issues(self.conn)
+        schema_ok = (
+            meta_version == str(SCHEMA_VERSION)
+            and user_version == SCHEMA_VERSION
+            and not missing_columns
+        )
+        return {
+            "ok": integrity == ["ok"] and not foreign_key_violations and schema_ok,
+            "schema": {
+                "expected_version": SCHEMA_VERSION,
+                "meta_version": meta_version,
+                "user_version": user_version,
+                "missing_columns": missing_columns,
+            },
+            "sqlite": {
+                "integrity_check": integrity,
+                "foreign_key_violations": foreign_key_violations,
+                "journal_mode": self.conn.execute("PRAGMA journal_mode").fetchone()[0],
+            },
+        }
+
     def __del__(self):
         try:
             self.close()
         except Exception:
             pass
 
-    def set_meta(self, key: str, value: str) -> None:
+    def _set_meta_uncommitted(self, key: str, value: str) -> None:
         self.conn.execute("INSERT OR REPLACE INTO meta(key,value) VALUES(?,?)", (key, value))
+
+    def set_meta(self, key: str, value: str) -> None:
+        self._set_meta_uncommitted(key, value)
         self.conn.commit()
 
     def get_meta(self, key: str, default: str | None = None) -> str | None:

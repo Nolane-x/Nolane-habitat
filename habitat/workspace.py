@@ -6,6 +6,7 @@ import re
 import shutil
 import time
 from collections import Counter
+from functools import wraps
 from pathlib import Path
 
 from .compiler import COMPILE_CACHE_VERSION, CompiledFile, compile_cache_fingerprint, compile_file
@@ -44,6 +45,14 @@ from .dependency_cognition import snapshot as dependency_snapshot, query as depe
 from .execution import containment_probe
 from .sandbox import bubblewrap_probe, sandbox_capability_summary
 from .retention import RetentionPolicy, plan as retention_plan, compact as retention_compact, harden_state_permissions
+
+
+def _atomic_workspace_refresh(method):
+    @wraps(method)
+    def wrapped(self, *args, **kwargs):
+        with self.store.atomic():
+            return method(self, *args, **kwargs)
+    return wrapped
 
 
 class HabitatWorkspace:
@@ -88,6 +97,11 @@ class HabitatWorkspace:
             self.backend.close()
         finally:
             self.store.close()
+
+    def storage_doctor(self) -> dict:
+        """Inspect the local Habitat database without refreshing project state."""
+
+        return self.store.doctor()
 
     def __enter__(self):
         return self
@@ -1770,6 +1784,7 @@ class HabitatWorkspace:
             "graph_delta": graph_delta, "effect_twin": effect_report, "dataflow_twin": dataflow_report,
         }
 
+    @_atomic_workspace_refresh
     def refresh(self, reason: str = "refresh") -> dict:
         """Deep integrity refresh.
 
@@ -1819,6 +1834,7 @@ class HabitatWorkspace:
         }
         return result
 
+    @_atomic_workspace_refresh
     def refresh_paths(self, paths: list[str], reason: str = "targeted-refresh") -> dict:
         """Refresh metadata-observed candidate paths while hashing only those candidates.
 
