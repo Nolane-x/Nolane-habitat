@@ -8,13 +8,18 @@ import json
 import os
 from pathlib import Path
 import re
+import stat
 import subprocess
 import sys
+import tarfile
 from tempfile import NamedTemporaryFile, TemporaryDirectory
 from typing import Any, Callable
+import zipfile
 
 
 _COMMIT_SHA = re.compile(r"^[0-9a-f]{40}$")
+_FORBIDDEN_PARTS = frozenset({".habitat", ".test-artifacts", "__pycache__"})
+_FORBIDDEN_SUFFIXES = (".db", ".key", ".pem", ".p12", ".pfx", ".sqlite", ".sqlite3")
 
 
 def _sha256_file(path: Path) -> str:
@@ -66,6 +71,70 @@ def _smoke_import(wheel: Path, expected_version: str) -> bool:
         return checked.returncode == 0
 
 
+def _member_reason(path: str) -> str | None:
+    normalized = path.replace("\\", "/")
+    parts = tuple(part for part in normalized.split("/") if part)
+    if not parts or normalized.startswith("/") or ".." in parts or ":" in parts[0]:
+        return "unsafe-member"
+    lower_parts = tuple(part.lower() for part in parts)
+    if any(part in _FORBIDDEN_PARTS for part in lower_parts):
+        return "forbidden-member"
+    name = lower_parts[-1]
+    if name.startswith(".env") or name.endswith(_FORBIDDEN_SUFFIXES):
+        return "forbidden-member"
+    return None
+
+
+def _audit_wheel(path: Path) -> tuple[list[dict[str, Any]], list[str]]:
+    members: list[dict[str, Any]] = []
+    failures: list[str] = []
+    try:
+        with zipfile.ZipFile(path) as archive:
+            for entry in sorted(archive.infolist(), key=lambda item: item.filename):
+                if entry.is_dir():
+                    continue
+                reason = _member_reason(entry.filename)
+                if stat.S_ISLNK(entry.external_attr >> 16):
+                    reason = "unsafe-member"
+                if reason:
+                    failures.append(f"wheel:{reason}:{entry.filename}")
+                members.append({"path": entry.filename, "bytes": entry.file_size})
+    except (OSError, zipfile.BadZipFile):
+        failures.append("wheel:archive-invalid")
+    return members, failures
+
+
+def _audit_sdist(path: Path) -> tuple[list[dict[str, Any]], list[str]]:
+    members: list[dict[str, Any]] = []
+    failures: list[str] = []
+    try:
+        with tarfile.open(path, "r:gz") as archive:
+            for entry in sorted(archive.getmembers(), key=lambda item: item.name):
+                if entry.isdir():
+                    continue
+                reason = _member_reason(entry.name)
+                if entry.issym() or entry.islnk() or entry.isdev():
+                    reason = "unsafe-member"
+                if reason:
+                    failures.append(f"sdist:{reason}:{entry.name}")
+                members.append({"path": entry.name, "bytes": entry.size})
+    except (OSError, tarfile.TarError):
+        failures.append("sdist:archive-invalid")
+    return members, failures
+
+
+def _audit_members(expected: dict[str, Path]) -> tuple[dict[str, list[dict[str, Any]]], list[str]]:
+    members: dict[str, list[dict[str, Any]]] = {}
+    failures: list[str] = []
+    for name, path in expected.items():
+        if not path.is_file():
+            continue
+        rows, row_failures = _audit_wheel(path) if name == "wheel" else _audit_sdist(path)
+        members[name] = rows
+        failures.extend(row_failures)
+    return members, failures
+
+
 def verify_distribution(
     *,
     source_commit: str,
@@ -81,6 +150,8 @@ def verify_distribution(
         "sdist": dist / f"nolane_habitat-{package_version}.tar.gz",
     }
     failures = [f"{name}:missing" for name, path in expected.items() if not path.is_file()]
+    members, member_failures = _audit_members(expected)
+    failures.extend(member_failures)
     wheel = expected["wheel"]
     smoke_passed = False
     if wheel.is_file():
@@ -98,6 +169,10 @@ def verify_distribution(
         "source_commit": source_commit,
         "version": version,
         "artifacts": artifacts,
+        "package_members": members,
+        "member_manifest_sha256": hashlib.sha256(
+            json.dumps(members, sort_keys=True, separators=(",", ":")).encode("utf-8")
+        ).hexdigest(),
         "wheel_smoke_import": smoke_passed,
         "failures": failures,
         "status": "passed" if not failures else "failed",
