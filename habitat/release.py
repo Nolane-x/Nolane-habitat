@@ -8,7 +8,7 @@ from typing import Any, Mapping
 
 
 REQUIRED_REPORTS = {
-    "alpha-candidate": frozenset({"truth-core", "matrix", "faults", "artifacts", "scanner"}),
+    "alpha-candidate": frozenset({"truth-core", "matrix", "faults", "artifacts", "scanner", "db-recovery"}),
     "beta-readiness": frozenset({"semantic", "context", "memory", "privacy"}),
     "beta-candidate": frozenset({"coordination", "mcp-soak", "observatory", "scale"}),
     "production-candidate": frozenset({"security", "slo", "sbom", "reproducibility"}),

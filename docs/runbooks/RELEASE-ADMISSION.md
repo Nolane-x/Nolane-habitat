@@ -2,7 +2,7 @@
 
 `tools/promote_release.py` evaluates a supplied release manifest and writes a machine-readable verdict. It never creates a Git tag, publishes a package, uploads an artifact, or creates a GitHub release.
 
-For an alpha candidate, the gate requires hash-bound `truth-core`, `matrix`, `faults`, `artifacts`, and `scanner` reports, at least one artifact, and at least one review record. The review record is hashed by the builder; its digest must not be reused from any report or artifact. This is a binding check, not a claim that a filename proves reviewer identity—follow the independent-review procedure before supplying the record.
+For an alpha candidate, the gate requires hash-bound `truth-core`, `matrix`, `faults`, `artifacts`, `scanner`, and `db-recovery` reports, at least one artifact, and at least one review record. The review record is hashed by the builder; its digest must not be reused from any report or artifact. This is a binding check, not a claim that a filename proves reviewer identity—follow the independent-review procedure before supplying the record.
 
 ## CI scanner evidence
 
@@ -30,6 +30,7 @@ python tools\build_release_manifest.py --version 0.1.0-alpha.19 --commit $commit
   --report faults=.test-artifacts\faults.json `
   --report artifacts=.test-artifacts\artifacts.json `
   --report scanner=.test-artifacts\semgrep-workflows.json `
+  --report db-recovery=.test-artifacts\db-recovery.json `
   --artifact wheel=dist\nolane_habitat-0.1.0a19-py3-none-any.whl `
   --review independent-review=reports\independent-review.json `
   --out dist\release-manifest.json
