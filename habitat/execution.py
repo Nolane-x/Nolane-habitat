@@ -11,6 +11,7 @@ import platform
 import re
 import sys
 import time
+import threading
 try:
     import resource
 except ImportError:  # pragma: no cover - Windows
@@ -21,9 +22,10 @@ from pathlib import Path
 from .model import ExecutionReceipt
 from .source_bridge import snapshot_metadata
 from .testing.normalize import normalize_test_output
-from .util import stable_id
+from .util import iter_project_files, stable_id
 
 MAX_CAPTURE = 64_000
+_PYCACHE_PATH_LOCK = threading.Lock()
 
 _SECRET_ENV_RE = re.compile(r"(?i)(token|secret|password|passwd|api[_-]?key|private[_-]?key|credential|aws_|github_|openai_)")
 
@@ -97,6 +99,32 @@ def _python_has_module(exe: str, module: str) -> bool:
         return proc.returncode == 0
     except Exception:
         return False
+
+
+def _prepare_python_bytecode_cache(root: Path) -> Path:
+    """Reuse dependency bytecode while invalidating every project Python module.
+
+    A fresh PYTHONPYCACHEPREFIX per verification avoids timestamp-based stale
+    project bytecode, but cold-compiles the entire test toolchain on every run.
+    The cache remains outside the source tree and is stable per project; only
+    project .py entries are removed before execution.
+    """
+    cache_root = Path(tempfile.gettempdir()) / "nolane-habitat-pycache" / stable_id("python-cache", str(root.resolve())).replace(":", "-")
+    cache_root.mkdir(parents=True, exist_ok=True)
+    with _PYCACHE_PATH_LOCK:
+        previous = sys.pycache_prefix
+        sys.pycache_prefix = str(cache_root)
+        try:
+            for source in iter_project_files(root, respect_ignore=False):
+                if source.suffix.lower() != ".py":
+                    continue
+                try:
+                    Path(importlib.util.cache_from_source(str(source))).unlink(missing_ok=True)
+                except (OSError, ValueError):
+                    pass
+        finally:
+            sys.pycache_prefix = previous
+    return cache_root
 
 
 
@@ -207,10 +235,10 @@ def run_action(root: Path, capability: str, argv: list[str], timeout_s: int = 60
         outp=Path(td)/"stdout.bin"; errp=Path(td)/"stderr.bin"
         if capability.startswith("python."):
             # CPython timestamp bytecode can be stale after a same-size source edit within one
-            # second. A per-run cache makes verification observe source state without mutating
-            # the project's own __pycache__ directories.
+            # second. An isolated cache makes verification observe source state without mutating
+            # the project's own __pycache__ directories, while preserving dependency startup time.
             execution_env = dict(popen_kwargs.get("env") or os.environ)
-            execution_env["PYTHONPYCACHEPREFIX"] = str(Path(td) / "pycache")
+            execution_env["PYTHONPYCACHEPREFIX"] = str(_prepare_python_bytecode_cache(root))
             popen_kwargs["env"] = execution_env
         with outp.open("wb") as out_f, errp.open("wb") as err_f:
             popen_kwargs["stdout"]=out_f; popen_kwargs["stderr"]=err_f

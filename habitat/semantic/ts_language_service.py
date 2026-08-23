@@ -3,6 +3,7 @@ from __future__ import annotations
 import atexit
 import json
 import os
+import queue
 import shutil
 import subprocess
 import threading
@@ -11,6 +12,9 @@ from typing import Any
 
 from .typescript import _probe
 from ..util import stable_id
+
+
+TS_SERVICE_RESPONSE_TIMEOUT_S = 30.0
 
 
 TS_SERVICE_SCRIPT = r'''
@@ -99,9 +103,26 @@ class TypeScriptLanguageServiceProcess:
             raise RuntimeError("TypeScript language service is not running")
         req={"cmd":"analyze","root":str(self.root),"files":files,"file_states":file_states,"scan_files":scan_files}
         with self._lock:
+            if self._closed or self.proc.poll() is not None:
+                raise RuntimeError("TypeScript language service is not running")
             assert self.proc.stdin is not None and self.proc.stdout is not None
             self.proc.stdin.write(json.dumps(req,separators=(",",":"))+"\n"); self.proc.stdin.flush()
-            line=self.proc.stdout.readline()
+            responses: queue.Queue[str | Exception] = queue.Queue(maxsize=1)
+
+            def read_response() -> None:
+                try:
+                    responses.put(self.proc.stdout.readline())
+                except Exception as exc:
+                    responses.put(exc)
+
+            threading.Thread(target=read_response, daemon=True).start()
+            try:
+                line=responses.get(timeout=TS_SERVICE_RESPONSE_TIMEOUT_S)
+            except queue.Empty:
+                self.close()
+                raise RuntimeError(f"TypeScript language service timed out after {TS_SERVICE_RESPONSE_TIMEOUT_S:g}s")
+            if isinstance(line, Exception):
+                raise line
         if not line:
             err=""
             if self.proc.stderr is not None:

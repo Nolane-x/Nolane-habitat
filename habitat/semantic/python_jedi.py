@@ -19,6 +19,25 @@ _PROJECTS: "OrderedDict[str, object]" = OrderedDict()
 _PROJECT_LOCK = threading.Lock()
 _MAX_PROJECTS = 4
 
+
+def _close_jedi_compiler_process(project: object) -> None:
+    """Release Jedi's private compiler process when Habitat has no live projects.
+
+    Jedi 0.20 exposes no public Project.close(). Its Environment retains a shared
+    CompiledSubprocess until its private finalizer runs, which can keep Python
+    alive after a workspace is closed. The compatibility guard keeps an optional
+    provider failure from affecting the rest of Habitat.
+    """
+    try:
+        environment = getattr(project, "_environment", None)
+        compiled = getattr(environment, "_subprocess", None)
+        kill = getattr(compiled, "_kill", None)
+        if callable(kill):
+            kill()
+    except Exception:
+        pass
+
+
 def _project_for(root: Path):
     """Return a bounded Jedi Project cache entry.
 
@@ -44,11 +63,16 @@ def _project_for(root: Path):
 
 def close_jedi_project(root: Path) -> None:
     with _PROJECT_LOCK:
-        _PROJECTS.pop(str(root.resolve()),None)
+        project = _PROJECTS.pop(str(root.resolve()), None)
+        if project is not None and not _PROJECTS:
+            _close_jedi_compiler_process(project)
 
 def close_all_jedi_projects() -> None:
     with _PROJECT_LOCK:
+        projects = list(_PROJECTS.values())
         _PROJECTS.clear()
+        for project in projects:
+            _close_jedi_compiler_process(project)
 
 def jedi_project_status(root: Path) -> dict:
     key=str(root.resolve())

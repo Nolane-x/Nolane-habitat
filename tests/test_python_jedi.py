@@ -5,6 +5,7 @@ from pathlib import Path
 from habitat.toml_compat import tomllib
 
 from habitat.workspace import HabitatWorkspace
+from habitat.semantic import python_jedi
 from habitat.semantic.python_jedi import probe
 
 
@@ -95,5 +96,32 @@ class PythonJediSemanticTests(unittest.TestCase):
                 self.assertFalse(marker.exists())
             finally:
                 ws.close()
+
+    def test_closing_last_project_terminates_jedi_compiler_subprocess(self):
+        try:
+            import jedi
+        except Exception:
+            self.skipTest("Jedi unavailable")
+
+        compiled = None
+        try:
+            with tempfile.TemporaryDirectory() as td:
+                root = Path(td) / "project"
+                root.mkdir()
+                project, _ = python_jedi._project_for(root)
+                environment = project.get_environment()
+                environment.get_sys_path()
+                compiled = environment._subprocess
+                process = compiled._get_process()
+                self.assertIsNone(process.poll())
+
+                python_jedi.close_jedi_project(root)
+
+                self.assertIsNotNone(process.poll())
+        finally:
+            python_jedi.close_all_jedi_projects()
+            kill = getattr(compiled, "_kill", None)
+            if callable(kill):
+                kill()
 
 if __name__ == '__main__': unittest.main()

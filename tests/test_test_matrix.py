@@ -32,8 +32,8 @@ class TestMatrixTests(unittest.TestCase):
         with patch.object(test_matrix.tempfile, "TemporaryDirectory", CleanupFailure):
             result = test_matrix.run_group(
                 Path(__file__).resolve().parents[1],
-                "capabilities",
-                ["test_capabilities"],
+                "toml-compat",
+                ["test_toml_compat"],
                 60,
             )
 
@@ -43,19 +43,23 @@ class TestMatrixTests(unittest.TestCase):
     def test_output_parent_is_created_for_a_successful_matrix_report(self):
         with tempfile.TemporaryDirectory() as td:
             output = Path(td) / "new-artifacts" / "matrix.json"
-            result = subprocess.run(
-                [
-                    sys.executable,
-                    str(_RUNNER_PATH),
-                    "--mode", "shard",
-                    "--match", "test_capabilities",
-                    "--out", str(output),
-                ],
-                cwd=Path(__file__).resolve().parents[1],
-                capture_output=True,
-                text=True,
-                timeout=60,
-            )
+            log = Path(td) / "matrix.log"
+            with log.open("w+", encoding="utf-8", errors="replace") as stream:
+                result = subprocess.run(
+                    [
+                        sys.executable,
+                        str(_RUNNER_PATH),
+                        "--mode", "module",
+                        "--match", "test_toml_compat",
+                        "--timeout", "20",
+                        "--out", str(output),
+                    ],
+                    cwd=Path(__file__).resolve().parents[1],
+                    stdout=stream,
+                    stderr=subprocess.STDOUT,
+                    text=True,
+                    timeout=60,
+                )
 
-            self.assertEqual(0, result.returncode, result.stderr)
+            self.assertEqual(0, result.returncode, log.read_text(encoding="utf-8"))
             self.assertTrue(output.is_file())
