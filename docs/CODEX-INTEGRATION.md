@@ -52,7 +52,7 @@ codex plugin add nolane-habitat@personal
 For the published release:
 
 ```powershell
-codex plugin marketplace add Nolane-x/Nolane-habitat --ref v0.1.0-alpha.18
+codex plugin marketplace add Nolane-x/Nolane-habitat --ref v0.1.0-alpha.19
 codex plugin add nolane-habitat@personal
 ```
 

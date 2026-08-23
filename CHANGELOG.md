@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.1.0-alpha.19 — 2026-08-23
+
+- Added structural SQLite migration verification, safe pre-migration backups, and explicit rejection of malformed or newer workspace schema markers.
+- Made deep and targeted refresh operations atomic, including rollback on task cancellation before later persistence can commit abandoned state.
+- Added a read-only `habitat doctor <workspace>` health report for schema, integrity, foreign-key, and WAL state.
+- Made test-matrix cleanup failures structured CI evidence and made JSON report output create its artifact directory and replace atomically.
+- Added a checked release-identity command to keep runtime, package metadata, changelog, and current Codex documentation aligned.
+
 ## 0.1.0-alpha.18 — 2026-08-09
 
 - Added portable Codex distribution with the `nolane-habitat` plugin, marketplace entry, operator skill, and maintainer skill.

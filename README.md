@@ -91,4 +91,4 @@ This loop makes context, changes, evidence, and handoffs durable across longer-r
 .\.venv\Scripts\python tools\run_test_matrix.py --workers 1 --timeout 180
 ```
 
-Nolane Habitat 0.1.0-alpha.18 is ready for local project cognition, governed agent workflows, and Codex integration.
+Nolane Habitat 0.1.0-alpha.19 is ready for local project cognition, governed agent workflows, and Codex integration.
