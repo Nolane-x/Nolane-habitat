@@ -121,7 +121,7 @@ class Alpha5EvidenceTests(unittest.TestCase):
                 self.assertTrue(any(o.object_type=='evidence' for o in ctx.objects),[(o.object_type,o.reason) for o in ctx.objects])
                 impl.write_text('def add(a,b):\n    return a+b\n'); ws.refresh(reason='fix')
                 passed=ws.verify(changed_paths=['calc.py'])
-                self.assertEqual(passed['receipt']['exit_code'],0)
+                self.assertEqual(passed['receipt']['exit_code'],0,passed['receipt']['stdout']+passed['receipt']['stderr'])
                 self.assertEqual(ws.evidence_active('test-failure')['count'],0)
             finally: ws.close()
 
@@ -258,7 +258,7 @@ class SelectiveRetrievalTests(unittest.TestCase):
             tx=ws.stage_symbol_change(sym["id"],"def add(a,b):\n    return a+b")
             ws.commit_change(tx["id"])
             passed=ws.verify(changed_paths=["calc.py"],timeout_s=30)
-            self.assertEqual(passed["receipt"]["structured"]["status"],"passed")
+            self.assertEqual(passed["receipt"]["structured"]["status"],"passed",passed["receipt"]["stdout"]+passed["receipt"]["stderr"])
             self.assertEqual(ws.evidence_active("test-failure")["count"],0)
             ctx=ws.orient("fix failing addition test",12)
             self.assertFalse(any(o.object_type=="evidence" for o in ctx.objects),ctx.objects)

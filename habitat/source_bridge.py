@@ -152,7 +152,13 @@ def atomic_write(path: Path, data: bytes) -> None:
             f.flush()
             os.fsync(f.fileno())
         if original_stat is not None:
-            os.chmod(tmp, stat.S_IMODE(original_stat.st_mode), follow_symlinks=False)
+            mode = stat.S_IMODE(original_stat.st_mode)
+            try:
+                os.chmod(tmp, mode, follow_symlinks=False)
+            except NotImplementedError:
+                # Windows Python 3.10 exposes chmod but does not implement its nofollow form.
+                # tmp came from mkstemp in this function, so the ordinary call remains safe.
+                os.chmod(tmp, mode)
             if hasattr(os, "chown"):
                 try:
                     os.chown(tmp, original_stat.st_uid, original_stat.st_gid, follow_symlinks=False)

@@ -169,6 +169,25 @@ class Alpha17StabilityCompletionTests(unittest.TestCase):
             self.assertEqual(attempts, 7)
             self.assertEqual(path.read_bytes(), b"updated")
 
+    def test_atomic_write_preserves_mode_when_nofollow_chmod_is_unavailable(self):
+        with tempfile.TemporaryDirectory() as td:
+            path = Path(td) / "state.txt"
+            path.write_bytes(b"seed")
+            original_chmod = source_bridge.os.chmod
+            calls = []
+
+            def chmod_without_nofollow(target, mode, **kwargs):
+                calls.append(kwargs)
+                if kwargs.get("follow_symlinks") is False:
+                    raise NotImplementedError("nofollow chmod unavailable")
+                return original_chmod(target, mode)
+
+            with mock.patch("habitat.source_bridge.os.chmod", side_effect=chmod_without_nofollow):
+                atomic_write(path, b"updated")
+
+            self.assertEqual(path.read_bytes(), b"updated")
+            self.assertEqual(calls, [{"follow_symlinks": False}, {}])
+
 
     def test_ui_input_validation_fails_before_playwright_semantics(self):
         self.assertEqual(BrowserRuntime._normalize_viewport(None), {"width": 1440, "height": 900})
