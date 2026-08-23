@@ -11,6 +11,7 @@
 - Added a dry-run release-promotion gate that always writes a machine-readable verdict and never tags or publishes artifacts.
 - Added a release-manifest builder that derives SHA-256 evidence and artifact bindings directly from supplied files.
 - Made capability discovery report malformed npm manifests explicitly and avoid timing-dependent full imports when probing Python module presence.
+- Added a quality-gate collector that records missing, unreadable, failed, timed-out, or finding-bearing required evidence as a blocked result.
 
 ## 0.1.0-alpha.18 — 2026-08-09
 
