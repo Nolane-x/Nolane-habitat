@@ -10,6 +10,7 @@
 - Added a truthful execution-capability report to `enter` and `habitat capabilities`, with fail-closed checks for unverified containment.
 - Added a dry-run release-promotion gate that always writes a machine-readable verdict and never tags or publishes artifacts.
 - Added a release-manifest builder that derives SHA-256 evidence and artifact bindings directly from supplied files.
+- Made capability discovery report malformed npm manifests explicitly and avoid timing-dependent full imports when probing Python module presence.
 
 ## 0.1.0-alpha.18 — 2026-08-09
 

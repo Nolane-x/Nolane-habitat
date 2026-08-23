@@ -92,7 +92,8 @@ def _project_python(root: Path) -> str:
 
 def _python_has_module(exe: str, module: str) -> bool:
     try:
-        proc=subprocess.run([exe,"-c",f"import {module}"],stdout=subprocess.DEVNULL,stderr=subprocess.DEVNULL,timeout=5,shell=False)
+        probe = "import importlib.util,sys; raise SystemExit(0 if importlib.util.find_spec(sys.argv[1]) else 1)"
+        proc=subprocess.run([exe,"-c",probe,module],stdout=subprocess.DEVNULL,stderr=subprocess.DEVNULL,timeout=5,shell=False)
         return proc.returncode == 0
     except Exception:
         return False
@@ -146,8 +147,15 @@ def discover_capabilities(root: Path) -> list[dict]:
                     f"npm.{name}", kind, [npm or "npm", "run", name], "exact-manifest",
                     npm is not None, "npm executable found" if npm else "npm executable not found",
                 ))
-        except Exception:
-            pass
+        except (OSError, UnicodeDecodeError, json.JSONDecodeError) as exc:
+            caps.append(_cap(
+                "npm.manifest",
+                "metadata",
+                [],
+                "exact-manifest",
+                False,
+                f"package.json is invalid or unreadable: {type(exc).__name__}",
+            ))
     if (root / "pom.xml").exists():
         mvn = shutil.which("mvn")
         for id_, goal, kind in [("maven.test", "test", "test"), ("maven.package", "package", "build")]:

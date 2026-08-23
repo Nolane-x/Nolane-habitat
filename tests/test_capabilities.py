@@ -1,11 +1,14 @@
 import io
 import json
+import os
+import sys
 import tempfile
 import unittest
 from contextlib import redirect_stdout
 from pathlib import Path
+from unittest.mock import patch
 
-from habitat.execution import discover_capabilities
+from habitat.execution import _python_has_module, discover_capabilities
 from habitat.cli import main
 from habitat.security.capabilities import (
     CapabilityReport,
@@ -27,6 +30,33 @@ class CapabilityTests(unittest.TestCase):
                 self.assertIn("availability_reason", cap)
             unittest_cap = next(c for c in caps if c["id"] == "python.unittest")
             self.assertTrue(unittest_cap["available"])
+
+    def test_malformed_package_manifest_is_reported_as_unavailable(self):
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            (root / "package.json").write_text("{not json", encoding="utf-8")
+
+            manifests = [
+                capability
+                for capability in discover_capabilities(root)
+                if capability["id"] == "npm.manifest"
+            ]
+
+            self.assertEqual(1, len(manifests))
+            self.assertFalse(manifests[0]["available"])
+            self.assertIn("invalid", manifests[0]["availability_reason"])
+
+    def test_module_presence_probe_does_not_import_slow_module(self):
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            (root / "slow_capability_probe.py").write_text(
+                "import time\ntime.sleep(6)\n",
+                encoding="utf-8",
+            )
+            with patch.dict(os.environ, {"PYTHONPATH": str(root)}):
+                available = _python_has_module(sys.executable, "slow_capability_probe")
+
+        self.assertTrue(available)
 
     def test_enter_reports_trusted_local_execution_without_sandbox_claims(self):
         with tempfile.TemporaryDirectory() as td:
