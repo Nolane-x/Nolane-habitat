@@ -1,6 +1,7 @@
 from __future__ import annotations
 import argparse, json, sys
 from pathlib import Path
+from .database_health import inspect_database
 from .workspace import HabitatWorkspace
 from .model import to_dict
 from . import __version__
@@ -41,12 +42,15 @@ def main(argv=None):
     sp=sub.add_parser("lease-status"); sp.add_argument("workspace"); sp.add_argument("--agent-id")
     args=p.parse_args(argv)
     try:
+        if args.cmd=="doctor":
+            report=inspect_database(Path(args.workspace) / "habitat.sqlite3")
+            emit(report)
+            return 0 if report["ok"] else 1
         if args.cmd=="create":
             ws=HabitatWorkspace.create(args.source,args.workspace,backend=args.backend); emit(ws.enter()); ws.close(); return 0
         ws=HabitatWorkspace(Path(args.workspace))
         try:
             if args.cmd=="enter": emit(ws.enter())
-            elif args.cmd=="doctor": emit(ws.storage_doctor())
             elif args.cmd=="backend-info": emit(ws.backend_info())
             elif args.cmd=="refresh": emit(ws.refresh())
             elif args.cmd=="orient": emit(ws.orient(args.task,args.budget))

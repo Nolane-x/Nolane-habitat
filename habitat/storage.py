@@ -7,6 +7,7 @@ from contextlib import contextmanager
 from pathlib import Path
 from typing import Iterable
 
+from .database_health import inspect_connection
 from .model import DiagnosticRecord, EventRecord, FileRecord, OccurrenceRecord, RelationRecord, Revision, SymbolRecord
 from .storage_migrations import (
     SCHEMA_VERSION,
@@ -15,7 +16,6 @@ from .storage_migrations import (
     migration_backup_version,
     preflight_schema_version,
     repair_additive_columns,
-    required_schema_issues,
     verify_required_structure,
 )
 
@@ -516,32 +516,7 @@ class Store:
     def doctor(self) -> dict:
         """Return a read-only health report for the Habitat workspace database."""
 
-        integrity = [row[0] for row in self.conn.execute("PRAGMA integrity_check")]
-        foreign_key_violations = [
-            dict(row) for row in self.conn.execute("PRAGMA foreign_key_check")
-        ]
-        meta_version = self.get_meta("schema_version")
-        user_version = self.conn.execute("PRAGMA user_version").fetchone()[0]
-        missing_columns = required_schema_issues(self.conn)
-        schema_ok = (
-            meta_version == str(SCHEMA_VERSION)
-            and user_version == SCHEMA_VERSION
-            and not missing_columns
-        )
-        return {
-            "ok": integrity == ["ok"] and not foreign_key_violations and schema_ok,
-            "schema": {
-                "expected_version": SCHEMA_VERSION,
-                "meta_version": meta_version,
-                "user_version": user_version,
-                "missing_columns": missing_columns,
-            },
-            "sqlite": {
-                "integrity_check": integrity,
-                "foreign_key_violations": foreign_key_violations,
-                "journal_mode": self.conn.execute("PRAGMA journal_mode").fetchone()[0],
-            },
-        }
+        return inspect_connection(self.conn)
 
     def __del__(self):
         try:
