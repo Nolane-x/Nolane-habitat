@@ -2,7 +2,7 @@
 
 `tools/promote_release.py` evaluates a supplied release manifest and writes a machine-readable verdict. It never creates a Git tag, publishes a package, uploads an artifact, or creates a GitHub release.
 
-For an alpha candidate, the gate requires hash-bound `truth-core`, `matrix`, `faults`, `artifacts`, `scanner`, and `db-recovery` reports, at least one artifact, and at least one review record. The review record is hashed by the builder; its digest must not be reused from any report or artifact. This is a binding check, not a claim that a filename proves reviewer identity—follow the independent-review procedure before supplying the record.
+For an alpha candidate, the gate requires hash-bound `truth-core`, `matrix`, `faults`, `artifacts`, `scanner`, `db-recovery`, and `contract` reports, at least one artifact, and at least one review record. The review record is hashed by the builder; its digest must not be reused from any report or artifact. This is a binding check, not a claim that a filename proves reviewer identity—follow the independent-review procedure before supplying the record.
 
 ## CI scanner evidence
 
@@ -25,6 +25,7 @@ Generate the SQLite recovery and fault-injection reports from the same checked-o
 ```powershell
 python tools\run_db_recovery_suite.py --source-commit $commit --out .test-artifacts\db-recovery.json
 python tools\run_reliability_suite.py --source-commit $commit --out .test-artifacts\faults.json
+python tools\verify_contracts.py --source-commit $commit --fixture tests\fixtures\contracts\agent-v1alpha2.json --out .test-artifacts\contract.json
 ```
 
 Build the manifest from the actual evidence and artifact files; the builder computes the SHA-256 bindings rather than accepting manually entered values:
@@ -38,6 +39,7 @@ python tools\build_release_manifest.py --version 0.1.0-alpha.19 --commit $commit
   --report artifacts=.test-artifacts\artifacts.json `
   --report scanner=.test-artifacts\semgrep-workflows.json `
   --report db-recovery=.test-artifacts\db-recovery.json `
+  --report contract=.test-artifacts\contract.json `
   --artifact wheel=dist\nolane_habitat-0.1.0a19-py3-none-any.whl `
   --review independent-review=reports\independent-review.json `
   --out dist\release-manifest.json

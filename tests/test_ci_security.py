@@ -47,6 +47,10 @@ class CiSecurityTests(unittest.TestCase):
             "python tools/run_reliability_suite.py --source-commit ${{ github.sha }} --out .test-artifacts/faults.json",
             workflow,
         )
+        self.assertIn(
+            "python tools/verify_contracts.py --source-commit ${{ github.sha }} --fixture tests/fixtures/contracts/agent-v1alpha2.json --out .test-artifacts/contract.json",
+            workflow,
+        )
 
 
 if __name__ == "__main__":

@@ -121,7 +121,7 @@ class ReleasePromotionTests(unittest.TestCase):
             self.assertEqual(1, exit_code)
             self.assertEqual("not-attempted", verdict["publication"])
             self.assertEqual(
-                ["artifacts", "db-recovery", "faults", "matrix", "scanner", "truth-core"],
+                ["artifacts", "contract", "db-recovery", "faults", "matrix", "scanner", "truth-core"],
                 verdict["required_reports"],
             )
             self.assertFalse(verdict["verdict"]["admitted"])

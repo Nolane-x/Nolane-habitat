@@ -1,0 +1,21 @@
+{
+  "schema": 1,
+  "protocol_version": "habitat.agent.v1alpha2",
+  "mcp_spec_target": "2026-07-28",
+  "protocol_method_count": 162,
+  "protocol_methods_sha256": "d4c062e7afc3b020cdf858a7878be46728a9f88a163f44a19a1f87bcd36c5e3b",
+  "mcp_tools": [
+    {"name": "habitat_change_symbol", "purpose": "Transactionally replace one exact symbol body and sync canonical source."},
+    {"name": "habitat_checkpoint", "purpose": "Create a provenance-bound resumable checkpoint."},
+    {"name": "habitat_context_step", "purpose": "Submit bounded context feedback, plan next virtual pages, and fault only selected exact source."},
+    {"name": "habitat_inspect", "purpose": "Inspect one semantic object with optional exact source."},
+    {"name": "habitat_references", "purpose": "Get resolved references and provenance for a semantic object."},
+    {"name": "habitat_rename_symbol", "purpose": "Fail-closed project-wide Python semantic rename using proven references."},
+    {"name": "habitat_resume", "purpose": "Validate a checkpoint and choose direct, selective-revalidate, or reorient."},
+    {"name": "habitat_start_task", "purpose": "Orient to a task, open a provenance-bound work episode, and fault a bounded exact-source packet."},
+    {"name": "habitat_ui_act", "purpose": "Act on a semantic UI handle and return state delta."},
+    {"name": "habitat_ui_assert", "purpose": "Assert runtime UI state without screenshot interpretation."},
+    {"name": "habitat_ui_open", "purpose": "Open a project UI as semantic runtime state rather than pixels."},
+    {"name": "habitat_verify", "purpose": "Run graph-targeted verification and return a structured receipt."}
+  ]
+}
