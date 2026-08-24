@@ -1,12 +1,13 @@
 import json
 import hashlib
+from dataclasses import replace
 import subprocess
 import sys
 import tempfile
 import unittest
 from pathlib import Path
 
-from habitat.release import ReleaseManifest, evaluate_promotion
+from habitat.release import REQUIRED_REPORTS, ReleaseManifest, evaluate_promotion
 from tools.promote_release import main
 
 
@@ -27,6 +28,15 @@ class ReleasePromotionTests(unittest.TestCase):
             "status": status,
             "report_sha256": digest,
         }
+
+    @staticmethod
+    def _with_manifest_hash(manifest: ReleaseManifest) -> ReleaseManifest:
+        unsigned = manifest.as_dict()
+        unsigned.pop("manifest_sha256")
+        digest = hashlib.sha256(
+            json.dumps(unsigned, sort_keys=True, separators=(",", ":")).encode("utf-8")
+        ).hexdigest()
+        return replace(manifest, manifest_sha256=digest)
 
     def test_promotion_blocks_when_required_evidence_is_missing(self):
         manifest = ReleaseManifest(
@@ -63,8 +73,8 @@ class ReleasePromotionTests(unittest.TestCase):
         self.assertIn("report:truth-core:invalid-digest", verdict.failed_gates)
         self.assertIn("artifact_hashes:missing", verdict.failed_gates)
 
-    def test_alpha_candidate_requires_scanner_and_independent_reviewer_binding(self):
-        manifest = ReleaseManifest(
+    def test_alpha_candidate_requires_scanner_and_review_binding(self):
+        manifest = self._with_manifest_hash(ReleaseManifest(
             version="0.1.0-alpha.20",
             commit="a" * 40,
             reports={
@@ -76,7 +86,7 @@ class ReleasePromotionTests(unittest.TestCase):
             },
             artifact_hashes={"wheel": "b" * 64},
             residual_risks=(),
-        )
+        ))
 
         verdict = evaluate_promotion(manifest, target="alpha-candidate")
 
@@ -88,7 +98,7 @@ class ReleasePromotionTests(unittest.TestCase):
         required_without_mutation_recovery = {
             "truth-core", "matrix", "faults", "artifacts", "scanner", "db-recovery", "contract"
         }
-        manifest = ReleaseManifest(
+        manifest = self._with_manifest_hash(ReleaseManifest(
             version="0.1.0-alpha.20",
             commit=commit,
             reports={
@@ -99,7 +109,7 @@ class ReleasePromotionTests(unittest.TestCase):
             residual_risks=(),
             reviewer_hashes=("c" * 64,),
             report_provenance={name: self._provenance(commit) for name in required_without_mutation_recovery},
-        )
+        ))
 
         verdict = evaluate_promotion(manifest, target="alpha-candidate")
 
@@ -111,7 +121,7 @@ class ReleasePromotionTests(unittest.TestCase):
         required_without_reproducible_build = {
             "truth-core", "matrix", "faults", "artifacts", "scanner", "db-recovery", "mutation-recovery", "protocol-conformance", "contract"
         }
-        manifest = ReleaseManifest(
+        manifest = self._with_manifest_hash(ReleaseManifest(
             version="0.1.0-alpha.20",
             commit=commit,
             reports={
@@ -122,7 +132,7 @@ class ReleasePromotionTests(unittest.TestCase):
             residual_risks=(),
             reviewer_hashes=("c" * 64,),
             report_provenance={name: self._provenance(commit) for name in required_without_reproducible_build},
-        )
+        ))
 
         verdict = evaluate_promotion(manifest, target="alpha-candidate")
 
@@ -149,7 +159,7 @@ class ReleasePromotionTests(unittest.TestCase):
         verdict = evaluate_promotion(manifest, target="alpha-candidate")
 
         self.assertFalse(verdict.admitted)
-        self.assertIn("reviewer_hashes:not-independent", verdict.failed_gates)
+        self.assertIn("reviewer_hashes:reused-evidence", verdict.failed_gates)
 
     def test_alpha_candidate_rejects_reports_without_matching_passed_provenance(self):
         commit = "a" * 40
@@ -179,15 +189,17 @@ class ReleasePromotionTests(unittest.TestCase):
         required = {
             "truth-core", "matrix", "faults", "artifacts", "scanner", "db-recovery", "mutation-recovery", "reproducible-build", "protocol-conformance", "contract"
         }
-        manifest = ReleaseManifest(
+        manifest = self._with_manifest_hash(ReleaseManifest(
             version="0.1.0-alpha.20",
             commit=commit,
             reports={name: f"{index:x}" * 64 for index, name in enumerate(sorted(required), start=1)},
             artifact_hashes={"wheel": "b" * 64},
             residual_risks=(),
             reviewer_hashes=("c" * 64,),
+            reviewers={"review": "c" * 64},
             report_provenance={name: self._provenance(commit) for name in required},
-        )
+            review_provenance={"review": self._provenance(commit)},
+        ))
 
         verdict = evaluate_promotion(manifest, target="alpha-candidate")
 
@@ -231,6 +243,48 @@ class ReleasePromotionTests(unittest.TestCase):
                 verdict["required_reports"],
             )
             self.assertFalse(verdict["verdict"]["admitted"])
+
+    def test_dry_run_rejects_missing_or_tampered_manifest_self_hash(self):
+        commit = "a" * 40
+        required = REQUIRED_REPORTS["alpha-candidate"]
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            for name, digest in (("missing", None), ("tampered", "0" * 64)):
+                with self.subTest(name=name):
+                    manifest = root / f"{name}-manifest.json"
+                    output = root / f"{name}-verdict.json"
+                    value = {
+                        "version": "0.1.0-alpha.20",
+                        "commit": commit,
+                        "reports": {
+                            report_name: f"{index:x}" * 64
+                            for index, report_name in enumerate(sorted(required), start=1)
+                        },
+                        "artifact_hashes": {"wheel": "b" * 64},
+                        "residual_risks": [],
+                        "reviewer_hashes": ["c" * 64],
+                        "report_provenance": {
+                            report_name: self._provenance(commit)
+                            for report_name in required
+                        },
+                    }
+                    if digest:
+                        value["manifest_sha256"] = digest
+                    manifest.write_text(json.dumps(value), encoding="utf-8")
+
+                    exit_code = main(
+                        [
+                            "--manifest", str(manifest), "--target", "alpha-candidate",
+                            "--dry-run", "--out", str(output),
+                        ]
+                    )
+
+                    verdict = json.loads(output.read_text(encoding="utf-8"))
+                    self.assertEqual(1, exit_code)
+                    self.assertIn(
+                        "manifest:self-hash:invalid",
+                        verdict["verdict"]["failed_gates"],
+                    )
 
     def test_release_gate_script_is_runnable_from_a_checkout(self):
         root = Path(__file__).parents[1]

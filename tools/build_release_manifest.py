@@ -11,7 +11,7 @@ from tempfile import NamedTemporaryFile
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
-from habitat.release import build_release_manifest
+from habitat.release import REQUIRED_REPORTS, build_release_manifest, evaluate_promotion
 
 
 def _named_paths(values: list[str]) -> dict[str, Path]:
@@ -39,6 +39,7 @@ def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--version", required=True)
     parser.add_argument("--commit", required=True)
+    parser.add_argument("--target", choices=sorted(REQUIRED_REPORTS), required=True)
     parser.add_argument("--report", action="append", default=[], metavar="NAME=PATH")
     parser.add_argument("--artifact", action="append", default=[], metavar="NAME=PATH")
     parser.add_argument("--review", action="append", default=[], metavar="NAME=PATH")
@@ -46,14 +47,22 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--out", type=Path, required=True)
     args = parser.parse_args(argv)
 
-    manifest = build_release_manifest(
-        version=args.version,
-        commit=args.commit,
-        reports=_named_paths(args.report),
-        artifacts=_named_paths(args.artifact),
-        residual_risks=tuple(args.risk),
-        reviewers=_named_paths(args.review),
-    )
+    try:
+        manifest = build_release_manifest(
+            version=args.version,
+            commit=args.commit,
+            reports=_named_paths(args.report),
+            artifacts=_named_paths(args.artifact),
+            residual_risks=tuple(args.risk),
+            reviewers=_named_paths(args.review),
+        )
+    except (FileNotFoundError, ValueError) as exc:
+        parser.error(str(exc))
+    verdict = evaluate_promotion(manifest, target=args.target)
+    if not verdict.admitted:
+        parser.error("release manifest rejected: " + ", ".join(
+            (*verdict.missing_reports, *verdict.failed_gates)
+        ))
     _write_json_atomically(args.out, manifest.as_dict())
     return 0
 

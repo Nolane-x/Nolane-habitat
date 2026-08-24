@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from dataclasses import asdict, dataclass, field
+from dataclasses import asdict, dataclass, field, replace
 import hashlib
 import json
 from pathlib import Path
@@ -27,6 +27,8 @@ class ReleaseManifest:
     reviewer_hashes: tuple[str, ...] = ()
     reviewers: dict[str, str] = field(default_factory=dict)
     report_provenance: dict[str, dict[str, str]] = field(default_factory=dict)
+    review_provenance: dict[str, dict[str, str]] = field(default_factory=dict)
+    manifest_sha256: str = ""
 
     @classmethod
     def from_dict(cls, value: Mapping[str, Any]) -> "ReleaseManifest":
@@ -50,6 +52,12 @@ class ReleaseManifest:
                 for name, record in dict(value.get("report_provenance") or {}).items()
                 if isinstance(record, Mapping)
             },
+            review_provenance={
+                str(name): {str(key): str(item) for key, item in dict(record).items()}
+                for name, record in dict(value.get("review_provenance") or {}).items()
+                if isinstance(record, Mapping)
+            },
+            manifest_sha256=str(value.get("manifest_sha256") or ""),
         )
 
     def as_dict(self) -> dict[str, Any]:
@@ -94,6 +102,11 @@ def _canonical_report_digest(value: Mapping[str, Any]) -> str:
     ).hexdigest()
 
 
+def _canonical_manifest_digest(value: Mapping[str, Any]) -> str:
+    unsigned = {key: item for key, item in value.items() if key != "manifest_sha256"}
+    return _canonical_report_digest(unsigned)
+
+
 def _report_provenance(values: Mapping[str, Path]) -> dict[str, dict[str, str]]:
     provenance: dict[str, dict[str, str]] = {}
     for name, path in values.items():
@@ -133,7 +146,7 @@ def build_release_manifest(
     reviewers: Mapping[str, Path] | None = None,
 ) -> ReleaseManifest:
     reviewer_records = _hash_named_files(reviewers or {})
-    return ReleaseManifest(
+    manifest = ReleaseManifest(
         version=version,
         commit=commit,
         reports=_hash_named_files(reports),
@@ -142,6 +155,11 @@ def build_release_manifest(
         reviewer_hashes=tuple(reviewer_records.values()),
         reviewers=reviewer_records,
         report_provenance=_report_provenance(reports),
+        review_provenance=_report_provenance(reviewers or {}),
+    )
+    return replace(
+        manifest,
+        manifest_sha256=_canonical_manifest_digest(manifest.as_dict()),
     )
 
 
@@ -156,6 +174,26 @@ def evaluate_promotion(manifest: ReleaseManifest, target: str) -> PromotionVerdi
         for name in required & manifest.reports.keys()
         if not SHA256.fullmatch(manifest.reports[name])
     }
+    if set(manifest.reports) != required:
+        failed.add("reports:required-set-mismatch")
+    if (
+        not SHA256.fullmatch(manifest.manifest_sha256)
+        or manifest.manifest_sha256 != _canonical_manifest_digest(manifest.as_dict())
+    ):
+        failed.add("manifest:self-hash:invalid")
+    if not re.fullmatch(r"[0-9a-f]{40}", manifest.commit):
+        failed.add("manifest:commit:invalid-sha")
+    for name in required & manifest.reports.keys():
+        provenance = manifest.report_provenance.get(name)
+        if not provenance:
+            failed.add(f"report:{name}:provenance:missing-or-invalid")
+            continue
+        if provenance.get("source_commit") != manifest.commit:
+            failed.add(f"report:{name}:source-commit-mismatch")
+        if provenance.get("status") != "passed":
+            failed.add(f"report:{name}:status")
+        if not SHA256.fullmatch(provenance.get("report_sha256", "")):
+            failed.add(f"report:{name}:report-hash-invalid")
     if "artifacts" in required:
         if not manifest.artifact_hashes:
             failed.add("artifact_hashes:missing")
@@ -166,19 +204,6 @@ def evaluate_promotion(manifest: ReleaseManifest, target: str) -> PromotionVerdi
                 if not SHA256.fullmatch(digest)
             )
     if target == "alpha-candidate":
-        if not re.fullmatch(r"[0-9a-f]{40}", manifest.commit):
-            failed.add("manifest:commit:invalid-sha")
-        for name in required & manifest.reports.keys():
-            provenance = manifest.report_provenance.get(name)
-            if not provenance:
-                failed.add(f"report:{name}:provenance:missing-or-invalid")
-                continue
-            if provenance.get("source_commit") != manifest.commit:
-                failed.add(f"report:{name}:source-commit-mismatch")
-            if provenance.get("status") != "passed":
-                failed.add(f"report:{name}:status")
-            if not SHA256.fullmatch(provenance.get("report_sha256", "")):
-                failed.add(f"report:{name}:report-hash-invalid")
         if not manifest.reviewer_hashes:
             failed.add("reviewer_hashes:missing")
         else:
@@ -186,12 +211,25 @@ def evaluate_promotion(manifest: ReleaseManifest, target: str) -> PromotionVerdi
                 failed.add("reviewer_hashes:invalid-digest")
             evidence_hashes = set(manifest.reports.values()) | set(manifest.artifact_hashes.values())
             if any(digest in evidence_hashes for digest in manifest.reviewer_hashes):
-                failed.add("reviewer_hashes:not-independent")
+                failed.add("reviewer_hashes:reused-evidence")
         if manifest.reviewers:
             if any(not name or not SHA256.fullmatch(digest) for name, digest in manifest.reviewers.items()):
                 failed.add("reviewers:invalid-record")
             if set(manifest.reviewers.values()) != set(manifest.reviewer_hashes):
                 failed.add("reviewers:hash-mismatch")
+        else:
+            failed.add("reviewers:missing")
+        for name in manifest.reviewers:
+            provenance = manifest.review_provenance.get(name)
+            if not provenance:
+                failed.add(f"review:{name}:provenance:missing-or-invalid")
+                continue
+            if provenance.get("source_commit") != manifest.commit:
+                failed.add(f"review:{name}:source-commit-mismatch")
+            if provenance.get("status") != "passed":
+                failed.add(f"review:{name}:status")
+            if not SHA256.fullmatch(provenance.get("report_sha256", "")):
+                failed.add(f"review:{name}:report-hash-invalid")
     return PromotionVerdict(
         target=target,
         admitted=not missing and not failed,

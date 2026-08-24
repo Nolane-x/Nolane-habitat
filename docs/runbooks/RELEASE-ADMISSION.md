@@ -2,7 +2,7 @@
 
 `tools/promote_release.py` evaluates a supplied release manifest and writes a machine-readable verdict. It never creates a Git tag, publishes a package, uploads an artifact, or creates a GitHub release.
 
-For an alpha candidate, the gate requires hash-bound `truth-core`, `matrix`, `faults`, `artifacts`, `scanner`, `db-recovery`, `mutation-recovery`, `reproducible-build`, `protocol-conformance`, and `contract` reports, at least one artifact, and at least one review record. Every required report must contain a verified payload hash, `status: passed`, and the same 40-character commit SHA as the manifest. Distribution evidence includes a deterministic member manifest and rejects unsafe paths, `.env` files, private-key extensions, local databases, Habitat state, and Python bytecode caches. It also extracts the wheel `METADATA` and sdist `PKG-INFO`, checks their normalized project name and package version, and blocks if their canonical `Requires-Dist` inventories differ. The resulting `dependency_inventory_sha256` binds that inventory into the artifact report. The review record is hashed by the builder; its digest must not be reused from any report or artifact. This is a binding check, not a claim that a filename proves reviewer identity—follow the independent-review procedure before supplying the record.
+For an alpha candidate, the gate requires hash-bound `truth-core`, `matrix`, `faults`, `artifacts`, `scanner`, `db-recovery`, `mutation-recovery`, `reproducible-build`, `protocol-conformance`, and `contract` reports, at least one artifact, and at least one separately named review record. Every report and review record must contain a verified payload hash, `status: passed`, and the same 40-character commit SHA as the manifest. The builder records the report and review provenance, then calculates `manifest_sha256` over canonical manifest JSON with that field omitted; dry-run promotion recalculates it and blocks missing or changed manifests. Distribution evidence includes a deterministic member manifest and rejects unsafe paths, `.env` files, private-key extensions, local databases, Habitat state, and Python bytecode caches. It also extracts the wheel `METADATA` and sdist `PKG-INFO`, checks their normalized project name and package version, and blocks if their canonical `Requires-Dist` inventories differ. The resulting `dependency_inventory_sha256` binds that inventory into the artifact report. The review record's digest must not be reused from any report or artifact. Its `--review` name identifies evidence only; it does not establish reviewer identity or independent review.
 
 ## Reproducible-build evidence
 
@@ -66,7 +66,7 @@ Build the manifest from the actual evidence and artifact files; the builder comp
 
 ```powershell
 $commit = git rev-parse HEAD
-python tools\build_release_manifest.py --version 0.1.0-alpha.19 --commit $commit `
+python tools\build_release_manifest.py --version 0.1.0-alpha.19 --commit $commit --target alpha-candidate `
   --report truth-core=.test-artifacts\truth-core.json `
   --report matrix=.test-artifacts\matrix.json `
   --report faults=.test-artifacts\faults.json `
@@ -79,7 +79,7 @@ python tools\build_release_manifest.py --version 0.1.0-alpha.19 --commit $commit
   --report contract=.test-artifacts\contract.json `
   --artifact wheel=.test-artifacts\dist-first\nolane_habitat-0.1.0a19-py3-none-any.whl `
   --artifact sdist=.test-artifacts\dist-first\nolane_habitat-0.1.0a19.tar.gz `
-  --review independent-review=reports\independent-review.json `
+  --review review=reports\review.json `
   --out dist\release-manifest.json
 ```
 
@@ -89,4 +89,4 @@ Evaluate the alpha gate and retain the verdict beside the other evidence:
 python tools\promote_release.py --manifest dist\release-manifest.json --target alpha-candidate --dry-run --out .test-artifacts\promotion-verdict.json
 ```
 
-The command exits `0` only when every report required by the selected target has a valid digest and matching passed provenance, artifacts are present, and the review binding is valid; it exits `1` after writing a blocked verdict otherwise. A blocked verdict is evidence of a safe stop, not a publishing failure. External publication remains a separate, explicit action after the required evidence has been independently reviewed.
+The builder requires `--target` and writes no manifest unless the supplied evidence exactly matches that target and every report is valid, passed, and commit-bound. The dry-run command exits `0` only when it verifies that same contract, including the canonical manifest hash; it exits `1` after writing a blocked verdict otherwise. A blocked verdict is evidence of a safe stop, not a publishing failure. External publication remains a separate, explicit action; a review record alone does not assert that an independent review occurred.
