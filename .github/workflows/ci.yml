@@ -9,6 +9,9 @@ on:
 permissions:
   contents: read
 
+env:
+  HABITAT_SOURCE_COMMIT: ${{ github.event.pull_request.head.sha || github.sha }}
+
 jobs:
   test:
     name: ${{ matrix.os }} / Python ${{ matrix.python }}
@@ -21,6 +24,8 @@ jobs:
         python: ['3.10', '3.14']
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          ref: ${{ env.HABITAT_SOURCE_COMMIT }}
       - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7
         with:
           python-version: ${{ matrix.python }}
@@ -29,31 +34,31 @@ jobs:
       - name: Compile source and tests
         run: python -m compileall -q habitat tests tools
       - name: Verify release identity
-        run: python tools/check_release_identity.py --source-commit ${{ github.sha }} --out .test-artifacts/identity.json
+        run: python tools/check_release_identity.py --source-commit ${{ env.HABITAT_SOURCE_COMMIT }} --out .test-artifacts/identity.json
       - name: Run full regression suite
         run: python -m unittest discover -q
       - name: Run isolated regression matrix
-        run: python tools/run_test_matrix.py --mode shard --workers 1 --timeout 600 --source-commit ${{ github.sha }} --out .test-artifacts/matrix.json
+        run: python tools/run_test_matrix.py --mode shard --workers 1 --timeout 600 --source-commit ${{ env.HABITAT_SOURCE_COMMIT }} --out .test-artifacts/matrix.json
       - name: Verify public compatibility contract
-        run: python tools/verify_contracts.py --source-commit ${{ github.sha }} --fixture tests/fixtures/contracts/agent-v1alpha2.json --out .test-artifacts/contract.json
+        run: python tools/verify_contracts.py --source-commit ${{ env.HABITAT_SOURCE_COMMIT }} --fixture tests/fixtures/contracts/agent-v1alpha2.json --out .test-artifacts/contract.json
       - name: Run protocol conformance evidence
-        run: python tools/run_protocol_conformance_suite.py --source-commit ${{ github.sha }} --out .test-artifacts/protocol-conformance.json
+        run: python tools/run_protocol_conformance_suite.py --source-commit ${{ env.HABITAT_SOURCE_COMMIT }} --out .test-artifacts/protocol-conformance.json
       - name: Run database recovery evidence
-        run: python tools/run_db_recovery_suite.py --source-commit ${{ github.sha }} --out .test-artifacts/db-recovery.json
+        run: python tools/run_db_recovery_suite.py --source-commit ${{ env.HABITAT_SOURCE_COMMIT }} --out .test-artifacts/db-recovery.json
       - name: Run source-mutation recovery evidence
-        run: python tools/run_mutation_recovery_suite.py --source-commit ${{ github.sha }} --out .test-artifacts/mutation-recovery.json
+        run: python tools/run_mutation_recovery_suite.py --source-commit ${{ env.HABITAT_SOURCE_COMMIT }} --out .test-artifacts/mutation-recovery.json
       - name: Run fault-injection reliability evidence
-        run: python tools/run_reliability_suite.py --source-commit ${{ github.sha }} --out .test-artifacts/faults.json
+        run: python tools/run_reliability_suite.py --source-commit ${{ env.HABITAT_SOURCE_COMMIT }} --out .test-artifacts/faults.json
       - name: Checkout first independent reproducibility source copy
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
-          ref: ${{ github.sha }}
+          ref: ${{ env.HABITAT_SOURCE_COMMIT }}
           path: .test-artifacts/source-first
           fetch-depth: 1
       - name: Checkout second independent reproducibility source copy
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
-          ref: ${{ github.sha }}
+          ref: ${{ env.HABITAT_SOURCE_COMMIT }}
           path: .test-artifacts/source-second
           fetch-depth: 1
       - name: Build first reproducible release artifact set
@@ -71,9 +76,9 @@ jobs:
       - name: Normalize second source distribution metadata
         run: python tools/normalize_sdist.py --dist .test-artifacts/dist-second --epoch 0
       - name: Verify independent-checkout reproducible release artifacts
-        run: python tools/verify_reproducible_build.py --source-commit ${{ github.sha }} --first .test-artifacts/dist-first --second .test-artifacts/dist-second --first-source .test-artifacts/source-first --second-source .test-artifacts/source-second --out .test-artifacts/reproducible-build.json
+        run: python tools/verify_reproducible_build.py --source-commit ${{ env.HABITAT_SOURCE_COMMIT }} --first .test-artifacts/dist-first --second .test-artifacts/dist-second --first-source .test-artifacts/source-first --second-source .test-artifacts/source-second --out .test-artifacts/reproducible-build.json
       - name: Verify distributable release artifacts
-        run: python tools/verify_distribution.py --source-commit ${{ github.sha }} --dist .test-artifacts/dist-first --out .test-artifacts/artifacts.json
+        run: python tools/verify_distribution.py --source-commit ${{ env.HABITAT_SOURCE_COMMIT }} --dist .test-artifacts/dist-first --out .test-artifacts/artifacts.json
       - name: Install isolated Semgrep
         shell: bash
         run: |
@@ -91,9 +96,9 @@ jobs:
           "$semgrep_executable" --version
           echo "HABITAT_SEMGREP_EXECUTABLE=$semgrep_env_path" >> "$GITHUB_ENV"
       - name: Run GitHub Actions Semgrep policy
-        run: python tools/run_semgrep.py --source-commit ${{ github.sha }} --out .test-artifacts/semgrep-workflows.json
+        run: python tools/run_semgrep.py --source-commit ${{ env.HABITAT_SOURCE_COMMIT }} --out .test-artifacts/semgrep-workflows.json
       - name: Summarize local quality evidence
-        run: python tools/quality_gate.py --identity .test-artifacts/identity.json --matrix .test-artifacts/matrix.json --scanner semgrep=.test-artifacts/semgrep-workflows.json --require-scanner semgrep --expected-commit ${{ github.sha }} --out .test-artifacts/truth-core.json
+        run: python tools/quality_gate.py --identity .test-artifacts/identity.json --matrix .test-artifacts/matrix.json --scanner semgrep=.test-artifacts/semgrep-workflows.json --require-scanner semgrep --expected-commit ${{ env.HABITAT_SOURCE_COMMIT }} --out .test-artifacts/truth-core.json
       - name: Upload verification artifacts
         if: always()
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7

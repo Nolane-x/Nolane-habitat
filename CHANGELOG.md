@@ -17,6 +17,7 @@
 - Aligned the Windows quick start and release runbook with the CI build prerequisite for `setuptools>=68` when using `build --no-isolation`.
 - Added an HTTP-level regression proof that Observatory health, snapshot, and activity reads leave the authoritative SQLite workspace unchanged.
 - Defined a bounded owner-authorized publication path for alpha pre-releases while retaining independent review for stable releases and all existing commit-bound technical gates.
+- Bound pull-request release evidence to the exact head commit instead of GitHub's synthetic merge commit, while preserving the event SHA for push and manual workflows.
 
 ## 0.1.0-alpha.18 — 2026-08-09
 

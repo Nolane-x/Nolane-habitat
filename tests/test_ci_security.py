@@ -6,6 +6,21 @@ from pathlib import Path
 
 
 class CiSecurityTests(unittest.TestCase):
+    def test_pull_request_release_evidence_binds_to_the_head_commit(self) -> None:
+        root = Path(__file__).parents[1]
+        workflow = (root / ".github" / "workflows" / "ci.yml").read_text(encoding="utf-8")
+
+        self.assertIn(
+            "HABITAT_SOURCE_COMMIT: ${{ github.event.pull_request.head.sha || github.sha }}",
+            workflow,
+        )
+        self.assertEqual(
+            workflow.count("ref: ${{ env.HABITAT_SOURCE_COMMIT }}"),
+            3,
+        )
+        self.assertNotIn("--source-commit ${{ github.sha }}", workflow)
+        self.assertNotIn("ref: ${{ github.sha }}", workflow)
+
     def test_workflow_actions_are_pinned_to_immutable_commits(self) -> None:
         root = Path(__file__).parents[1]
         workflows = (root / ".github" / "workflows" / "ci.yml", root / ".github" / "workflows" / "codeql.yml")
@@ -27,11 +42,11 @@ class CiSecurityTests(unittest.TestCase):
         self.assertIn('"$semgrep_python" -m pip install "semgrep==1.168.0"', workflow)
         self.assertIn('semgrep_env_path=".semgrep-venv\\Scripts\\semgrep.exe"', workflow)
         self.assertIn(
-            "python tools/run_semgrep.py --source-commit ${{ github.sha }} --out .test-artifacts/semgrep-workflows.json",
+            "python tools/run_semgrep.py --source-commit ${{ env.HABITAT_SOURCE_COMMIT }} --out .test-artifacts/semgrep-workflows.json",
             workflow,
         )
         self.assertIn(
-            "--scanner semgrep=.test-artifacts/semgrep-workflows.json --require-scanner semgrep --expected-commit ${{ github.sha }}",
+            "--scanner semgrep=.test-artifacts/semgrep-workflows.json --require-scanner semgrep --expected-commit ${{ env.HABITAT_SOURCE_COMMIT }}",
             workflow,
         )
 
@@ -40,23 +55,23 @@ class CiSecurityTests(unittest.TestCase):
         workflow = (root / ".github" / "workflows" / "ci.yml").read_text(encoding="utf-8")
 
         self.assertIn(
-            "python tools/run_db_recovery_suite.py --source-commit ${{ github.sha }} --out .test-artifacts/db-recovery.json",
+            "python tools/run_db_recovery_suite.py --source-commit ${{ env.HABITAT_SOURCE_COMMIT }} --out .test-artifacts/db-recovery.json",
             workflow,
         )
         self.assertIn(
-            "python tools/run_mutation_recovery_suite.py --source-commit ${{ github.sha }} --out .test-artifacts/mutation-recovery.json",
+            "python tools/run_mutation_recovery_suite.py --source-commit ${{ env.HABITAT_SOURCE_COMMIT }} --out .test-artifacts/mutation-recovery.json",
             workflow,
         )
         self.assertIn(
-            "python tools/run_reliability_suite.py --source-commit ${{ github.sha }} --out .test-artifacts/faults.json",
+            "python tools/run_reliability_suite.py --source-commit ${{ env.HABITAT_SOURCE_COMMIT }} --out .test-artifacts/faults.json",
             workflow,
         )
         self.assertIn(
-            "python tools/verify_contracts.py --source-commit ${{ github.sha }} --fixture tests/fixtures/contracts/agent-v1alpha2.json --out .test-artifacts/contract.json",
+            "python tools/verify_contracts.py --source-commit ${{ env.HABITAT_SOURCE_COMMIT }} --fixture tests/fixtures/contracts/agent-v1alpha2.json --out .test-artifacts/contract.json",
             workflow,
         )
         self.assertIn(
-            "python tools/run_protocol_conformance_suite.py --source-commit ${{ github.sha }} --out .test-artifacts/protocol-conformance.json",
+            "python tools/run_protocol_conformance_suite.py --source-commit ${{ env.HABITAT_SOURCE_COMMIT }} --out .test-artifacts/protocol-conformance.json",
             workflow,
         )
         self.assertIn(
@@ -76,11 +91,11 @@ class CiSecurityTests(unittest.TestCase):
             workflow,
         )
         self.assertIn(
-            "python tools/verify_reproducible_build.py --source-commit ${{ github.sha }} --first .test-artifacts/dist-first --second .test-artifacts/dist-second --first-source .test-artifacts/source-first --second-source .test-artifacts/source-second --out .test-artifacts/reproducible-build.json",
+            "python tools/verify_reproducible_build.py --source-commit ${{ env.HABITAT_SOURCE_COMMIT }} --first .test-artifacts/dist-first --second .test-artifacts/dist-second --first-source .test-artifacts/source-first --second-source .test-artifacts/source-second --out .test-artifacts/reproducible-build.json",
             workflow,
         )
         self.assertIn(
-            "python tools/verify_distribution.py --source-commit ${{ github.sha }} --dist .test-artifacts/dist-first --out .test-artifacts/artifacts.json",
+            "python tools/verify_distribution.py --source-commit ${{ env.HABITAT_SOURCE_COMMIT }} --dist .test-artifacts/dist-first --out .test-artifacts/artifacts.json",
             workflow,
         )
 
@@ -89,11 +104,11 @@ class CiSecurityTests(unittest.TestCase):
         workflow = (root / ".github" / "workflows" / "ci.yml").read_text(encoding="utf-8")
 
         self.assertIn(
-            "python tools/check_release_identity.py --source-commit ${{ github.sha }} --out .test-artifacts/identity.json",
+            "python tools/check_release_identity.py --source-commit ${{ env.HABITAT_SOURCE_COMMIT }} --out .test-artifacts/identity.json",
             workflow,
         )
         self.assertIn(
-            "python tools/run_test_matrix.py --mode shard --workers 1 --timeout 600 --source-commit ${{ github.sha }} --out .test-artifacts/matrix.json",
+            "python tools/run_test_matrix.py --mode shard --workers 1 --timeout 600 --source-commit ${{ env.HABITAT_SOURCE_COMMIT }} --out .test-artifacts/matrix.json",
             workflow,
         )
         self.assertIn("--out .test-artifacts/truth-core.json", workflow)
