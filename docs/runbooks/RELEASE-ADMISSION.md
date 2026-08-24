@@ -8,6 +8,8 @@ For an alpha candidate, the gate requires hash-bound `truth-core`, `matrix`, `fa
 
 CI checks out the candidate commit twice into distinct clean Git worktrees, then builds the wheel and sdist once in each copy with `SOURCE_DATE_EPOCH=0`. `normalize_sdist.py` rewrites only archive metadata that Setuptools leaves time-varying: gzip/tar timestamps, owner/group fields, and deterministic member order. It preserves every permitted entry's path, mode, and file bytes, and rejects links or other unsupported member types. `reproducible-build.json` blocks the alpha gate unless both worktrees are clean, both resolve to the candidate SHA, their hashed checkout identities differ, and both normalised artifact sets have the same SHA-256 values. The evidence records no absolute worktree paths. It proves repeatability across two clean copies in one CI OS/Python environment; it does not claim cross-environment, dependency-hermetic, or supply-chain reproducibility.
 
+The local commands below use `python -m build --no-isolation`, matching CI. Run them from the documented development environment: install `setuptools>=68` and the `dev` extra first. Python 3.12+ virtual environments may not include `setuptools` automatically.
+
 ## CI scanner evidence
 
 CI runs the GitHub Actions Semgrep policy before its local quality gate. The scanner report is valid only for the exact Git commit it names: the gate rejects a missing report, a scanner identity mismatch, a non-passing status, findings, errors, a digest mismatch, or a different commit.

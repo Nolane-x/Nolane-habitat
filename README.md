@@ -22,6 +22,7 @@ git clone https://github.com/Nolane-x/Nolane-habitat.git
 cd Nolane-habitat
 python -m venv .venv
 .\.venv\Scripts\python -m pip install -U pip
+.\.venv\Scripts\python -m pip install -U "setuptools>=68"
 .\.venv\Scripts\python -m pip install -e ".[dev,mcp,python-semantic]"
 ```
 

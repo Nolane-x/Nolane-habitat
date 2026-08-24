@@ -14,6 +14,7 @@
 - Added a quality-gate collector that records missing, unreadable, failed, timed-out, or finding-bearing required evidence as a blocked result.
 - Rejected malformed mutation payloads before reconciliation, approval consumption, lease acquisition, transaction persistence, backup, or journal creation.
 - Strengthened reproducibility evidence from two builds in one checkout to two distinct clean checkouts of the candidate commit, with non-reversible checkout identities and build-environment provenance.
+- Aligned the Windows quick start and release runbook with the CI build prerequisite for `setuptools>=68` when using `build --no-isolation`.
 
 ## 0.1.0-alpha.18 — 2026-08-09
 
