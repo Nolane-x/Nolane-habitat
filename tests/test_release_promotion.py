@@ -1,10 +1,12 @@
 import json
 import hashlib
+import io
 from dataclasses import replace
 import subprocess
 import sys
 import tempfile
 import unittest
+from contextlib import redirect_stderr
 from pathlib import Path
 
 from habitat.release import REQUIRED_REPORTS, ReleaseManifest, evaluate_promotion
@@ -13,10 +15,13 @@ from tools.promote_release import main
 
 class ReleasePromotionTests(unittest.TestCase):
     @staticmethod
-    def _provenance(commit: str, *, status: str = "passed") -> dict[str, str]:
+    def _provenance(
+        commit: str, *, status: str = "passed", evidence_type: str = "report"
+    ) -> dict[str, str]:
         payload = {
             "schema": 1,
             "suite": "release-evidence",
+            "evidence_type": evidence_type,
             "source_commit": commit,
             "status": status,
         }
@@ -27,6 +32,8 @@ class ReleasePromotionTests(unittest.TestCase):
             "source_commit": commit,
             "status": status,
             "report_sha256": digest,
+            "evidence_type": evidence_type,
+            "schema": 1,
         }
 
     @staticmethod
@@ -198,12 +205,33 @@ class ReleasePromotionTests(unittest.TestCase):
             reviewer_hashes=("c" * 64,),
             reviewers={"review": "c" * 64},
             report_provenance={name: self._provenance(commit) for name in required},
-            review_provenance={"review": self._provenance(commit)},
+            review_provenance={"review": self._provenance(commit, evidence_type="review")},
         ))
 
         verdict = evaluate_promotion(manifest, target="alpha-candidate")
 
         self.assertTrue(verdict.admitted, verdict.failed_gates)
+
+    def test_alpha_candidate_rejects_review_with_a_reused_canonical_report_payload(self):
+        commit = "a" * 40
+        required = REQUIRED_REPORTS["alpha-candidate"]
+        report_provenance = {name: self._provenance(commit) for name in required}
+        reused_digest = report_provenance["contract"]["report_sha256"]
+        review_provenance = self._provenance(commit, evidence_type="review")
+        review_provenance["report_sha256"] = reused_digest
+        manifest = self._with_manifest_hash(ReleaseManifest(
+            version="0.1.0-alpha.20", commit=commit,
+            reports={name: f"{index:x}" * 64 for index, name in enumerate(sorted(required), start=1)},
+            artifact_hashes={"wheel": "b" * 64}, residual_risks=(),
+            reviewer_hashes=("c" * 64,), reviewers={"review": "c" * 64},
+            report_provenance=report_provenance,
+            review_provenance={"review": review_provenance},
+        ))
+
+        verdict = evaluate_promotion(manifest, target="alpha-candidate")
+
+        self.assertFalse(verdict.admitted)
+        self.assertIn("review:review:reused-report-payload", verdict.failed_gates)
 
     def test_dry_run_writes_a_blocked_verdict_without_publication(self):
         with tempfile.TemporaryDirectory() as td:
@@ -214,7 +242,7 @@ class ReleasePromotionTests(unittest.TestCase):
                 json.dumps(
                     {
                         "version": "0.1.0-alpha.19",
-                        "commit": "commit",
+                        "commit": "a" * 40,
                         "reports": {},
                         "artifact_hashes": {},
                         "residual_risks": ["scanner unavailable"],
@@ -243,6 +271,68 @@ class ReleasePromotionTests(unittest.TestCase):
                 verdict["required_reports"],
             )
             self.assertFalse(verdict["verdict"]["admitted"])
+
+    def test_dry_run_refuses_invalid_commit_without_writing_a_verdict(self):
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            manifest = root / "manifest.json"
+            output = root / "verdict.json"
+            manifest.write_text(
+                json.dumps({
+                    "version": "0.1.0-alpha.20", "commit": "invalid",
+                    "reports": {}, "artifact_hashes": {}, "residual_risks": [],
+                }),
+                encoding="utf-8",
+            )
+
+            stderr = io.StringIO()
+            with redirect_stderr(stderr), self.assertRaises(SystemExit) as raised:
+                main(["--manifest", str(manifest), "--target", "alpha-candidate", "--dry-run", "--out", str(output)])
+            self.assertEqual(2, raised.exception.code)
+            self.assertIn("manifest:commit:invalid-sha", stderr.getvalue())
+            self.assertFalse(output.exists())
+
+    def test_dry_run_binds_a_hashed_verdict_to_the_evaluated_manifest(self):
+        commit = "a" * 40
+        required = REQUIRED_REPORTS["alpha-candidate"]
+        valid = self._with_manifest_hash(ReleaseManifest(
+            version="0.1.0-alpha.20", commit=commit,
+            reports={name: f"{index:x}" * 64 for index, name in enumerate(sorted(required), start=1)},
+            artifact_hashes={"wheel": "b" * 64}, residual_risks=(),
+            reviewer_hashes=("c" * 64,), reviewers={"review": "c" * 64},
+            report_provenance={name: self._provenance(commit) for name in required},
+            review_provenance={"review": self._provenance(commit, evidence_type="review")},
+        ))
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            manifest = root / "manifest.json"
+            output = root / "verdict.json"
+            manifest.write_text(json.dumps(valid.as_dict()), encoding="utf-8")
+
+            self.assertEqual(0, main(["--manifest", str(manifest), "--target", "alpha-candidate", "--dry-run", "--out", str(output)]))
+
+            value = json.loads(output.read_text(encoding="utf-8"))
+            unsigned = dict(value)
+            reported_digest = unsigned.pop("report_sha256")
+            self.assertEqual(commit, value["source_commit"])
+            self.assertEqual(valid.manifest_sha256, value["manifest_sha256"])
+            self.assertEqual(
+                hashlib.sha256(json.dumps(unsigned, sort_keys=True, separators=(",", ":")).encode("utf-8")).hexdigest(),
+                reported_digest,
+            )
+
+    def test_dry_run_rejects_duplicate_manifest_keys_without_writing_a_verdict(self):
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            manifest = root / "manifest.json"
+            output = root / "verdict.json"
+            manifest.write_text('{"version":"one","version":"two"}', encoding="utf-8")
+            stderr = io.StringIO()
+            with redirect_stderr(stderr), self.assertRaises(SystemExit) as raised:
+                main(["--manifest", str(manifest), "--target", "alpha-candidate", "--dry-run", "--out", str(output)])
+            self.assertEqual(2, raised.exception.code)
+            self.assertIn("duplicate JSON key: version", stderr.getvalue())
+            self.assertFalse(output.exists())
 
     def test_dry_run_rejects_missing_or_tampered_manifest_self_hash(self):
         commit = "a" * 40

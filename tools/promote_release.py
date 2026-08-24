@@ -6,12 +6,19 @@ import argparse
 import json
 import os
 from pathlib import Path
+import re
 import sys
 from tempfile import NamedTemporaryFile
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
-from habitat.release import REQUIRED_REPORTS, ReleaseManifest, evaluate_promotion
+from habitat.release import (
+    REQUIRED_REPORTS,
+    ReleaseManifest,
+    canonical_report_sha256,
+    evaluate_promotion,
+    load_json_object,
+)
 
 
 def write_json_atomically(path: Path, value: dict) -> None:
@@ -31,24 +38,30 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--out", type=Path, required=True)
     args = parser.parse_args(argv)
 
-    manifest = ReleaseManifest.from_dict(
-        json.loads(args.manifest.read_text(encoding="utf-8"))
-    )
+    try:
+        manifest = ReleaseManifest.from_dict(
+            load_json_object(args.manifest.read_bytes(), context="manifest")
+        )
+    except (OSError, ValueError) as exc:
+        parser.error(str(exc))
+    if not re.fullmatch(r"[0-9a-f]{40}", manifest.commit):
+        parser.error("manifest:commit:invalid-sha")
     verdict = evaluate_promotion(manifest, target=args.target)
-    write_json_atomically(
-        args.out,
-        {
-            "manifest": {
-                "version": manifest.version,
-                "commit": manifest.commit,
-                "reviewers": manifest.reviewers,
-            },
-            "dry_run": args.dry_run,
-            "publication": "not-attempted",
-            "required_reports": sorted(REQUIRED_REPORTS[args.target]),
-            "verdict": verdict.as_dict(),
+    value = {
+        "source_commit": manifest.commit,
+        "manifest_sha256": manifest.manifest_sha256,
+        "manifest": {
+            "version": manifest.version,
+            "commit": manifest.commit,
+            "reviewers": manifest.reviewers,
         },
-    )
+        "dry_run": args.dry_run,
+        "publication": "not-attempted",
+        "required_reports": sorted(REQUIRED_REPORTS[args.target]),
+        "verdict": verdict.as_dict(),
+    }
+    value["report_sha256"] = canonical_report_sha256(value)
+    write_json_atomically(args.out, value)
     return 0 if verdict.admitted else 1
 
 

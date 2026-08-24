@@ -3,6 +3,7 @@ from __future__ import annotations
 from dataclasses import asdict, dataclass, field, replace
 import hashlib
 import json
+import math
 from pathlib import Path
 import re
 from typing import Any, Mapping
@@ -26,38 +27,37 @@ class ReleaseManifest:
     residual_risks: tuple[str, ...]
     reviewer_hashes: tuple[str, ...] = ()
     reviewers: dict[str, str] = field(default_factory=dict)
-    report_provenance: dict[str, dict[str, str]] = field(default_factory=dict)
-    review_provenance: dict[str, dict[str, str]] = field(default_factory=dict)
+    report_provenance: dict[str, dict[str, Any]] = field(default_factory=dict)
+    review_provenance: dict[str, dict[str, Any]] = field(default_factory=dict)
     manifest_sha256: str = ""
 
     @classmethod
     def from_dict(cls, value: Mapping[str, Any]) -> "ReleaseManifest":
-        reviewers = {
-            str(name): str(digest)
-            for name, digest in dict(value.get("reviewers") or {}).items()
-        }
-        reviewer_hashes = tuple(
-            str(digest) for digest in value.get("reviewer_hashes") or ()
+        if not isinstance(value, Mapping):
+            raise ValueError("manifest must be an object")
+        reviewers = _string_mapping(value.get("reviewers", {}), "reviewers")
+        reviewer_hashes = _string_sequence(
+            value.get("reviewer_hashes", []), "reviewer_hashes"
         )
         return cls(
-            version=str(value["version"]),
-            commit=str(value["commit"]),
-            reports={str(key): str(digest) for key, digest in dict(value.get("reports") or {}).items()},
-            artifact_hashes={str(key): str(digest) for key, digest in dict(value.get("artifact_hashes") or {}).items()},
-            residual_risks=tuple(str(risk) for risk in value.get("residual_risks") or ()),
+            version=_required_string(value, "version", "manifest"),
+            commit=_required_string(value, "commit", "manifest"),
+            reports=_string_mapping(value.get("reports", {}), "reports"),
+            artifact_hashes=_string_mapping(
+                value.get("artifact_hashes", {}), "artifact_hashes"
+            ),
+            residual_risks=_string_sequence(
+                value.get("residual_risks", []), "residual_risks"
+            ),
             reviewer_hashes=reviewer_hashes or tuple(reviewers.values()),
             reviewers=reviewers,
-            report_provenance={
-                str(name): {str(key): str(item) for key, item in dict(record).items()}
-                for name, record in dict(value.get("report_provenance") or {}).items()
-                if isinstance(record, Mapping)
-            },
-            review_provenance={
-                str(name): {str(key): str(item) for key, item in dict(record).items()}
-                for name, record in dict(value.get("review_provenance") or {}).items()
-                if isinstance(record, Mapping)
-            },
-            manifest_sha256=str(value.get("manifest_sha256") or ""),
+            report_provenance=_provenance_mapping(
+                value.get("report_provenance", {}), "report_provenance"
+            ),
+            review_provenance=_provenance_mapping(
+                value.get("review_provenance", {}), "review_provenance"
+            ),
+            manifest_sha256=_optional_string(value.get("manifest_sha256", ""), "manifest_sha256"),
         )
 
     def as_dict(self) -> dict[str, Any]:
@@ -76,24 +76,112 @@ class PromotionVerdict:
         return asdict(self)
 
 
-def _sha256_file(path: Path) -> str:
-    digest = hashlib.sha256()
-    with path.open("rb") as handle:
-        for block in iter(lambda: handle.read(1024 * 1024), b""):
-            digest.update(block)
-    return digest.hexdigest()
+def _required_string(value: Mapping[str, Any], name: str, context: str) -> str:
+    item = value.get(name)
+    if not isinstance(item, str):
+        raise ValueError(f"{context}.{name} must be a string")
+    return item
 
 
-def _hash_named_files(values: Mapping[str, Path]) -> dict[str, str]:
-    hashes: dict[str, str] = {}
+def _optional_string(value: Any, name: str) -> str:
+    if not isinstance(value, str):
+        raise ValueError(f"{name} must be a string")
+    return value
+
+
+def _string_mapping(value: Any, name: str) -> dict[str, str]:
+    if not isinstance(value, Mapping):
+        raise ValueError(f"{name} must be an object")
+    result: dict[str, str] = {}
+    for key, item in value.items():
+        if not isinstance(key, str) or not key or not isinstance(item, str):
+            raise ValueError(f"{name} must map non-empty strings to strings")
+        result[key] = item
+    return result
+
+
+def _string_sequence(value: Any, name: str) -> tuple[str, ...]:
+    if not isinstance(value, list) or any(not isinstance(item, str) for item in value):
+        raise ValueError(f"{name} must be an array of strings")
+    return tuple(value)
+
+
+def _provenance_mapping(value: Any, name: str) -> dict[str, dict[str, Any]]:
+    if not isinstance(value, Mapping):
+        raise ValueError(f"{name} must be an object")
+    records: dict[str, dict[str, Any]] = {}
+    for evidence_name, record in value.items():
+        if not isinstance(evidence_name, str) or not evidence_name or not isinstance(record, Mapping):
+            raise ValueError(f"{name} must map non-empty names to objects")
+        source_commit = _required_string(record, "source_commit", name)
+        status = _required_string(record, "status", name)
+        report_sha256 = _required_string(record, "report_sha256", name)
+        evidence_type = _required_string(record, "evidence_type", name)
+        schema = record.get("schema")
+        if type(schema) is not int or schema < 1:
+            raise ValueError(f"{name}.schema must be a positive integer")
+        records[evidence_name] = {
+            "source_commit": source_commit,
+            "status": status,
+            "report_sha256": report_sha256,
+            "evidence_type": evidence_type,
+            "schema": schema,
+        }
+    return records
+
+
+def _reject_duplicate_json_keys(pairs: list[tuple[str, Any]]) -> dict[str, Any]:
+    value: dict[str, Any] = {}
+    for key, item in pairs:
+        if key in value:
+            raise ValueError(f"duplicate JSON key: {key}")
+        value[key] = item
+    return value
+
+
+def _parse_json_float(value: str) -> float:
+    number = float(value)
+    if not math.isfinite(number):
+        raise ValueError("non-finite JSON number")
+    return number
+
+
+def _reject_json_constant(value: str) -> None:
+    raise ValueError(f"non-finite JSON number: {value}")
+
+
+def load_json_object(raw: bytes, *, context: str) -> dict[str, Any]:
+    try:
+        value = json.loads(
+            raw.decode("utf-8"),
+            object_pairs_hook=_reject_duplicate_json_keys,
+            parse_float=_parse_json_float,
+            parse_constant=_reject_json_constant,
+        )
+    except (UnicodeDecodeError, json.JSONDecodeError, ValueError) as exc:
+        raise ValueError(f"{context}: {exc}") from exc
+    if not isinstance(value, dict):
+        raise ValueError(f"{context} must be an object")
+    return value
+
+
+def _read_named_files(values: Mapping[str, Path]) -> dict[str, bytes]:
+    snapshots: dict[str, bytes] = {}
     for name, path in values.items():
-        if not name:
+        if not isinstance(name, str) or not name:
             raise ValueError("evidence names must be non-empty")
         resolved = Path(path)
         if not resolved.is_file():
             raise FileNotFoundError(resolved)
-        hashes[str(name)] = _sha256_file(resolved)
-    return hashes
+        snapshots[name] = resolved.read_bytes()
+    return snapshots
+
+
+def _hash_named_files(values: Mapping[str, Path]) -> dict[str, str]:
+    return {
+        name: hashlib.sha256(snapshot).hexdigest()
+        for name, snapshot in _read_named_files(values).items()
+    }
 
 
 def _canonical_report_digest(value: Mapping[str, Any]) -> str:
@@ -102,28 +190,34 @@ def _canonical_report_digest(value: Mapping[str, Any]) -> str:
     ).hexdigest()
 
 
+def canonical_report_sha256(value: Mapping[str, Any]) -> str:
+    return _canonical_report_digest(value)
+
+
 def _canonical_manifest_digest(value: Mapping[str, Any]) -> str:
     unsigned = {key: item for key, item in value.items() if key != "manifest_sha256"}
     return _canonical_report_digest(unsigned)
 
 
-def _report_provenance(values: Mapping[str, Path]) -> dict[str, dict[str, str]]:
-    provenance: dict[str, dict[str, str]] = {}
-    for name, path in values.items():
-        try:
-            value = json.loads(Path(path).read_text(encoding="utf-8"))
-        except (OSError, UnicodeDecodeError, json.JSONDecodeError):
-            continue
-        if not isinstance(value, Mapping):
-            continue
+def _report_provenance(
+    snapshots: Mapping[str, bytes], *, context: str
+) -> dict[str, dict[str, Any]]:
+    provenance: dict[str, dict[str, Any]] = {}
+    for name, snapshot in snapshots.items():
+        value = load_json_object(snapshot, context=f"{context}:{name}")
+        schema = value.get("schema")
         source_commit = value.get("source_commit")
         status = value.get("status")
         reported_digest = value.get("report_sha256")
+        evidence_type = value.get("evidence_type", "")
         unsigned = {key: item for key, item in value.items() if key != "report_sha256"}
         if (
-            not isinstance(source_commit, str)
+            type(schema) is not int
+            or schema < 1
+            or not isinstance(source_commit, str)
             or not isinstance(status, str)
             or not isinstance(reported_digest, str)
+            or not isinstance(evidence_type, str)
             or not SHA256.fullmatch(reported_digest)
             or reported_digest != _canonical_report_digest(unsigned)
         ):
@@ -132,6 +226,8 @@ def _report_provenance(values: Mapping[str, Path]) -> dict[str, dict[str, str]]:
             "source_commit": source_commit,
             "status": status,
             "report_sha256": reported_digest,
+            "evidence_type": evidence_type,
+            "schema": schema,
         }
     return provenance
 
@@ -145,17 +241,25 @@ def build_release_manifest(
     residual_risks: tuple[str, ...] = (),
     reviewers: Mapping[str, Path] | None = None,
 ) -> ReleaseManifest:
-    reviewer_records = _hash_named_files(reviewers or {})
+    report_snapshots = _read_named_files(reports)
+    review_snapshots = _read_named_files(reviewers or {})
+    reviewer_records = {
+        name: hashlib.sha256(snapshot).hexdigest()
+        for name, snapshot in sorted(review_snapshots.items())
+    }
     manifest = ReleaseManifest(
         version=version,
         commit=commit,
-        reports=_hash_named_files(reports),
+        reports={
+            name: hashlib.sha256(snapshot).hexdigest()
+            for name, snapshot in report_snapshots.items()
+        },
         artifact_hashes=_hash_named_files(artifacts),
         residual_risks=tuple(residual_risks),
-        reviewer_hashes=tuple(reviewer_records.values()),
+        reviewer_hashes=tuple(reviewer_records[name] for name in sorted(reviewer_records)),
         reviewers=reviewer_records,
-        report_provenance=_report_provenance(reports),
-        review_provenance=_report_provenance(reviewers or {}),
+        report_provenance=_report_provenance(report_snapshots, context="report"),
+        review_provenance=_report_provenance(review_snapshots, context="review"),
     )
     return replace(
         manifest,
@@ -192,6 +296,8 @@ def evaluate_promotion(manifest: ReleaseManifest, target: str) -> PromotionVerdi
             failed.add(f"report:{name}:source-commit-mismatch")
         if provenance.get("status") != "passed":
             failed.add(f"report:{name}:status")
+        if provenance.get("evidence_type") not in ("", "report"):
+            failed.add(f"report:{name}:invalid-kind")
         if not SHA256.fullmatch(provenance.get("report_sha256", "")):
             failed.add(f"report:{name}:report-hash-invalid")
     if "artifacts" in required:
@@ -228,8 +334,17 @@ def evaluate_promotion(manifest: ReleaseManifest, target: str) -> PromotionVerdi
                 failed.add(f"review:{name}:source-commit-mismatch")
             if provenance.get("status") != "passed":
                 failed.add(f"review:{name}:status")
+            if (
+                provenance.get("schema") != 1
+                or provenance.get("evidence_type") != "review"
+            ):
+                failed.add(f"review:{name}:invalid-kind")
             if not SHA256.fullmatch(provenance.get("report_sha256", "")):
                 failed.add(f"review:{name}:report-hash-invalid")
+            if provenance.get("report_sha256") in {
+                item.get("report_sha256") for item in manifest.report_provenance.values()
+            }:
+                failed.add(f"review:{name}:reused-report-payload")
     return PromotionVerdict(
         target=target,
         admitted=not missing and not failed,

@@ -1,9 +1,11 @@
 import hashlib
+import io
 import json
 import subprocess
 import sys
 import tempfile
 import unittest
+from contextlib import redirect_stderr
 from pathlib import Path
 
 from habitat.release import REQUIRED_REPORTS, build_release_manifest
@@ -36,6 +38,18 @@ class ReleaseManifestTests(unittest.TestCase):
             )
             reports[name] = path
         return reports
+
+    def _alpha_args(
+        self, reports: dict[str, Path], artifact: Path, review: Path, output: Path, commit: str
+    ) -> list[str]:
+        args = [
+            "--version", "0.1.0-alpha.20", "--commit", commit,
+            "--target", "alpha-candidate", "--artifact", f"wheel={artifact}",
+            "--review", f"review={review}", "--out", str(output),
+        ]
+        for name, path in reports.items():
+            args.extend(("--report", f"{name}={path}"))
+        return args
 
     def test_manifest_binds_evidence_and_artifacts_to_file_hashes(self):
         with tempfile.TemporaryDirectory() as td:
@@ -145,6 +159,8 @@ class ReleaseManifestTests(unittest.TestCase):
                     "source_commit": commit,
                     "status": "passed",
                     "report_sha256": self._commit_bound_report(commit)["report_sha256"],
+                    "evidence_type": "report",
+                    "schema": 1,
                 },
                 manifest.report_provenance["matrix"],
             )
@@ -176,13 +192,12 @@ class ReleaseManifestTests(unittest.TestCase):
             self.assertEqual(first.manifest_sha256, second.manifest_sha256)
             self.assertEqual(first.manifest_sha256, first.as_dict()["manifest_sha256"])
 
-    def test_cli_rejects_missing_failed_or_cross_commit_admission_evidence(self):
+    def test_cli_rejects_each_invalid_admission_evidence_with_a_gate_and_no_output(self):
         commit = "a" * 40
         with tempfile.TemporaryDirectory() as td:
             root = Path(td)
             artifact = root / "habitat.whl"
             review = root / "review.json"
-            output = root / "release-manifest.json"
             artifact.write_bytes(b"wheel bytes")
             review.write_text(
                 json.dumps(self._commit_bound_report(commit, evidence_type="review")),
@@ -190,31 +205,138 @@ class ReleaseManifestTests(unittest.TestCase):
             )
 
             cases = (
-                ("missing", {}, None),
-                ("failed", self._required_report_paths(root, commit), "failed"),
-                ("cross-commit", self._required_report_paths(root, commit), "b" * 40),
+                ("missing", {}, None, "reports:required-set-mismatch"),
+                ("failed", self._required_report_paths(root, commit), "failed", "report:contract:status"),
+                ("cross-commit", self._required_report_paths(root, commit), "b" * 40, "report:contract:source-commit-mismatch"),
+                ("tampered", self._required_report_paths(root, commit), "tampered", "report:contract:provenance:missing-or-invalid"),
             )
-            for name, reports, corruption in cases:
+            for name, reports, corruption, expected_gate in cases:
                 with self.subTest(name=name):
+                    output = root / f"{name}-release-manifest.json"
                     if corruption == "failed":
                         reports["contract"].write_text(
                             json.dumps(self._commit_bound_report(commit, status="failed")),
                             encoding="utf-8",
                         )
+                    elif corruption == "tampered":
+                        value = self._commit_bound_report(commit)
+                        value["status"] = "failed"
+                        reports["contract"].write_text(json.dumps(value), encoding="utf-8")
                     elif corruption:
                         reports["contract"].write_text(
                             json.dumps(self._commit_bound_report(corruption)),
                             encoding="utf-8",
                         )
-                    args = [
-                        "--version", "0.1.0-alpha.20", "--commit", commit,
-                        "--target", "alpha-candidate", "--artifact", f"wheel={artifact}",
-                        "--review", f"review={review}", "--out", str(output),
-                    ]
-                    for report_name, report_path in reports.items():
-                        args.extend(("--report", f"{report_name}={report_path}"))
-                    with self.assertRaises(SystemExit):
-                        main(args)
+                    stderr = io.StringIO()
+                    with redirect_stderr(stderr), self.assertRaises(SystemExit) as raised:
+                        main(self._alpha_args(reports, artifact, review, output, commit))
+                    self.assertEqual(2, raised.exception.code)
+                    self.assertIn(expected_gate, stderr.getvalue())
+                    self.assertFalse(output.exists())
+
+    def test_cli_rejects_duplicate_evidence_names_and_duplicate_json_keys(self):
+        commit = "a" * 40
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            reports = self._required_report_paths(root, commit)
+            artifact = root / "habitat.whl"
+            review = root / "review.json"
+            artifact.write_bytes(b"wheel bytes")
+            review.write_text(
+                json.dumps(self._commit_bound_report(commit, evidence_type="review")),
+                encoding="utf-8",
+            )
+            duplicate_name_output = root / "duplicate-name.json"
+            duplicate_json_output = root / "duplicate-json.json"
+
+            stderr = io.StringIO()
+            duplicate_name_args = self._alpha_args(
+                reports, artifact, review, duplicate_name_output, commit
+            ) + ["--report", f"contract={reports['contract']}"]
+            with redirect_stderr(stderr), self.assertRaises(SystemExit) as raised:
+                main(duplicate_name_args)
+            self.assertEqual(2, raised.exception.code)
+            self.assertIn("duplicate evidence name: contract", stderr.getvalue())
+            self.assertFalse(duplicate_name_output.exists())
+
+            payload = self._commit_bound_report(commit)
+            duplicate_json = json.dumps(payload).replace(
+                '"status": "passed"', '"status": "failed", "status": "passed"'
+            )
+            reports["contract"].write_text(duplicate_json, encoding="utf-8")
+            stderr = io.StringIO()
+            with redirect_stderr(stderr), self.assertRaises(SystemExit) as raised:
+                main(self._alpha_args(reports, artifact, review, duplicate_json_output, commit))
+            self.assertEqual(2, raised.exception.code)
+            self.assertIn("duplicate JSON key: status", stderr.getvalue())
+            self.assertFalse(duplicate_json_output.exists())
+
+    def test_cli_rejects_a_reserialized_report_used_as_a_review(self):
+        commit = "a" * 40
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            reports = self._required_report_paths(root, commit)
+            artifact = root / "habitat.whl"
+            review = root / "review.json"
+            output = root / "release-manifest.json"
+            artifact.write_bytes(b"wheel bytes")
+            review.write_text(
+                json.dumps(self._commit_bound_report(commit), indent=2), encoding="utf-8"
+            )
+
+            stderr = io.StringIO()
+            with redirect_stderr(stderr), self.assertRaises(SystemExit) as raised:
+                main(self._alpha_args(reports, artifact, review, output, commit))
+            self.assertEqual(2, raised.exception.code)
+            self.assertIn("review:review:invalid-kind", stderr.getvalue())
+            self.assertFalse(output.exists())
+
+    def test_cli_rejects_a_review_bound_to_a_different_commit(self):
+        commit = "a" * 40
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            reports = self._required_report_paths(root, commit)
+            artifact = root / "habitat.whl"
+            review = root / "review.json"
+            output = root / "release-manifest.json"
+            artifact.write_bytes(b"wheel bytes")
+            review.write_text(
+                json.dumps(self._commit_bound_report("b" * 40, evidence_type="review")),
+                encoding="utf-8",
+            )
+
+            stderr = io.StringIO()
+            with redirect_stderr(stderr), self.assertRaises(SystemExit) as raised:
+                main(self._alpha_args(reports, artifact, review, output, commit))
+            self.assertEqual(2, raised.exception.code)
+            self.assertIn("review:review:source-commit-mismatch", stderr.getvalue())
+            self.assertFalse(output.exists())
+
+    def test_manifest_hash_is_stable_when_named_reviews_are_reordered(self):
+        commit = "a" * 40
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            report = root / "report.json"
+            first = root / "first.json"
+            second = root / "second.json"
+            report.write_text(json.dumps(self._commit_bound_report(commit)), encoding="utf-8")
+            first.write_text(
+                json.dumps(self._commit_bound_report(commit, evidence_type="review")),
+                encoding="utf-8",
+            )
+            second.write_text(
+                json.dumps(self._commit_bound_report(commit, evidence_type="review")) + "\n",
+                encoding="utf-8",
+            )
+            one = build_release_manifest(
+                version="0.1.0-alpha.20", commit=commit, reports={"matrix": report},
+                artifacts={}, reviewers={"first": first, "second": second},
+            )
+            two = build_release_manifest(
+                version="0.1.0-alpha.20", commit=commit, reports={"matrix": report},
+                artifacts={}, reviewers={"second": second, "first": first},
+            )
+            self.assertEqual(one.manifest_sha256, two.manifest_sha256)
 
     def test_manifest_script_runs_from_a_checkout(self):
         with tempfile.TemporaryDirectory() as td:
