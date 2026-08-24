@@ -9,6 +9,27 @@ from typing import Any
 from .util import utc_now
 
 
+def canonical_source_path(path: str) -> str:
+    """Return one portable identity for a source-relative path."""
+    if not isinstance(path, str) or not path:
+        raise ValueError("source path must be a non-empty string")
+    portable = path.replace("\\", "/")
+    if "\x00" in portable or portable.startswith("/") or (
+        len(portable) >= 2 and portable[1] == ":"
+    ):
+        raise ValueError("source path must be relative")
+    parts: list[str] = []
+    for part in portable.split("/"):
+        if part in {"", "."}:
+            continue
+        if part == "..":
+            raise ValueError("source path escapes source root")
+        parts.append(part)
+    if not parts:
+        raise ValueError("source path must identify a file")
+    return "/".join(parts)
+
+
 @dataclass(frozen=True)
 class PolicyDecision:
     allowed: bool
@@ -105,10 +126,14 @@ class PolicyEngine:
 
     @staticmethod
     def _matches(path: str, patterns: list[str]) -> bool:
-        p = path.replace("\\", "/")
-        return any(fnmatch.fnmatch(p, pattern) or (pattern == "**") for pattern in patterns)
+        canonical_path = canonical_source_path(path)
+        return any(
+            fnmatch.fnmatch(canonical_path, canonical_source_path(pattern)) or pattern == "**"
+            for pattern in patterns
+        )
 
     def evaluate_source(self, action: str, path: str, *, structural: bool = False) -> PolicyDecision:
+        path = canonical_source_path(path)
         value = self.status(); source = value.get("source") or {}
         deny = list(source.get("deny") or [])
         if self._matches(path, deny):

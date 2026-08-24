@@ -8,6 +8,7 @@ import stat
 from pathlib import Path
 
 from .model import TransactionRecord
+from .policy import canonical_source_path
 from .util import sha256_bytes, stable_id, utc_now
 
 
@@ -25,10 +26,10 @@ class MutationEngine:
     def _valid_rel(rel: str) -> str:
         if not isinstance(rel, str) or not rel:
             raise ValueError("mutation path must be a non-empty string")
-        p=Path(rel)
-        if p.is_absolute() or ".." in p.parts:
-            raise ValueError("mutation path escapes source root")
-        return p.as_posix()
+        try:
+            return canonical_source_path(rel)
+        except ValueError as exc:
+            raise ValueError("mutation path escapes source root") from exc
 
     def _normalize_operations(self, operations: list[dict]) -> list[dict]:
         if not isinstance(operations,list) or not operations:

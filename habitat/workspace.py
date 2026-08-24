@@ -2451,8 +2451,7 @@ class HabitatWorkspace:
         # Policy and lease checks happen before MutationEngine.begin(), which itself may persist a staged transaction.
         paths=[]; approval_needed=False
         structural_ops={"create_file","delete_file","move_file"}
-        for op in operations:
-            if not isinstance(op,dict): raise TypeError("each mutation operation must be an object")
+        for op in normalized_operations:
             kind=op.get("op")
             op_paths=[op.get("from_path"),op.get("to_path")] if kind=="move_file" else [op.get("path")]
             if kind=="replace_symbol_source" and not op.get("path"):

@@ -2,11 +2,136 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from habitat.mutation import MutationEngine
+from habitat.mutation import MutationEngine, TransactionConflict
 from habitat.workspace import HabitatWorkspace
 
 
 class MutationRecoveryTests(unittest.TestCase):
+    def test_canonical_policy_path_blocks_equivalent_git_hook_mutations(self):
+        variants = (
+            "./.git/hooks/pre-commit",
+            ".git//hooks/./pre-commit",
+            ".git\\hooks\\pre-commit",
+        )
+        with tempfile.TemporaryDirectory() as td:
+            base = Path(td)
+            project = base / "project"
+            project.mkdir()
+            workspace = HabitatWorkspace.create(project, base / "workspace")
+            try:
+                workspace.policy_update(
+                    {
+                        "source": {"edit": ["**"], "deny": [".git/hooks/pre-commit"]},
+                        "structural_mutation": {"approval_required": False},
+                    }
+                )
+
+                for raw_path in variants:
+                    with self.subTest(raw_path=raw_path):
+                        decision = workspace.policy_evaluate("edit", path=raw_path)["decision"]
+                        self.assertFalse(decision["allowed"])
+                        with self.assertRaises(PermissionError):
+                            transaction = workspace.stage_change(
+                                [
+                                    {
+                                        "op": "create_file",
+                                        "path": raw_path,
+                                        "content": "#!/usr/bin/env python\n",
+                                        "mode": 0o755,
+                                    }
+                                ]
+                            )
+                            workspace.commit_change(transaction["id"])
+
+                self.assertFalse((project / ".git" / "hooks" / "pre-commit").exists())
+                self.assertEqual(
+                    0,
+                    workspace.store.conn.execute("SELECT COUNT(*) FROM transactions").fetchone()[0],
+                )
+            finally:
+                workspace.close()
+
+    def test_canonical_policy_path_checks_both_move_endpoints(self):
+        with tempfile.TemporaryDirectory() as td:
+            base = Path(td)
+            project = base / "project"
+            project.mkdir()
+            (project / "blocked.py").write_text("blocked = True\n", encoding="utf-8")
+            (project / "safe.py").write_text("safe = True\n", encoding="utf-8")
+            workspace = HabitatWorkspace.create(project, base / "workspace")
+            try:
+                workspace.policy_update(
+                    {
+                        "source": {
+                            "edit": ["**"],
+                            "deny": ["blocked.py", "blocked-target.py"],
+                        },
+                        "structural_mutation": {"approval_required": False},
+                    }
+                )
+
+                with self.assertRaises(PermissionError):
+                    workspace.stage_change(
+                        [
+                            {
+                                "op": "move_file",
+                                "from_path": "./blocked.py",
+                                "to_path": "out.py",
+                            }
+                        ]
+                    )
+                with self.assertRaises(PermissionError):
+                    workspace.stage_change(
+                        [
+                            {
+                                "op": "move_file",
+                                "from_path": "./safe.py",
+                                "to_path": ".\\blocked-target.py",
+                            }
+                        ]
+                    )
+            finally:
+                workspace.close()
+
+    def test_equivalent_paths_share_one_agent_lease_resource(self):
+        with tempfile.TemporaryDirectory() as td:
+            base = Path(td)
+            project = base / "project"
+            project.mkdir()
+            (project / "a.py").write_text("value = 1\n", encoding="utf-8")
+            workspace = HabitatWorkspace.create(project, base / "workspace")
+            try:
+                first_agent = workspace.agent_open("first")["id"]
+                second_agent = workspace.agent_open("second")["id"]
+                transaction = workspace.stage_change(
+                    [
+                        {
+                            "op": "replace_text",
+                            "path": ".\\a.py",
+                            "old": "value = 1",
+                            "new": "value = 2",
+                        }
+                    ],
+                    agent_id=first_agent,
+                )
+                self.assertEqual("a.py", transaction["operations"][0]["path"])
+                self.assertEqual(["a.py"], transaction["lease_resources"])
+
+                with self.assertRaises(TransactionConflict):
+                    workspace.stage_change(
+                        [
+                            {
+                                "op": "replace_text",
+                                "path": "./a.py",
+                                "old": "value = 1",
+                                "new": "value = 3",
+                            }
+                        ],
+                        agent_id=second_agent,
+                    )
+            finally:
+                workspace.close()
+
     def test_rejects_invalid_operations_before_reconciling_or_persisting(self):
         with tempfile.TemporaryDirectory() as td:
             base = Path(td)
