@@ -44,6 +44,10 @@ class CiSecurityTests(unittest.TestCase):
             workflow,
         )
         self.assertIn(
+            "python tools/run_mutation_recovery_suite.py --source-commit ${{ github.sha }} --out .test-artifacts/mutation-recovery.json",
+            workflow,
+        )
+        self.assertIn(
             "python tools/run_reliability_suite.py --source-commit ${{ github.sha }} --out .test-artifacts/faults.json",
             workflow,
         )

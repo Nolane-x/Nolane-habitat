@@ -752,6 +752,8 @@ git commit -m "test(reliability): bind fault evidence to candidate commits"
 
 **Why this matters:** SQLite recovery alone does not prove that the journaled source mutation engine cannot leave a project half-edited. The mutation engine already persists a prepared/applying/committed journal, so its promises need deterministic interruption tests that operate on synthetic projects only.
 
+**Partial foundation delivered in the Alpha.19 candidate:** a commit-bound `mutation-recovery` report now runs text replacement and structural create/move/delete interruption fixtures in CI. Each fixture closes and reopens the workspace, proves rollback to the original source state, and checks a second reopen performs no extra recovery. Exact fault hooks for every journal transition, controlled filesystem failures, and the full concurrency/path matrix remain required before this task is complete.
+
 **Files:**
 
 - Create: `tests/test_mutation_recovery.py`

@@ -2,7 +2,7 @@
 
 `tools/promote_release.py` evaluates a supplied release manifest and writes a machine-readable verdict. It never creates a Git tag, publishes a package, uploads an artifact, or creates a GitHub release.
 
-For an alpha candidate, the gate requires hash-bound `truth-core`, `matrix`, `faults`, `artifacts`, `scanner`, `db-recovery`, and `contract` reports, at least one artifact, and at least one review record. Every required report must contain a verified payload hash, `status: passed`, and the same 40-character commit SHA as the manifest. Distribution evidence includes a deterministic member manifest and rejects unsafe paths, `.env` files, private-key extensions, local databases, Habitat state, and Python bytecode caches. It also extracts the wheel `METADATA` and sdist `PKG-INFO`, checks their normalized project name and package version, and blocks if their canonical `Requires-Dist` inventories differ. The resulting `dependency_inventory_sha256` binds that inventory into the artifact report. The review record is hashed by the builder; its digest must not be reused from any report or artifact. This is a binding check, not a claim that a filename proves reviewer identity—follow the independent-review procedure before supplying the record.
+For an alpha candidate, the gate requires hash-bound `truth-core`, `matrix`, `faults`, `artifacts`, `scanner`, `db-recovery`, `mutation-recovery`, and `contract` reports, at least one artifact, and at least one review record. Every required report must contain a verified payload hash, `status: passed`, and the same 40-character commit SHA as the manifest. Distribution evidence includes a deterministic member manifest and rejects unsafe paths, `.env` files, private-key extensions, local databases, Habitat state, and Python bytecode caches. It also extracts the wheel `METADATA` and sdist `PKG-INFO`, checks their normalized project name and package version, and blocks if their canonical `Requires-Dist` inventories differ. The resulting `dependency_inventory_sha256` binds that inventory into the artifact report. The review record is hashed by the builder; its digest must not be reused from any report or artifact. This is a binding check, not a claim that a filename proves reviewer identity—follow the independent-review procedure before supplying the record.
 
 ## CI scanner evidence
 
@@ -26,6 +26,7 @@ Generate the SQLite recovery and fault-injection reports from the same checked-o
 
 ```powershell
 python tools\run_db_recovery_suite.py --source-commit $commit --out .test-artifacts\db-recovery.json
+python tools\run_mutation_recovery_suite.py --source-commit $commit --out .test-artifacts\mutation-recovery.json
 python tools\run_reliability_suite.py --source-commit $commit --out .test-artifacts\faults.json
 python tools\verify_contracts.py --source-commit $commit --fixture tests\fixtures\contracts\agent-v1alpha2.json --out .test-artifacts\contract.json
 python -m build --no-isolation --outdir dist
@@ -43,6 +44,7 @@ python tools\build_release_manifest.py --version 0.1.0-alpha.19 --commit $commit
   --report artifacts=.test-artifacts\artifacts.json `
   --report scanner=.test-artifacts\semgrep-workflows.json `
   --report db-recovery=.test-artifacts\db-recovery.json `
+  --report mutation-recovery=.test-artifacts\mutation-recovery.json `
   --report contract=.test-artifacts\contract.json `
   --artifact wheel=dist\nolane_habitat-0.1.0a19-py3-none-any.whl `
   --artifact sdist=dist\nolane_habitat-0.1.0a19.tar.gz `
