@@ -41,6 +41,20 @@ class Alpha11ObservatoryRuntimeTests(unittest.TestCase):
             error_response.close()
         self.assertTrue(error_response.closed)
 
+    def test_observer_requests_leave_authoritative_sqlite_unchanged(self):
+        ws,_,_=self.make_ws(); ws.agent_open('observer-proof',{'surface':'test'})
+        obs=ws.observatory_start(open_browser=False); self.addCleanup(ws.observatory_stop)
+        database_before="\n".join(ws.store.conn.iterdump())
+
+        for endpoint in ('api/health','api/snapshot','api/activity?since=0'):
+            with urllib.request.urlopen(obs['url']+endpoint,timeout=3) as response:
+                self.assertEqual(200,response.status)
+                payload=json.loads(response.read())
+                if endpoint=='api/activity?since=0': self.assertIn('events',payload)
+                else: self.assertTrue(payload['read_only'])
+
+        self.assertEqual(database_before,"\n".join(ws.store.conn.iterdump()))
+
     def test_domain_activity_events_capture_agent_episode_mutation_and_are_monotonic(self):
         ws,_,_=self.make_ws(); a=ws.agent_open('Claude')['id']; ctx=ws.orient('change validate',agent_id=a); ep=ws.episode_start('change validate',ctx.handle)
         tx=ws.stage_change([{'op':'replace_text','path':'auth.py','old':'bool(user)','new':'user is not None'}],episode_id=ep['id'],agent_id=a)

@@ -264,6 +264,8 @@ git commit -m "release: bind admission evidence to candidate provenance"
 
 ## Task 5: Make Observatory read-only guarantees independently observable
 
+**Status:** In progress. HTTP-level state-neutrality coverage is implemented for health, snapshot, and activity reads; complete matrix evidence remains required.
+
 **Files:**
 
 - Modify: `habitat/observatory.py`
