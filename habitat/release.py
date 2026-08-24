@@ -185,10 +185,19 @@ def _read_named_files(values: Mapping[str, Path]) -> dict[str, bytes]:
 
 
 def _hash_named_files(values: Mapping[str, Path]) -> dict[str, str]:
-    return {
-        name: hashlib.sha256(snapshot).hexdigest()
-        for name, snapshot in _read_named_files(values).items()
-    }
+    hashes: dict[str, str] = {}
+    for name, path in values.items():
+        if not isinstance(name, str) or not name:
+            raise ValueError("evidence names must be non-empty")
+        resolved = Path(path)
+        if not resolved.is_file():
+            raise FileNotFoundError(resolved)
+        digest = hashlib.sha256()
+        with resolved.open("rb") as handle:
+            for chunk in iter(lambda: handle.read(1024 * 1024), b""):
+                digest.update(chunk)
+        hashes[name] = digest.hexdigest()
+    return hashes
 
 
 def _canonical_report_digest(value: Mapping[str, Any]) -> str:

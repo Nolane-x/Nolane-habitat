@@ -212,6 +212,37 @@ class ReleaseManifestTests(unittest.TestCase):
                 manifest.review_provenance["review"]["report_sha256"],
             )
 
+    def test_manifest_hashes_distribution_artifacts_in_bounded_blocks(self):
+        payload = b"artifact-block-" * 100_000
+        read_sizes = []
+
+        class BoundedReader(io.BytesIO):
+            def read(self, size=-1):
+                if size < 0:
+                    raise AssertionError("artifact was buffered with an unbounded read")
+                read_sizes.append(size)
+                return super().read(size)
+
+        with tempfile.TemporaryDirectory() as td:
+            artifact = Path(td) / "habitat.whl"
+            artifact.write_bytes(payload)
+
+            with patch.object(
+                Path,
+                "open",
+                new=lambda path, mode="r", *args, **kwargs: BoundedReader(payload),
+            ):
+                manifest = build_release_manifest(
+                    version="0.1.0-alpha.20",
+                    commit="a" * 40,
+                    reports={},
+                    artifacts={"wheel": artifact},
+                )
+
+        self.assertEqual(hashlib.sha256(payload).hexdigest(), manifest.artifact_hashes["wheel"])
+        self.assertGreater(len(read_sizes), 1)
+        self.assertTrue(all(0 < size <= 1024 * 1024 for size in read_sizes))
+
     def test_manifest_round_trips_through_its_in_memory_dictionary(self):
         commit = "a" * 40
         with tempfile.TemporaryDirectory() as td:
