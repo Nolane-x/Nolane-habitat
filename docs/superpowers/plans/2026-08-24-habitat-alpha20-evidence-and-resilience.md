@@ -795,6 +795,8 @@ git commit -m "test(reliability): bind fault evidence to candidate commits"
 - Consumes: versioned request fixtures, a temporary workspace digest, an agent handle, and the public MCP/CLI request adapters.
 - Produces: `replay_protocol_case(case: Mapping[str, object]) -> ProtocolResult` with `outcome`, `error_class`, `response_shape`, `workspace_digest_before`, and `workspace_digest_after`.
 
+**Partial foundation delivered in the Alpha.19 candidate:** the NDJSON adapter now rejects duplicate JSON keys, non-standard JSON numbers, unpaired Unicode surrogates, non-object requests, and payloads over 256 KiB before dispatch. A versioned adversarial fixture proves each rejection uses a typed, non-disclosing envelope and leaves the workspace revision unchanged. The broader corpus, mutation-preparation checks, MCP SDK surface replay, logical-state digest, and commit-bound evidence runner remain required before this task is complete.
+
 **Required scenarios:**
 
 - [ ] Maintain a deterministic corpus covering missing required fields, wrong scalar/container types, unknown fields, duplicate JSON keys, invalid UTF-8 surrogate forms, stale/foreign agent and checkpoint handles, oversized strings/lists, empty change payloads, encoded path traversal, and invalid semantic identifiers.

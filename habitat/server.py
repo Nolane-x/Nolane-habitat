@@ -5,7 +5,7 @@ import json
 import sys
 from pathlib import Path
 
-from .protocol import HabitatProtocol, PROTOCOL_VERSION
+from .protocol import HabitatProtocol, PROTOCOL_VERSION, ProtocolError, parse_json_request
 from .workspace import HabitatWorkspace
 
 
@@ -18,17 +18,23 @@ def serve_stdio(workspace: HabitatWorkspace, inp=None, out=None) -> int:
         if not raw:
             continue
         try:
-            request = json.loads(raw)
-            if not isinstance(request, dict):
-                raise ValueError("request must be a JSON object")
+            request = parse_json_request(raw)
             response = protocol.handle(request)
+        except ProtocolError as exc:
+            response = {
+                "protocol": PROTOCOL_VERSION,
+                "id": None,
+                "ok": False,
+                "revision": workspace.revision,
+                "error": {"code": exc.code, "message": exc.message, "details": {}},
+            }
         except Exception as exc:
             response = {
                 "protocol": PROTOCOL_VERSION,
                 "id": None,
                 "ok": False,
                 "revision": workspace.revision,
-                "error": {"code": "INVALID_JSON", "message": str(exc), "details": {}},
+                "error": {"code": "INVALID_JSON", "message": "request could not be parsed", "details": {}},
             }
         out.write(json.dumps(response, ensure_ascii=False, separators=(",", ":")) + "\n")
         out.flush()

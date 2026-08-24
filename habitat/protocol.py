@@ -7,11 +7,49 @@ from .model import to_dict
 from .workspace import HabitatWorkspace
 
 PROTOCOL_VERSION = "habitat.agent.v1alpha2"
+MAX_REQUEST_BYTES = 256 * 1024
 
 @dataclass
 class ProtocolError(Exception):
     code: str; message: str; details: dict[str, Any] | None = None
     def __str__(self): return self.message
+
+
+def _reject_duplicate_keys(pairs: list[tuple[str, Any]]) -> dict[str, Any]:
+    value: dict[str, Any] = {}
+    for key, item in pairs:
+        if key in value:
+            raise ValueError("duplicate key")
+        value[key] = item
+    return value
+
+
+def _reject_nonstandard_number(_value: str) -> None:
+    raise ValueError("non-standard number")
+
+
+def _contains_unpaired_surrogate(value: Any) -> bool:
+    if isinstance(value, str):
+        return any(0xD800 <= ord(character) <= 0xDFFF for character in value)
+    if isinstance(value, dict):
+        return any(_contains_unpaired_surrogate(key) or _contains_unpaired_surrogate(item) for key, item in value.items())
+    if isinstance(value, list):
+        return any(_contains_unpaired_surrogate(item) for item in value)
+    return False
+
+
+def parse_json_request(raw: str) -> dict[str, Any]:
+    if len(raw.encode("utf-8", errors="surrogatepass")) > MAX_REQUEST_BYTES:
+        raise ProtocolError("REQUEST_TOO_LARGE", "request exceeds the protocol size limit")
+    try:
+        request = json.loads(raw, object_pairs_hook=_reject_duplicate_keys, parse_constant=_reject_nonstandard_number)
+    except (json.JSONDecodeError, ValueError):
+        raise ProtocolError("INVALID_JSON", "request must be strict JSON") from None
+    if not isinstance(request, dict):
+        raise ProtocolError("INVALID_REQUEST", "request must be a JSON object")
+    if _contains_unpaired_surrogate(request):
+        raise ProtocolError("INVALID_REQUEST", "request contains an unpaired surrogate")
+    return request
 
 class HabitatProtocol:
     METHODS = [
@@ -62,8 +100,12 @@ class HabitatProtocol:
             total += sum(HabitatProtocol._exact_source_bytes(v) for v in value)
         return total
 
-    def handle(self, request: dict[str, Any]) -> dict[str, Any]:
+    def handle(self, request: Any) -> dict[str, Any]:
         started = time.perf_counter()
+        if not isinstance(request, dict):
+            return self._error(None, "INVALID_REQUEST", "request must be a JSON object")
+        if _contains_unpaired_surrogate(request):
+            return self._error(request.get("id"), "INVALID_REQUEST", "request contains an unpaired surrogate")
         rid=request.get("id"); method=request.get("method"); params=request.get("params") or {}
         if not isinstance(method,str):
             response=self._error(rid,"INVALID_REQUEST","method must be a string")

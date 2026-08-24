@@ -1,0 +1,26 @@
+{
+  "schema": 1,
+  "protocol": "habitat.agent.v1alpha2",
+  "cases": [
+    {
+      "id": "non-object-request",
+      "raw": "[]",
+      "error_code": "INVALID_REQUEST"
+    },
+    {
+      "id": "duplicate-request-key",
+      "raw": "{\"id\":1,\"id\":2,\"method\":\"protocol.capabilities\",\"params\":{}}",
+      "error_code": "INVALID_JSON"
+    },
+    {
+      "id": "non-standard-number",
+      "raw": "{\"id\":1,\"method\":\"protocol.capabilities\",\"params\":{\"limit\":NaN}}",
+      "error_code": "INVALID_JSON"
+    },
+    {
+      "id": "unpaired-surrogate",
+      "raw": "{\"id\":1,\"method\":\"protocol.capabilities\",\"params\":{\"note\":\"\\ud800\"}}",
+      "error_code": "INVALID_REQUEST"
+    }
+  ]
+}

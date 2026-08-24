@@ -5,3 +5,7 @@
 `python tools\verify_contracts.py` compares the checked-out public surface with that fixture and writes a commit-bound report. A difference is a breaking candidate until the protocol version, fixture, migration guidance, and release evidence are reviewed together. Updating the fixture is therefore a compatibility decision, not a formatting change.
 
 The verifier does not modify a workspace or start an MCP server. Its CI report is required for alpha admission, alongside recovery, fault, scanner, artifact, and review evidence.
+
+## Transport boundary
+
+The stdio adapter accepts one strict JSON object per NDJSON line, up to 256 KiB. Duplicate object keys, `NaN`/`Infinity`, unpaired Unicode surrogates, and non-object requests are rejected before protocol dispatch. Rejections use stable typed envelopes (`INVALID_JSON`, `INVALID_REQUEST`, or `REQUEST_TOO_LARGE`) and do not expose parser exceptions or filesystem paths. These invalid forms are outside the supported request contract; valid `habitat.agent.v1alpha2` requests retain their existing response shape.
