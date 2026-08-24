@@ -19,11 +19,11 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 
 _COMMIT_SHA = re.compile(r"^[0-9a-f]{40}$")
-_FAULT_POINTS = (
-    "semantic.shutdown.before_close",
-    "storage.atomic.after_begin",
-    "storage.atomic.before_commit",
-)
+_FAULT_TESTS = {
+    "tests.test_fault_injection.FaultInjectionTests.test_fault_after_begin_rolls_back_without_leaving_a_transaction_open": "storage.atomic.after_begin",
+    "tests.test_fault_injection.FaultInjectionTests.test_fault_before_commit_rolls_back_uncommitted_state": "storage.atomic.before_commit",
+    "tests.test_fault_injection.FaultInjectionTests.test_shutdown_fault_is_observable_and_does_not_skip_later_services": "semantic.shutdown.before_close",
+}
 
 
 def _canonical_digest(value: Mapping[str, Any]) -> str:
@@ -54,17 +54,30 @@ def normalize_reliability_report(
 
 
 class _ReliabilityResult(unittest.TextTestResult):
-    pass
+    def __init__(self, *args: Any, **kwargs: Any) -> None:
+        super().__init__(*args, **kwargs)
+        self.executed_tests: list[str] = []
+
+    def startTest(self, test: unittest.case.TestCase) -> None:
+        self.executed_tests.append(test.id())
+        super().startTest(test)
 
 
-def _run_fault_tests() -> list[str]:
+def _run_fault_tests() -> tuple[tuple[str, ...], tuple[str, ...]]:
     suite = unittest.defaultTestLoader.loadTestsFromName("tests.test_fault_injection")
     runner = unittest.TextTestRunner(stream=io.StringIO(), verbosity=0, resultclass=_ReliabilityResult)
     result = runner.run(suite)
     failures = [test.id() for test, _ in [*result.failures, *result.errors]]
     failures.extend(test.id() for test in result.unexpectedSuccesses)
     failures.extend(test.id() for test, _ in result.skipped)
-    return failures
+    observed = set(result.executed_tests)
+    expected = set(_FAULT_TESTS)
+    failures.extend(f"fault-mapping:unmapped:{test_id}" for test_id in sorted(observed - expected))
+    failures.extend(f"fault-mapping:unexecuted:{test_id}" for test_id in sorted(expected - observed))
+    fault_points = tuple(
+        sorted({_FAULT_TESTS[test_id] for test_id in result.executed_tests if test_id in _FAULT_TESTS})
+    )
+    return fault_points, tuple(failures)
 
 
 def _write_json_atomically(path: Path, value: Mapping[str, Any]) -> None:
@@ -82,10 +95,11 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--out", type=Path, required=True)
     args = parser.parse_args(argv)
 
+    executed_fault_points, failures = _run_fault_tests()
     report = normalize_reliability_report(
         source_commit=args.source_commit,
-        executed_fault_points=_FAULT_POINTS,
-        failures=_run_fault_tests(),
+        executed_fault_points=executed_fault_points,
+        failures=failures,
     )
     _write_json_atomically(args.out, report)
     return 0 if report["status"] == "passed" else 1

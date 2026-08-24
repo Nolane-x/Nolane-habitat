@@ -4,11 +4,30 @@ import sys
 import tempfile
 import unittest
 from pathlib import Path
+from unittest.mock import patch
 
-from tools.run_reliability_suite import normalize_reliability_report
+from tools.run_reliability_suite import main, normalize_reliability_report
 
 
 class ReliabilitySuiteTests(unittest.TestCase):
+    def test_suite_derives_fault_points_from_observed_test_receipts(self):
+        with tempfile.TemporaryDirectory() as td:
+            output = Path(td) / "faults.json"
+            with patch(
+                "tools.run_reliability_suite._run_fault_tests",
+                return_value=(("storage.atomic.after_begin",), ()),
+            ):
+                exit_code = main(
+                    ["--source-commit", "a" * 40, "--out", str(output)]
+                )
+
+            report = json.loads(output.read_text(encoding="utf-8"))
+
+        self.assertEqual(0, exit_code)
+        self.assertEqual(
+            ["storage.atomic.after_begin"], report["executed_fault_points"]
+        )
+
     def test_report_binds_executed_fault_points_to_the_candidate(self):
         report = normalize_reliability_report(
             source_commit="a" * 40,
