@@ -166,7 +166,7 @@ class ReleaseManifestTests(unittest.TestCase):
                 manifest.report_provenance["matrix"],
             )
 
-    def test_manifest_reads_each_report_and_review_once_from_one_snapshot(self):
+    def test_manifest_uses_one_path_open_snapshot_for_each_report_and_review(self):
         commit = "a" * 40
         with tempfile.TemporaryDirectory() as td:
             root = Path(td)
@@ -178,23 +178,30 @@ class ReleaseManifestTests(unittest.TestCase):
             first_review = json.dumps(
                 self._commit_bound_report(commit, evidence_type="review")
             ).encode("utf-8")
+            second_report = json.dumps(self._commit_bound_report("b" * 40)).encode("utf-8")
+            second_review = json.dumps(
+                self._commit_bound_report("b" * 40, evidence_type="review")
+            ).encode("utf-8")
             snapshots = {
-                report: [first_report, b'{"status":"changed"}'],
-                review: [first_review, b'{"status":"changed"}'],
+                report: [first_report, second_report],
+                review: [first_review, second_review],
             }
-            reads: list[Path] = []
+            reads: list[tuple[Path, str]] = []
 
-            def read_snapshot(path: Path) -> bytes:
-                reads.append(path)
-                return snapshots[path].pop(0)
+            def changing_open(path: Path, mode: str = "r", *args, **kwargs):
+                reads.append((path, mode))
+                snapshot = snapshots[path].pop(0)
+                if "b" in mode:
+                    return io.BytesIO(snapshot)
+                return io.StringIO(snapshot.decode("utf-8"))
 
-            with patch("habitat.release._read_snapshot", side_effect=read_snapshot):
+            with patch.object(Path, "open", new=changing_open):
                 manifest = build_release_manifest(
                     version="0.1.0-alpha.20", commit=commit,
                     reports={"matrix": report}, artifacts={}, reviewers={"review": review},
                 )
 
-            self.assertEqual([report, review], reads)
+            self.assertEqual([(report, "rb"), (review, "rb")], reads)
             self.assertEqual(hashlib.sha256(first_report).hexdigest(), manifest.reports["matrix"])
             self.assertEqual(
                 self._commit_bound_report(commit)["report_sha256"],

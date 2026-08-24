@@ -176,12 +176,8 @@ def _read_named_files(values: Mapping[str, Path]) -> dict[str, bytes]:
         resolved = Path(path)
         if not resolved.is_file():
             raise FileNotFoundError(resolved)
-        snapshots[name] = _read_snapshot(resolved)
+        snapshots[name] = resolved.read_bytes()
     return snapshots
-
-
-def _read_snapshot(path: Path) -> bytes:
-    return path.read_bytes()
 
 
 def _hash_named_files(values: Mapping[str, Path]) -> dict[str, str]:
