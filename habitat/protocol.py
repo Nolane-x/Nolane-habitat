@@ -1,5 +1,6 @@
 from __future__ import annotations
 import json
+import math
 import time
 from dataclasses import dataclass
 from typing import Any
@@ -28,6 +29,13 @@ def _reject_nonstandard_number(_value: str) -> None:
     raise ValueError("non-standard number")
 
 
+def _parse_finite_float(value: str) -> float:
+    parsed=float(value)
+    if not math.isfinite(parsed):
+        raise ValueError("non-finite number")
+    return parsed
+
+
 def _contains_unpaired_surrogate(value: Any) -> bool:
     if isinstance(value, str):
         return any(0xD800 <= ord(character) <= 0xDFFF for character in value)
@@ -42,7 +50,12 @@ def parse_json_request(raw: str) -> dict[str, Any]:
     if len(raw.encode("utf-8", errors="surrogatepass")) > MAX_REQUEST_BYTES:
         raise ProtocolError("REQUEST_TOO_LARGE", "request exceeds the protocol size limit")
     try:
-        request = json.loads(raw, object_pairs_hook=_reject_duplicate_keys, parse_constant=_reject_nonstandard_number)
+        request = json.loads(
+            raw,
+            object_pairs_hook=_reject_duplicate_keys,
+            parse_constant=_reject_nonstandard_number,
+            parse_float=_parse_finite_float,
+        )
     except (json.JSONDecodeError, ValueError):
         raise ProtocolError("INVALID_JSON", "request must be strict JSON") from None
     if not isinstance(request, dict):

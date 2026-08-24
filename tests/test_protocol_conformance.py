@@ -5,6 +5,7 @@ import sys
 from tempfile import TemporaryDirectory
 import types
 import unittest
+from unittest import mock
 
 from habitat.protocol import MAX_REQUEST_BYTES, HabitatProtocol, ProtocolError, parse_json_request
 from habitat.server import serve_stdio
@@ -62,6 +63,104 @@ class ProtocolConformanceTests(unittest.TestCase):
             parse_json_request("x" * (MAX_REQUEST_BYTES + 1))
 
         self.assertEqual("REQUEST_TOO_LARGE", raised.exception.code)
+
+    def test_stdio_counts_whitespace_padding_in_the_wire_size_limit(self):
+        with TemporaryDirectory() as td:
+            workspace = self._workspace(Path(td))
+            try:
+                incoming = io.StringIO("{}" + (" " * MAX_REQUEST_BYTES) + "\n")
+                outgoing = io.StringIO()
+
+                serve_stdio(workspace, incoming, outgoing)
+
+                response = json.loads(outgoing.getvalue())
+                self.assertFalse(response["ok"])
+                self.assertEqual("REQUEST_TOO_LARGE", response["error"]["code"])
+            finally:
+                workspace.close()
+
+    def test_stdio_uses_bounded_reads_and_drains_an_oversized_line(self):
+        class BoundedReader:
+            def __init__(self, data: str):
+                self.data = data
+                self.offset = 0
+                self.read_sizes = []
+
+            def __iter__(self):
+                raise AssertionError("stdio transport must not iterate unbounded lines")
+
+            def readline(self, size: int = -1) -> str:
+                if size < 0:
+                    raise AssertionError("stdio transport must provide a read bound")
+                self.read_sizes.append(size)
+                if self.offset >= len(self.data):
+                    return ""
+                newline = self.data.find("\n", self.offset)
+                end = len(self.data) if newline < 0 else newline + 1
+                end = min(end, self.offset + size)
+                chunk = self.data[self.offset:end]
+                self.offset = end
+                return chunk
+
+        oversized = '{"id":"oversized"' + (" " * MAX_REQUEST_BYTES) + "}\n"
+        valid = '{"id":"next","method":"protocol.capabilities","params":{}}\n'
+        reader = BoundedReader(oversized + valid)
+        with TemporaryDirectory() as td:
+            workspace = self._workspace(Path(td))
+            try:
+                outgoing = io.StringIO()
+
+                serve_stdio(workspace, reader, outgoing)
+
+                responses = [json.loads(line) for line in outgoing.getvalue().splitlines()]
+                self.assertEqual(2, len(responses))
+                self.assertEqual("REQUEST_TOO_LARGE", responses[0]["error"]["code"])
+                self.assertTrue(responses[1]["ok"])
+                self.assertEqual("next", responses[1]["id"])
+                self.assertTrue(reader.read_sizes)
+                self.assertLessEqual(max(reader.read_sizes), MAX_REQUEST_BYTES + 1)
+            finally:
+                workspace.close()
+
+    def test_finite_json_number_overflow_is_rejected(self):
+        for number in ("1e999", "-1e999"):
+            with self.subTest(number=number):
+                raw = (
+                    '{"id":"overflow","method":"protocol.capabilities",'
+                    f'"params":{{"value":{number}}}}}'
+                )
+                with self.assertRaises(ProtocolError) as raised:
+                    parse_json_request(raw)
+                self.assertEqual("INVALID_JSON", raised.exception.code)
+
+    def test_stdio_never_serializes_nonfinite_handler_values(self):
+        request = '{"id":"strict","method":"protocol.capabilities","params":{}}\n'
+        for value in (float("inf"), float("-inf"), float("nan")):
+            with self.subTest(value=repr(value)), TemporaryDirectory() as td:
+                workspace = self._workspace(Path(td))
+                try:
+                    outgoing = io.StringIO()
+                    with mock.patch("habitat.server.HabitatProtocol") as protocol_class:
+                        protocol_class.return_value.handle.return_value = {
+                            "protocol": "habitat.agent.v1alpha2",
+                            "id": "strict",
+                            "ok": True,
+                            "revision": workspace.revision,
+                            "result": {"value": value},
+                        }
+                        serve_stdio(workspace, io.StringIO(request), outgoing)
+
+                    encoded = outgoing.getvalue()
+                    response = json.loads(
+                        encoded,
+                        parse_constant=lambda token: (_ for _ in ()).throw(
+                            ValueError(f"non-finite JSON token: {token}")
+                        ),
+                    )
+                    self.assertFalse(response["ok"])
+                    self.assertEqual("INTERNAL_ERROR", response["error"]["code"])
+                finally:
+                    workspace.close()
 
     def test_declared_read_only_calls_leave_source_and_logical_state_unchanged(self):
         with TemporaryDirectory() as td:
