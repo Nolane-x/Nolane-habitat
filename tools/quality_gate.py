@@ -11,6 +11,39 @@ from tempfile import NamedTemporaryFile
 from typing import Any, Mapping
 
 
+def _canonical_digest(report: Mapping[str, Any]) -> str | None:
+    unsigned = {key: value for key, value in report.items() if key != "report_sha256"}
+    try:
+        payload = json.dumps(
+            unsigned, sort_keys=True, separators=(",", ":"), allow_nan=False
+        ).encode("utf-8")
+    except (TypeError, ValueError):
+        return None
+    return hashlib.sha256(payload).hexdigest()
+
+
+def _validate_bound_artifact(
+    name: str,
+    artifact: Mapping[str, Any],
+    *,
+    expected_suite: str,
+    expected_schema: int,
+    expected_commit: str,
+) -> list[str]:
+    failed: list[str] = []
+    if artifact.get("suite") != expected_suite:
+        failed.append(f"{name}:suite")
+    if artifact.get("schema") != expected_schema:
+        failed.append(f"{name}:schema")
+    if artifact.get("status") != "passed":
+        failed.append(f"{name}:status")
+    if artifact.get("source_commit") != expected_commit:
+        failed.append(f"{name}:source-commit-mismatch")
+    if artifact.get("report_sha256") != _canonical_digest(artifact):
+        failed.append(f"{name}:report-hash-mismatch")
+    return failed
+
+
 def evaluate_quality_gate(
     *,
     identity: Mapping[str, Any],
@@ -29,6 +62,26 @@ def evaluate_quality_gate(
     for status in ("failed", "timeout", "infra-error"):
         if statuses.get(status, 0):
             failed.append(f"matrix:{status}")
+
+    if expected_commit is not None:
+        failed.extend(
+            _validate_bound_artifact(
+                "identity",
+                identity,
+                expected_suite="release-identity",
+                expected_schema=1,
+                expected_commit=expected_commit,
+            )
+        )
+        failed.extend(
+            _validate_bound_artifact(
+                "matrix",
+                matrix,
+                expected_suite="isolated-regression-matrix",
+                expected_schema=2,
+                expected_commit=expected_commit,
+            )
+        )
 
     for name in sorted(set(required_scanners)):
         scanner = scanners.get(name)
@@ -50,12 +103,7 @@ def evaluate_quality_gate(
                 failed.append(f"scanner:{name}:status")
             if scanner.get("findings") != 0:
                 failed.append(f"scanner:{name}:findings")
-            digest = scanner.get("report_sha256")
-            unsigned = {key: value for key, value in scanner.items() if key != "report_sha256"}
-            expected_digest = hashlib.sha256(
-                json.dumps(unsigned, sort_keys=True, separators=(",", ":")).encode("utf-8")
-            ).hexdigest()
-            if digest != expected_digest:
+            if scanner.get("report_sha256") != _canonical_digest(scanner):
                 failed.append(f"scanner:{name}:report-hash-mismatch")
 
     report = {
