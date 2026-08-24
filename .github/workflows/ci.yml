@@ -42,10 +42,22 @@ jobs:
         run: python tools/run_mutation_recovery_suite.py --source-commit ${{ github.sha }} --out .test-artifacts/mutation-recovery.json
       - name: Run fault-injection reliability evidence
         run: python tools/run_reliability_suite.py --source-commit ${{ github.sha }} --out .test-artifacts/faults.json
-      - name: Build distributable release artifacts
-        run: python -m build --no-isolation --outdir .test-artifacts/dist
+      - name: Build first reproducible release artifact set
+        env:
+          SOURCE_DATE_EPOCH: "0"
+        run: python -m build --no-isolation --outdir .test-artifacts/dist-first
+      - name: Normalize first source distribution metadata
+        run: python tools/normalize_sdist.py --dist .test-artifacts/dist-first --epoch 0
+      - name: Build second reproducible release artifact set
+        env:
+          SOURCE_DATE_EPOCH: "0"
+        run: python -m build --no-isolation --outdir .test-artifacts/dist-second
+      - name: Normalize second source distribution metadata
+        run: python tools/normalize_sdist.py --dist .test-artifacts/dist-second --epoch 0
+      - name: Verify reproducible release artifacts
+        run: python tools/verify_reproducible_build.py --source-commit ${{ github.sha }} --first .test-artifacts/dist-first --second .test-artifacts/dist-second --out .test-artifacts/reproducible-build.json
       - name: Verify distributable release artifacts
-        run: python tools/verify_distribution.py --source-commit ${{ github.sha }} --dist .test-artifacts/dist --out .test-artifacts/artifacts.json
+        run: python tools/verify_distribution.py --source-commit ${{ github.sha }} --dist .test-artifacts/dist-first --out .test-artifacts/artifacts.json
       - name: Install isolated Semgrep
         shell: bash
         run: |

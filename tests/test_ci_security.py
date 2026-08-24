@@ -56,7 +56,19 @@ class CiSecurityTests(unittest.TestCase):
             workflow,
         )
         self.assertIn(
-            "python tools/verify_distribution.py --source-commit ${{ github.sha }} --dist .test-artifacts/dist --out .test-artifacts/artifacts.json",
+            "python tools/normalize_sdist.py --dist .test-artifacts/dist-first --epoch 0",
+            workflow,
+        )
+        self.assertIn(
+            "python tools/normalize_sdist.py --dist .test-artifacts/dist-second --epoch 0",
+            workflow,
+        )
+        self.assertIn(
+            "python tools/verify_reproducible_build.py --source-commit ${{ github.sha }} --first .test-artifacts/dist-first --second .test-artifacts/dist-second --out .test-artifacts/reproducible-build.json",
+            workflow,
+        )
+        self.assertIn(
+            "python tools/verify_distribution.py --source-commit ${{ github.sha }} --dist .test-artifacts/dist-first --out .test-artifacts/artifacts.json",
             workflow,
         )
 
@@ -79,7 +91,9 @@ class CiSecurityTests(unittest.TestCase):
         workflow = (root / ".github" / "workflows" / "ci.yml").read_text(encoding="utf-8")
 
         self.assertIn('python -m pip install -U pip "setuptools>=68"', workflow)
-        self.assertIn("python -m build --no-isolation --outdir .test-artifacts/dist", workflow)
+        self.assertIn("SOURCE_DATE_EPOCH: \"0\"", workflow)
+        self.assertIn("python -m build --no-isolation --outdir .test-artifacts/dist-first", workflow)
+        self.assertIn("python -m build --no-isolation --outdir .test-artifacts/dist-second", workflow)
 
 
 if __name__ == "__main__":

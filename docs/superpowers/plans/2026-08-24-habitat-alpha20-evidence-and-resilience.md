@@ -871,7 +871,9 @@ git commit -m "test(reliability): bind fault evidence to candidate commits"
 **Files:**
 
 - Create: `tools/verify_reproducible_build.py`
+- Create: `tools/normalize_sdist.py`
 - Create: `tests/test_reproducible_build.py`
+- Create: `tests/test_normalize_sdist.py`
 - Modify: `pyproject.toml`, CI build steps, and release manifest builder only when needed to declare/replay immutable build inputs
 - Modify: `docs/runbooks/RELEASE-ADMISSION.md` and `docs/OPERATIONS.md`
 
@@ -879,6 +881,8 @@ git commit -m "test(reliability): bind fault evidence to candidate commits"
 
 - Consumes: an exact commit, declared Python/build-backend versions, a fixed `SOURCE_DATE_EPOCH`, clean temporary source copies, and wheel/sdist artifact bytes.
 - Produces: `build_twice_and_compare(source_commit: str, build_spec: BuildSpec) -> ReproducibilityVerdict` with artifact hashes, build-input digest, reproducibility status, and normalized-difference reason.
+
+**Partial foundation delivered in the Alpha.19 candidate:** CI now builds twice per OS/Python lane with `SOURCE_DATE_EPOCH=0`, normalises sdist archive metadata through a tested `normalize_sdist.py`, verifies wheel and sdist SHA-256 equality, and blocks alpha promotion without the commit-bound `reproducible-build` report. The normaliser preserves regular-file/directory bytes, paths, and modes while rejecting links and unsupported member types. This is deliberately scoped to two build invocations in one checkout and lane; separate clean source copies, immutable build-environment provenance, and cross-lane policy remain required before this task is complete.
 
 **Required scenarios:**
 

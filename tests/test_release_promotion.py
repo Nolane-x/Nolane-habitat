@@ -106,6 +106,29 @@ class ReleasePromotionTests(unittest.TestCase):
         self.assertFalse(verdict.admitted)
         self.assertIn("mutation-recovery", verdict.missing_reports)
 
+    def test_alpha_candidate_requires_reproducible_build_evidence(self):
+        commit = "a" * 40
+        required_without_reproducible_build = {
+            "truth-core", "matrix", "faults", "artifacts", "scanner", "db-recovery", "mutation-recovery", "contract"
+        }
+        manifest = ReleaseManifest(
+            version="0.1.0-alpha.20",
+            commit=commit,
+            reports={
+                name: f"{index:x}" * 64
+                for index, name in enumerate(sorted(required_without_reproducible_build), start=1)
+            },
+            artifact_hashes={"wheel": "b" * 64},
+            residual_risks=(),
+            reviewer_hashes=("c" * 64,),
+            report_provenance={name: self._provenance(commit) for name in required_without_reproducible_build},
+        )
+
+        verdict = evaluate_promotion(manifest, target="alpha-candidate")
+
+        self.assertFalse(verdict.admitted)
+        self.assertIn("reproducible-build", verdict.missing_reports)
+
     def test_alpha_candidate_rejects_reviewer_hash_that_equals_an_artifact_hash(self):
         digest = "b" * 64
         manifest = ReleaseManifest(
@@ -131,7 +154,7 @@ class ReleasePromotionTests(unittest.TestCase):
     def test_alpha_candidate_rejects_reports_without_matching_passed_provenance(self):
         commit = "a" * 40
         required = {
-            "truth-core", "matrix", "faults", "artifacts", "scanner", "db-recovery", "mutation-recovery", "contract"
+            "truth-core", "matrix", "faults", "artifacts", "scanner", "db-recovery", "mutation-recovery", "reproducible-build", "contract"
         }
         manifest = ReleaseManifest(
             version="0.1.0-alpha.20",
@@ -154,7 +177,7 @@ class ReleasePromotionTests(unittest.TestCase):
     def test_alpha_candidate_accepts_complete_passed_commit_bound_evidence(self):
         commit = "a" * 40
         required = {
-            "truth-core", "matrix", "faults", "artifacts", "scanner", "db-recovery", "mutation-recovery", "contract"
+            "truth-core", "matrix", "faults", "artifacts", "scanner", "db-recovery", "mutation-recovery", "reproducible-build", "contract"
         }
         manifest = ReleaseManifest(
             version="0.1.0-alpha.20",
@@ -204,7 +227,7 @@ class ReleasePromotionTests(unittest.TestCase):
             self.assertEqual(1, exit_code)
             self.assertEqual("not-attempted", verdict["publication"])
             self.assertEqual(
-                ["artifacts", "contract", "db-recovery", "faults", "matrix", "mutation-recovery", "scanner", "truth-core"],
+                ["artifacts", "contract", "db-recovery", "faults", "matrix", "mutation-recovery", "reproducible-build", "scanner", "truth-core"],
                 verdict["required_reports"],
             )
             self.assertFalse(verdict["verdict"]["admitted"])

@@ -2,7 +2,11 @@
 
 `tools/promote_release.py` evaluates a supplied release manifest and writes a machine-readable verdict. It never creates a Git tag, publishes a package, uploads an artifact, or creates a GitHub release.
 
-For an alpha candidate, the gate requires hash-bound `truth-core`, `matrix`, `faults`, `artifacts`, `scanner`, `db-recovery`, `mutation-recovery`, and `contract` reports, at least one artifact, and at least one review record. Every required report must contain a verified payload hash, `status: passed`, and the same 40-character commit SHA as the manifest. Distribution evidence includes a deterministic member manifest and rejects unsafe paths, `.env` files, private-key extensions, local databases, Habitat state, and Python bytecode caches. It also extracts the wheel `METADATA` and sdist `PKG-INFO`, checks their normalized project name and package version, and blocks if their canonical `Requires-Dist` inventories differ. The resulting `dependency_inventory_sha256` binds that inventory into the artifact report. The review record is hashed by the builder; its digest must not be reused from any report or artifact. This is a binding check, not a claim that a filename proves reviewer identity—follow the independent-review procedure before supplying the record.
+For an alpha candidate, the gate requires hash-bound `truth-core`, `matrix`, `faults`, `artifacts`, `scanner`, `db-recovery`, `mutation-recovery`, `reproducible-build`, and `contract` reports, at least one artifact, and at least one review record. Every required report must contain a verified payload hash, `status: passed`, and the same 40-character commit SHA as the manifest. Distribution evidence includes a deterministic member manifest and rejects unsafe paths, `.env` files, private-key extensions, local databases, Habitat state, and Python bytecode caches. It also extracts the wheel `METADATA` and sdist `PKG-INFO`, checks their normalized project name and package version, and blocks if their canonical `Requires-Dist` inventories differ. The resulting `dependency_inventory_sha256` binds that inventory into the artifact report. The review record is hashed by the builder; its digest must not be reused from any report or artifact. This is a binding check, not a claim that a filename proves reviewer identity—follow the independent-review procedure before supplying the record.
+
+## Reproducible-build evidence
+
+CI builds the wheel and sdist twice on each OS/Python lane with `SOURCE_DATE_EPOCH=0`. `normalize_sdist.py` then rewrites only archive metadata that Setuptools leaves time-varying: gzip/tar timestamps, owner/group fields, and deterministic member order. It preserves every permitted entry's path, mode, and file bytes, and rejects links or other unsupported member types. `reproducible-build.json` blocks the alpha gate unless both normalised artifact sets have the same SHA-256 values. This proves repeatability for two builds in the same CI lane; it does not yet claim clean-checkout or cross-environment reproducibility.
 
 ## CI scanner evidence
 
@@ -29,8 +33,15 @@ python tools\run_db_recovery_suite.py --source-commit $commit --out .test-artifa
 python tools\run_mutation_recovery_suite.py --source-commit $commit --out .test-artifacts\mutation-recovery.json
 python tools\run_reliability_suite.py --source-commit $commit --out .test-artifacts\faults.json
 python tools\verify_contracts.py --source-commit $commit --fixture tests\fixtures\contracts\agent-v1alpha2.json --out .test-artifacts\contract.json
-python -m build --no-isolation --outdir dist
-python tools\verify_distribution.py --source-commit $commit --dist dist --out .test-artifacts\artifacts.json
+$env:SOURCE_DATE_EPOCH = "0"
+python -m build --no-isolation --outdir .test-artifacts\dist-first
+python tools\normalize_sdist.py --dist .test-artifacts\dist-first --epoch 0
+python -m build --no-isolation --outdir .test-artifacts\dist-second
+python tools\normalize_sdist.py --dist .test-artifacts\dist-second --epoch 0
+python tools\verify_reproducible_build.py --source-commit $commit `
+  --first .test-artifacts\dist-first --second .test-artifacts\dist-second `
+  --out .test-artifacts\reproducible-build.json
+python tools\verify_distribution.py --source-commit $commit --dist .test-artifacts\dist-first --out .test-artifacts\artifacts.json
 ```
 
 Build the manifest from the actual evidence and artifact files; the builder computes the SHA-256 bindings rather than accepting manually entered values:
@@ -45,9 +56,10 @@ python tools\build_release_manifest.py --version 0.1.0-alpha.19 --commit $commit
   --report scanner=.test-artifacts\semgrep-workflows.json `
   --report db-recovery=.test-artifacts\db-recovery.json `
   --report mutation-recovery=.test-artifacts\mutation-recovery.json `
+  --report reproducible-build=.test-artifacts\reproducible-build.json `
   --report contract=.test-artifacts\contract.json `
-  --artifact wheel=dist\nolane_habitat-0.1.0a19-py3-none-any.whl `
-  --artifact sdist=dist\nolane_habitat-0.1.0a19.tar.gz `
+  --artifact wheel=.test-artifacts\dist-first\nolane_habitat-0.1.0a19-py3-none-any.whl `
+  --artifact sdist=.test-artifacts\dist-first\nolane_habitat-0.1.0a19.tar.gz `
   --review independent-review=reports\independent-review.json `
   --out dist\release-manifest.json
 ```
