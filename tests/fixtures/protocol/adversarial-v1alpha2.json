@@ -5,22 +5,37 @@
     {
       "id": "non-object-request",
       "raw": "[]",
+      "expected_kind": "error",
       "error_code": "INVALID_REQUEST"
     },
     {
       "id": "duplicate-request-key",
       "raw": "{\"id\":1,\"id\":2,\"method\":\"protocol.capabilities\",\"params\":{}}",
+      "expected_kind": "error",
       "error_code": "INVALID_JSON"
     },
     {
       "id": "non-standard-number",
       "raw": "{\"id\":1,\"method\":\"protocol.capabilities\",\"params\":{\"limit\":NaN}}",
+      "expected_kind": "error",
       "error_code": "INVALID_JSON"
     },
     {
       "id": "unpaired-surrogate",
       "raw": "{\"id\":1,\"method\":\"protocol.capabilities\",\"params\":{\"note\":\"\\ud800\"}}",
+      "expected_kind": "error",
       "error_code": "INVALID_REQUEST"
+    },
+    {
+      "id": "capabilities-success",
+      "raw": "{\"id\":\"capabilities\",\"method\":\"protocol.capabilities\",\"params\":{}}",
+      "expected_kind": "success"
+    },
+    {
+      "id": "unknown-method-dispatch",
+      "raw": "{\"id\":\"unknown\",\"method\":\"protocol.not-real\",\"params\":{}}",
+      "expected_kind": "error",
+      "error_code": "NOT_FOUND"
     }
   ]
 }

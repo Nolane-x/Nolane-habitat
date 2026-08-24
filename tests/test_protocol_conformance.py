@@ -37,10 +37,15 @@ class ProtocolConformanceTests(unittest.TestCase):
                 self.assertEqual(before, workspace.revision)
                 self.assertEqual(len(cases), len(responses))
                 for case, response in zip(cases, responses):
-                    self.assertFalse(response["ok"], case["id"])
-                    self.assertEqual(case["error_code"], response["error"]["code"], case["id"])
-                    self.assertNotIn("Traceback", response["error"]["message"])
-                    self.assertNotIn("\\", response["error"]["message"])
+                    if case["expected_kind"] == "success":
+                        self.assertTrue(response["ok"], case["id"])
+                        self.assertIn("result", response)
+                        self.assertNotIn("error", response)
+                    else:
+                        self.assertFalse(response["ok"], case["id"])
+                        self.assertEqual(case["error_code"], response["error"]["code"], case["id"])
+                        self.assertNotIn("Traceback", response["error"]["message"])
+                        self.assertNotIn("\\", response["error"]["message"])
             finally:
                 workspace.close()
 
