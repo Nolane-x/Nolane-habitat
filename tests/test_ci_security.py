@@ -68,7 +68,15 @@ class CiSecurityTests(unittest.TestCase):
             workflow,
         )
         self.assertIn(
-            "python tools/verify_reproducible_build.py --source-commit ${{ github.sha }} --first .test-artifacts/dist-first --second .test-artifacts/dist-second --out .test-artifacts/reproducible-build.json",
+            "path: .test-artifacts/source-first",
+            workflow,
+        )
+        self.assertIn(
+            "path: .test-artifacts/source-second",
+            workflow,
+        )
+        self.assertIn(
+            "python tools/verify_reproducible_build.py --source-commit ${{ github.sha }} --first .test-artifacts/dist-first --second .test-artifacts/dist-second --first-source .test-artifacts/source-first --second-source .test-artifacts/source-second --out .test-artifacts/reproducible-build.json",
             workflow,
         )
         self.assertIn(
@@ -96,8 +104,10 @@ class CiSecurityTests(unittest.TestCase):
 
         self.assertIn('python -m pip install -U pip "setuptools>=68"', workflow)
         self.assertIn("SOURCE_DATE_EPOCH: \"0\"", workflow)
-        self.assertIn("python -m build --no-isolation --outdir .test-artifacts/dist-first", workflow)
-        self.assertIn("python -m build --no-isolation --outdir .test-artifacts/dist-second", workflow)
+        self.assertIn("python -m build --no-isolation --outdir ../dist-first", workflow)
+        self.assertIn("python -m build --no-isolation --outdir ../dist-second", workflow)
+        self.assertIn("working-directory: .test-artifacts/source-first", workflow)
+        self.assertIn("working-directory: .test-artifacts/source-second", workflow)
 
 
 if __name__ == "__main__":
