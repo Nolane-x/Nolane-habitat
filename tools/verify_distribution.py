@@ -3,6 +3,8 @@
 from __future__ import annotations
 
 import argparse
+from email.parser import BytesParser
+from email.policy import default as email_policy
 import hashlib
 import json
 import os
@@ -20,6 +22,7 @@ import zipfile
 _COMMIT_SHA = re.compile(r"^[0-9a-f]{40}$")
 _FORBIDDEN_PARTS = frozenset({".habitat", ".test-artifacts", "__pycache__"})
 _FORBIDDEN_SUFFIXES = (".db", ".key", ".pem", ".p12", ".pfx", ".sqlite", ".sqlite3")
+_EXPECTED_PROJECT_NAME = "nolane-habitat"
 
 
 def _sha256_file(path: Path) -> str:
@@ -135,6 +138,76 @@ def _audit_members(expected: dict[str, Path]) -> tuple[dict[str, list[dict[str, 
     return members, failures
 
 
+def _normalize_project_name(value: str) -> str:
+    return re.sub(r"[-_.]+", "-", value).lower()
+
+
+def _parse_metadata(payload: bytes) -> dict[str, Any] | None:
+    try:
+        message = BytesParser(policy=email_policy).parsebytes(payload)
+    except (UnicodeDecodeError, ValueError):
+        return None
+    name = message.get("Name")
+    version = message.get("Version")
+    if not isinstance(name, str) or not isinstance(version, str):
+        return None
+    requirements = sorted(
+        {
+            re.sub(r"\s+", " ", value).strip()
+            for value in message.get_all("Requires-Dist", [])
+            if isinstance(value, str) and value.strip()
+        }
+    )
+    return {"name": name.strip(), "version": version.strip(), "requirements": requirements}
+
+
+def _wheel_metadata(path: Path) -> dict[str, Any] | None:
+    try:
+        with zipfile.ZipFile(path) as archive:
+            names = sorted(
+                name
+                for name in archive.namelist()
+                if name.endswith(".dist-info/METADATA") and not name.endswith("/")
+            )
+            if len(names) != 1:
+                return None
+            return _parse_metadata(archive.read(names[0]))
+    except (OSError, zipfile.BadZipFile):
+        return None
+
+
+def _sdist_metadata(path: Path) -> dict[str, Any] | None:
+    try:
+        with tarfile.open(path, "r:gz") as archive:
+            entries = sorted(
+                entry
+                for entry in archive.getmembers()
+                if entry.isfile() and entry.name.count("/") == 1 and entry.name.endswith("/PKG-INFO")
+            )
+            if len(entries) != 1:
+                return None
+            handle = archive.extractfile(entries[0])
+            return _parse_metadata(handle.read()) if handle is not None else None
+    except (OSError, tarfile.TarError):
+        return None
+
+
+def _validate_metadata(
+    *,
+    name: str,
+    metadata: dict[str, Any] | None,
+    expected_version: str,
+) -> tuple[list[str], list[str]]:
+    if metadata is None:
+        return [], [f"{name}:metadata-missing"]
+    failures: list[str] = []
+    if _normalize_project_name(metadata["name"]) != _EXPECTED_PROJECT_NAME:
+        failures.append(f"{name}:metadata-name")
+    if metadata["version"] != expected_version:
+        failures.append(f"{name}:metadata-version")
+    return list(metadata["requirements"]), failures
+
+
 def verify_distribution(
     *,
     source_commit: str,
@@ -152,6 +225,21 @@ def verify_distribution(
     failures = [f"{name}:missing" for name, path in expected.items() if not path.is_file()]
     members, member_failures = _audit_members(expected)
     failures.extend(member_failures)
+    wheel_requirements, wheel_metadata_failures = _validate_metadata(
+        name="wheel",
+        metadata=_wheel_metadata(expected["wheel"]) if expected["wheel"].is_file() else None,
+        expected_version=package_version,
+    )
+    sdist_requirements, sdist_metadata_failures = _validate_metadata(
+        name="sdist",
+        metadata=_sdist_metadata(expected["sdist"]) if expected["sdist"].is_file() else None,
+        expected_version=package_version,
+    )
+    failures.extend(wheel_metadata_failures)
+    failures.extend(sdist_metadata_failures)
+    dependency_inventory = {"wheel": wheel_requirements, "sdist": sdist_requirements}
+    if not wheel_metadata_failures and not sdist_metadata_failures and wheel_requirements != sdist_requirements:
+        failures.append("dependencies:mismatch")
     wheel = expected["wheel"]
     smoke_passed = False
     if wheel.is_file():
@@ -172,6 +260,10 @@ def verify_distribution(
         "package_members": members,
         "member_manifest_sha256": hashlib.sha256(
             json.dumps(members, sort_keys=True, separators=(",", ":")).encode("utf-8")
+        ).hexdigest(),
+        "dependency_inventory": dependency_inventory,
+        "dependency_inventory_sha256": hashlib.sha256(
+            json.dumps(dependency_inventory, sort_keys=True, separators=(",", ":")).encode("utf-8")
         ).hexdigest(),
         "wheel_smoke_import": smoke_passed,
         "failures": failures,

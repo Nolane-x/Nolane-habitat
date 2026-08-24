@@ -596,7 +596,7 @@ git commit -m "test(reliability): bind fault evidence to candidate commits"
 
 ## Task 10: Attest distribution contents and dependency provenance before promotion
 
-**Partial foundation delivered in the Alpha.19 candidate:** CI builds a wheel and sdist without implicit network resolution, verifies both filenames and hashes against the repository version, smoke-installs the wheel offline into a temporary target before isolated import, and emits a deterministic member manifest that rejects unsafe paths, secret-bearing filenames, local databases, Habitat state, and bytecode caches. The remaining member allow-list, dependency inventory/SBOM, and artifact-vs-source identity proof stay required before this task is complete.
+**Partial foundation delivered in the Alpha.19 candidate:** CI builds a wheel and sdist without implicit network resolution, verifies both filenames and hashes against the repository version, smoke-installs the wheel offline into a temporary target before isolated import, and emits a deterministic member manifest that rejects unsafe paths, secret-bearing filenames, local databases, Habitat state, and bytecode caches. The verifier also compares the wheel `METADATA` and sdist `PKG-INFO` name, version, and canonical `Requires-Dist` inventories, then binds the inventory digest into artifact evidence. An explicit member allow-list, SBOM/lock provenance, and artifact-vs-source identity proof stay required before this task is complete.
 
 **Why this matters:** A green source checkout does not prove that the wheel/sdist is complete, installable, free of generated secrets, or produced from the reviewed commit.
 
