@@ -1647,8 +1647,7 @@ class HabitatWorkspace:
             raise TransactionConflict(f"source changed during range read: {rel}")
         if expected_fp is not None and before != expected_fp:
             # Do not serve bytes from a world state newer than the Semantic Twin.
-            self.refresh_paths([rel], reason="range-read-fingerprint-drift")
-            raise TransactionConflict(f"source fingerprint drifted before range read: {rel}; semantic state refreshed")
+            raise TransactionConflict(f"source fingerprint drifted before range read: {rel}")
         raw = receipt.data
         utf8_valid = bool(sio.get("utf8_valid", True))
         text = raw.decode("utf-8", errors="strict" if utf8_valid else "replace")
@@ -2062,7 +2061,6 @@ class HabitatWorkspace:
         return [dict(r) for r in self.store.search(query, limit)]
 
     def references(self, object_id: str, limit: int = 200) -> dict:
-        self.reconcile()
         return self.references_snapshot(object_id, limit)
 
     def references_snapshot(self, object_id: str, limit: int = 200) -> dict:
@@ -2123,14 +2121,19 @@ class HabitatWorkspace:
             value["symbols"] = [dict(s) for s in self.store.symbols_for_file(f["id"])]
             value["diagnostics"] = [dict(d) for d in self.store.diagnostics_for_path(f["path"])]
             if include_source != "none":
-                value["source"] = self.read_source_bytes(f["path"]).decode("utf-8", errors="replace")
-                value["source_authority"] = "exact source bytes decoded as UTF-8 with replacement"
+                cache=self.store.load_compile_cache(f["id"]) or {}
+                source_io=((cache.get("metadata") or {}).get("source_io") or {})
+                line_count=max(1,int(source_io.get("line_count") or 1))
+                page=self.read_source_line_range(f["path"],1,line_count)
+                value["source"] = page["raw"].decode("utf-8", errors="replace")
+                value["source_authority"] = "fingerprint-checked exact source bytes decoded as UTF-8 with replacement"
+                value["source_accounting"] = {k: page[k] for k in ("agent_visible_source_bytes","backend_authority_bytes_read","encoding","lossy_text","newline")}
             return value
         raise KeyError(object_id)
 
     def inspect(self, object_id: str, include_source: str = "none", agent_id: str | None = None) -> dict:
         if agent_id is not None and not self.store.agent_session(agent_id): raise KeyError(agent_id)
-        self.reconcile(); value=self._inspect_object(object_id, include_source)
+        value=self._inspect_object(object_id, include_source)
         if agent_id is not None and value.get("path"):
             fr=self.store.file_by_path(value["path"])
             if fr: self.store.record_agent_observation(agent_id,value["path"],fr["digest"],self.revision,"inspect",object_id,utc_now())
@@ -2140,7 +2143,6 @@ class HabitatWorkspace:
         return self._inspect_object(object_id, include_source)
 
     def inspect_many(self, object_ids: list[str], include_source: str = "none", max_objects: int = 50) -> dict:
-        self.reconcile()
         if not isinstance(object_ids, list) or len(object_ids) > max_objects or max_objects < 1 or max_objects > 200:
             raise ValueError("invalid inspect batch bounds")
         return {"revision": self.revision, "objects": [self._inspect_object(oid, include_source) for oid in object_ids]}

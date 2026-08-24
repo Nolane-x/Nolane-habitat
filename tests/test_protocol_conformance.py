@@ -8,6 +8,7 @@ import unittest
 from unittest import mock
 
 from habitat.protocol import MAX_REQUEST_BYTES, HabitatProtocol, ProtocolError, parse_json_request
+from habitat.mutation import TransactionConflict
 from habitat.server import serve_stdio
 from habitat.workspace import HabitatWorkspace
 
@@ -184,6 +185,64 @@ class ProtocolConformanceTests(unittest.TestCase):
             finally:
                 workspace.close()
 
+    def test_protocol_drift_reads_fail_closed_without_refresh_or_telemetry(self):
+        with TemporaryDirectory() as td:
+            root = Path(td)
+            workspace = self._workspace(root)
+            try:
+                protocol = HabitatProtocol(workspace)
+                symbol_id = workspace.store.conn.execute(
+                    "SELECT id FROM symbols WHERE name='greet'"
+                ).fetchone()[0]
+                source = workspace.source_root / "main.py"
+                source.write_text(
+                    "def greet(name):\n    return f'changed {name}'\n",
+                    encoding="utf-8",
+                )
+                before_revision = workspace.revision
+                before_state = "\n".join(workspace.store.conn.iterdump())
+
+                source_response = protocol.handle(
+                    {
+                        "id": "source-drift",
+                        "method": "workspace.source.read",
+                        "params": {"path": "main.py"},
+                    }
+                )
+                inspect_response = protocol.handle(
+                    {
+                        "id": "inspect-drift",
+                        "method": "workspace.inspect",
+                        "params": {"object_id": symbol_id, "include_source": "body"},
+                    }
+                )
+                batch_response = protocol.handle(
+                    {
+                        "id": "inspect-batch-drift",
+                        "method": "workspace.inspect.batch",
+                        "params": {"object_ids": [symbol_id], "include_source": "body"},
+                    }
+                )
+                references_response = protocol.handle(
+                    {
+                        "id": "references-drift",
+                        "method": "workspace.references",
+                        "params": {"object_id": symbol_id},
+                    }
+                )
+
+                self.assertFalse(source_response["ok"])
+                self.assertEqual("TRANSACTIONCONFLICT", source_response["error"]["code"])
+                self.assertFalse(inspect_response["ok"])
+                self.assertEqual("TRANSACTIONCONFLICT", inspect_response["error"]["code"])
+                self.assertFalse(batch_response["ok"])
+                self.assertEqual("TRANSACTIONCONFLICT", batch_response["error"]["code"])
+                self.assertTrue(references_response["ok"])
+                self.assertEqual(before_revision, workspace.revision)
+                self.assertEqual(before_state, "\n".join(workspace.store.conn.iterdump()))
+            finally:
+                workspace.close()
+
     def test_mcp_read_tools_leave_logical_state_unchanged(self):
         from habitat import mcp_adapter
 
@@ -222,6 +281,24 @@ class ProtocolConformanceTests(unittest.TestCase):
                     self.assertIsInstance(inspected, dict)
                     self.assertIsInstance(references, dict)
                     self.assertEqual(before_state, "\n".join(bound.store.conn.iterdump()))
+
+                    file_id = bound.store.file_by_path("main.py")["id"]
+                    (root / "project" / "main.py").write_text(
+                        "def greet(name):\n    return f'changed {name}'\n",
+                        encoding="utf-8",
+                    )
+                    drift_revision = bound.revision
+                    drift_state = "\n".join(bound.store.conn.iterdump())
+
+                    with self.assertRaises(TransactionConflict):
+                        server.tools["habitat_inspect"](file_id, include_source="exact")
+                    with self.assertRaises(TransactionConflict):
+                        server.tools["habitat_inspect"](object_id, include_source="body")
+                    drift_references = server.tools["habitat_references"](object_id)
+
+                    self.assertIsInstance(drift_references, dict)
+                    self.assertEqual(drift_revision, bound.revision)
+                    self.assertEqual(drift_state, "\n".join(bound.store.conn.iterdump()))
                 finally:
                     bound.close()
         finally:

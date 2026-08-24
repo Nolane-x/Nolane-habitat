@@ -67,7 +67,13 @@ def parse_json_request(raw: str) -> dict[str, Any]:
 class HabitatProtocol:
     # These operations are safe projections. They must not create activity or trace rows merely
     # because a client observed state; additions require logical-state conformance evidence.
-    READ_ONLY_METHODS = frozenset({"protocol.capabilities", "workspace.source.read"})
+    READ_ONLY_METHODS = frozenset({
+        "protocol.capabilities",
+        "workspace.inspect",
+        "workspace.inspect.batch",
+        "workspace.references",
+        "workspace.source.read",
+    })
     METHODS = [
         "protocol.capabilities","workspace.enter","workspace.refresh","workspace.orient","workspace.explore","workspace.context.page","workspace.context.refresh",
         "workspace.query","workspace.inspect","workspace.inspect.batch","workspace.context.materialize","workspace.context.address_space","workspace.context.fetch","workspace.context.prefetch","workspace.context.plan_next","workspace.context.feedback","workspace.context.efficiency","workspace.references","workspace.impact","workspace.source.read",
@@ -202,7 +208,9 @@ class HabitatProtocol:
         if m=="workspace.context.page": return self.workspace.context_page(self._required(p,"handle",str),self._int(p,"offset",0),self._int(p,"limit",20))
         if m=="workspace.context.refresh": return self.workspace.context_refresh(self._required(p,"handle",str),self._int(p,"budget") if "budget" in p else None)
         if m=="workspace.query": return self.workspace.query(self._required(p,"query",str),self._int(p,"limit",20))
-        if m=="workspace.inspect": return self.workspace.inspect(self._required(p,"object_id",str),p.get("include_source","none"),self._optional(p,"agent_id",str))
+        if m=="workspace.inspect":
+            self._optional(p,"agent_id",str)
+            return self.workspace.inspect_snapshot(self._required(p,"object_id",str),p.get("include_source","none"))
         if m=="workspace.inspect.batch": return self.workspace.inspect_many(self._required(p,"object_ids",list),p.get("include_source","none"),self._int(p,"max_objects",50))
         if m=="workspace.context.materialize": return self.workspace.context_materialize(self._required(p,"handle",str),self._int(p,"max_source_bytes",60000),self._int(p,"max_objects",12))
         if m=="workspace.context.address_space": return self.workspace.context_address_space(self._required(p,"handle",str),self._int(p,"max_pages",100))
@@ -211,7 +219,7 @@ class HabitatProtocol:
         if m=="workspace.context.plan_next": return self.workspace.context_plan_next(self._required(p,"handle",str),p.get("fetched_page_ids"),self._int(p,"max_pages",3),self._int(p,"max_estimated_bytes",20000))
         if m=="workspace.context.feedback": return self.workspace.context_feedback(self._required(p,"handle",str),p.get("used_object_ids"),p.get("unhelpful_object_ids"),self._float(p,"weight",1.0),self._optional(p,"agent_id",str))
         if m=="workspace.context.efficiency": return self.workspace.context_efficiency(self._required(p,"handle",str))
-        if m=="workspace.references": return self.workspace.references(self._required(p,"object_id",str),self._int(p,"limit",200))
+        if m=="workspace.references": return self.workspace.references_snapshot(self._required(p,"object_id",str),self._int(p,"limit",200))
         if m=="workspace.impact": return self.workspace.impact(p.get("changed_paths"),p.get("object_ids"),self._int(p,"max_depth",5))
         if m=="workspace.source.read": return self.workspace.read_source(self._required(p,"path",str),self._int(p,"start_line",1),self._int(p,"max_lines",200))
         if m=="workspace.change.plan": return self.workspace.change_plan(self._required(p,"operations",list))
