@@ -235,7 +235,7 @@ class Alpha13MicroDepthTests(unittest.TestCase):
             ws.close();td.cleanup()
 
     def test_observatory_read_frames_survive_concurrent_activity_writer(self):
-        td,project,ws=self.make_ws(); obs=None
+        td,project,ws=self.make_ws(); obs=None; th=None
         try:
             obs=ws.observatory_start(port=0,open_browser=False); port=obs['port']; errors=[]
             def writer():
@@ -253,8 +253,9 @@ class Alpha13MicroDepthTests(unittest.TestCase):
                 conn=http.client.HTTPConnection('127.0.0.1',port,timeout=5); conn.request('GET','/api/snapshot'); r=conn.getresponse(); snap=json.loads(r.read()); conn.close()
                 self.assertEqual(r.status,200); self.assertEqual(snap['observer_health']['snapshot_consistency'],'sqlite-read-transaction')
                 seqs.append(int(snap['activity_seq'])); self.assertLessEqual(int(snap['observer_health']['activity_seq']),int(snap['activity_seq']))
-            th.join(5); self.assertFalse(errors); self.assertEqual(seqs,sorted(seqs))
+            th.join(30); self.assertFalse(th.is_alive()); self.assertFalse(errors); self.assertEqual(seqs,sorted(seqs))
         finally:
+            if th is not None: th.join()
             if obs: ws.observatory_stop()
             ws.close();td.cleanup()
 
