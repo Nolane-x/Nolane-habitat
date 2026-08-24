@@ -2,7 +2,15 @@
 
 `tools/promote_release.py` evaluates a supplied release manifest and writes a machine-readable verdict. It never creates a Git tag, publishes a package, uploads an artifact, or creates a GitHub release.
 
-For an alpha candidate, the gate requires hash-bound `truth-core`, `matrix`, `faults`, `artifacts`, `scanner`, `db-recovery`, `mutation-recovery`, `reproducible-build`, `protocol-conformance`, and `contract` reports, at least one artifact, and at least one separately named review record. Every report and review record must contain a verified payload hash, `status: passed`, and the same 40-character commit SHA as the manifest. The builder reads each evidence file once, records its file hash and parsed provenance from that same snapshot, then calculates `manifest_sha256` over canonical manifest JSON with that field omitted. A review record additionally requires `schema: 1` and `evidence_type: "review"`; its canonical payload hash cannot equal a required report's. Its `--review` name identifies evidence only and does not establish reviewer identity or independent review. Dry-run promotion recalculates the manifest hash and writes a canonical, self-hashed verdict bound to that exact source commit and manifest hash; malformed manifests and invalid commits produce no verdict file. Distribution evidence includes a deterministic member manifest and rejects unsafe paths, `.env` files, private-key extensions, local databases, Habitat state, and Python bytecode caches. It also extracts the wheel `METADATA` and sdist `PKG-INFO`, checks their normalized project name and package version, and blocks if their canonical `Requires-Dist` inventories differ. The resulting `dependency_inventory_sha256` binds that inventory into the artifact report.
+For an alpha candidate, the gate requires hash-bound `truth-core`, `matrix`, `faults`, `artifacts`, `scanner`, `db-recovery`, `mutation-recovery`, `reproducible-build`, `protocol-conformance`, and `contract` reports, at least one artifact, and at least one separately named review or authorization record. Every report and review or authorization record must contain a verified payload hash, `status: passed`, and the same 40-character commit SHA as the manifest. The builder reads each evidence file once, records its file hash and parsed provenance from that same snapshot, then calculates `manifest_sha256` over canonical manifest JSON with that field omitted. A record supplied through `--review` additionally requires `schema: 1` and `evidence_type: "review"`; its canonical payload hash cannot equal a required report's. Its name identifies evidence only and does not establish reviewer identity or independent review. Dry-run promotion recalculates the manifest hash and writes a canonical, self-hashed verdict bound to that exact source commit and manifest hash; malformed manifests and invalid commits produce no verdict file. Distribution evidence includes a deterministic member manifest and rejects unsafe paths, `.env` files, private-key extensions, local databases, Habitat state, and Python bytecode caches. It also extracts the wheel `METADATA` and sdist `PKG-INFO`, checks their normalized project name and package version, and blocks if their canonical `Requires-Dist` inventories differ. The resulting `dependency_inventory_sha256` binds that inventory into the artifact report.
+
+## Publication authorization
+
+Alpha and other explicitly marked pre-releases may be published without an independent GitHub approval when the repository owner or a release maintainer explicitly authorizes that exact candidate. Owner authorization does not replace any technical evidence: every required report must pass, the artifacts and manifest must be bound to the candidate commit, the dry-run verdict must admit it, and no unresolved critical or high release finding may remain. A commit change invalidates the authorization and requires fresh commit-bound evidence.
+
+Record this path as `maintainer-authorization` through `--review` and state the authorizing actor and basis in the record payload. Do not describe that record as an independent review. GitHub's prohibition on approving one's own pull request remains intact; this policy authorizes pre-release publication rather than manufacturing a GitHub approval.
+
+Stable releases still require approval from a reviewer other than the change author, in addition to the complete technical evidence and an explicit publication action. If reviewer identity or independence cannot be established, the candidate remains eligible only for a clearly labelled pre-release.
 
 ## Reproducible-build evidence
 
@@ -26,7 +34,7 @@ python tools\quality_gate.py --identity .test-artifacts\identity.json --matrix .
   --expected-commit $commit --out .test-artifacts\truth-core.json
 ```
 
-The scanner report is CI evidence, not a release-admission verdict by itself. Release admission still requires the complete manifest and independent review described below.
+The scanner report is CI evidence, not a release-admission verdict by itself. Release admission still requires the complete manifest and the publication authorization appropriate to the release channel described above.
 
 Generate the SQLite recovery and fault-injection reports from the same checked-out candidate. These commands use temporary fixtures only and do not open or modify a user workspace:
 
@@ -79,7 +87,7 @@ python tools\build_release_manifest.py --version 0.1.0-alpha.19 --commit $commit
   --report contract=.test-artifacts\contract.json `
   --artifact wheel=.test-artifacts\dist-first\nolane_habitat-0.1.0a19-py3-none-any.whl `
   --artifact sdist=.test-artifacts\dist-first\nolane_habitat-0.1.0a19.tar.gz `
-  --review review=reports\review.json `
+  --review maintainer-authorization=reports\maintainer-authorization.json `
   --out dist\release-manifest.json
 ```
 
@@ -89,4 +97,4 @@ Evaluate the alpha gate and retain the verdict beside the other evidence:
 python tools\promote_release.py --manifest dist\release-manifest.json --target alpha-candidate --dry-run --out .test-artifacts\promotion-verdict.json
 ```
 
-The builder requires `--target` and writes no manifest unless the supplied evidence exactly matches that target and every report is valid, passed, and commit-bound. The dry-run command exits `0` only when it verifies that same contract, including the canonical manifest hash; it exits `1` after writing a blocked verdict otherwise. A blocked verdict is evidence of a safe stop, not a publishing failure. External publication remains a separate, explicit action; a review record alone does not assert that an independent review occurred.
+The builder requires `--target` and writes no manifest unless the supplied evidence exactly matches that target and every report is valid, passed, and commit-bound. The dry-run command exits `0` only when it verifies that same contract, including the canonical manifest hash; it exits `1` after writing a blocked verdict otherwise. A blocked verdict is evidence of a safe stop, not a publishing failure. External publication remains a separate, explicit action. For a pre-release, a `maintainer-authorization` record documents the bounded owner/maintainer path above; it does not assert that an independent review occurred. Stable publication still requires actual independent approval.

@@ -16,6 +16,7 @@
 - Strengthened reproducibility evidence from two builds in one checkout to two distinct clean checkouts of the candidate commit, with non-reversible checkout identities and build-environment provenance.
 - Aligned the Windows quick start and release runbook with the CI build prerequisite for `setuptools>=68` when using `build --no-isolation`.
 - Added an HTTP-level regression proof that Observatory health, snapshot, and activity reads leave the authoritative SQLite workspace unchanged.
+- Defined a bounded owner-authorized publication path for alpha pre-releases while retaining independent review for stable releases and all existing commit-bound technical gates.
 
 ## 0.1.0-alpha.18 — 2026-08-09
 

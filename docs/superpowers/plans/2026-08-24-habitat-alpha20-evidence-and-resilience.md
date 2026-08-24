@@ -15,7 +15,7 @@
 - Preserve `habitat.agent.v1alpha2`, existing MCP tool names, JSON field names, CLI entry points, and Observatory read-only behavior.
 - Support Ubuntu and Windows on Python 3.10 and 3.14; every new behavior has a platform-neutral regression test and runs in the four-way CI matrix.
 - SQL values always use SQLite placeholders. A dynamic SQLite identifier is accepted only after membership in a module-local immutable allow-list.
-- Do not infer release admission from a green check. A candidate needs hash-bound evidence, an independent review record, and a dry-run verdict before any tag or GitHub release action.
+- Do not infer release admission from a green check. A candidate needs hash-bound evidence, a channel-appropriate review or authorization record, and a dry-run verdict before any tag or GitHub release action; stable releases still require independent review.
 - Keep scanner artifacts under `.test-artifacts/` and do not commit generated reports, manifests, or downloaded CI artifacts.
 - Pin every `uses:` entry in a workflow to a 40-character commit SHA and retain a human-readable major-version comment.
 - A provider timeout or close must not leave an owned process alive; an unavailable provider must be reported as unavailable rather than represented as a successful semantic result.
@@ -369,7 +369,7 @@ class ReleaseManifest:
     reviewer_hashes: tuple[str, ...] = ()
 ```
 
-For `alpha-candidate`, add `scanner` to `REQUIRED_REPORTS` and require at least one 64-hex reviewer hash distinct from every report and artifact hash. `build_release_manifest.py` accepts repeatable `--review NAME=PATH` arguments, hashes each file, and serializes both the name and digest. `promote_release.py` remains dry-run-only and still never creates a tag, uploads an artifact, or creates a GitHub release.
+For `alpha-candidate`, add `scanner` to `REQUIRED_REPORTS` and require at least one 64-hex review or authorization hash distinct from every report and artifact hash. `build_release_manifest.py` accepts repeatable `--review NAME=PATH` arguments, hashes each file, and serializes both the name and digest. An alpha record may document exact-commit maintainer authorization; it must not be represented as an independent review. `promote_release.py` remains dry-run-only and still never creates a tag, uploads an artifact, or creates a GitHub release.
 
 - [ ] **Step 4: Add exact negative-path tests.**
 
@@ -401,7 +401,7 @@ python tools\build_release_manifest.py --version 0.1.0-alpha.20 --commit (git re
   --report truth-core=.test-artifacts\truth-core.json --report matrix=.test-artifacts\matrix.json `
   --report faults=.test-artifacts\faults.json --report artifacts=.test-artifacts\artifacts.json `
   --report scanner=.test-artifacts\semgrep-workflows.json --artifact wheel=dist\nolane_habitat-0.1.0a20-py3-none-any.whl `
-  --review independent-review=reports\independent-review.json --out dist\release-manifest.json
+  --review maintainer-authorization=reports\maintainer-authorization.json --out dist\release-manifest.json
 python tools\promote_release.py --manifest dist\release-manifest.json --target alpha-candidate --dry-run --out .test-artifacts\promotion-verdict.json
 ```
 
@@ -415,7 +415,7 @@ Commit:
 
 ```powershell
 git add habitat/release.py tools/build_release_manifest.py tools/promote_release.py docs/runbooks/RELEASE-ADMISSION.md tests/test_release_manifest.py tests/test_release_promotion.py
-git commit -m "release: require independent review evidence"
+git commit -m "release: require channel authorization evidence"
 ```
 
 ## Task 5: Add deterministic storage and provider fault evidence — delivered in Alpha.19 candidate
@@ -905,7 +905,7 @@ git commit -m "test(reliability): bind fault evidence to candidate commits"
 | Alpha.19 safety baseline | Tasks 1–2 | Delivered only with four-way CI and CodeQL on the exact commit. This is an engineering baseline, not release admission. |
 | Alpha.20 recovery core | Tasks 3, 5, 6, 12, 16 | No candidate while semantic cleanup, database/source-transaction recovery, or upgrade/restore reports are missing or nonzero. |
 | Contract, truth, and privacy boundary | Tasks 7, 8, 9, 11, 15, 17, 18, 19 | No candidate while a public-surface, ledger, semantic truth, redaction, resource-limit, Observatory, or authorization deny-path test fails. |
-| Distribution and provenance | Tasks 4, 10, 13, 14, 20 | No tag or GitHub release without independent review, artifact inspection, reproducible-build, scale, and verified provenance evidence. |
+| Distribution and provenance | Tasks 4, 10, 13, 14, 20 | No tag or GitHub release without channel-appropriate authorization, artifact inspection, reproducible-build, scale, and verified provenance evidence; stable releases still require independent review. |
 
 The implementation order is intentionally safety-first: fix a failing boundary with its smallest deterministic test; attach a commit-bound report; then widen coverage to recovery, compatibility, privacy, and scale. A green test run never substitutes for the next gate's evidence.
 
@@ -922,9 +922,9 @@ The implementation order is intentionally safety-first: fix a failing boundary w
 - [ ] Run database recovery, contract, export-redaction, resource-limit, and distribution suites; retain their commit-bound reports.
 - [ ] Run authorization, upgrade-recovery, scale, and provenance suites; retain their commit-bound reports.
 - [ ] Run workspace-ledger, source-mutation recovery, protocol conformance, semantic conformance, Observatory budget, and reproducible-build suites; retain their commit-bound reports.
-- [ ] Build a release manifest and run `promote_release.py --dry-run`; retain a blocked verdict when independent reviewer evidence is absent.
+- [ ] Build a release manifest and run `promote_release.py --dry-run`; retain a blocked verdict when the channel-appropriate review or authorization evidence is absent.
 - [ ] Update README only if a verified, user-visible behavior changed; do not describe planned fault injection, scanner policy, or release promotion as shipped until its task is complete.
 
 ## Completion definition
 
-The plan is complete when all dynamic SQLite identifiers are allow-listed; database and source-mutation recovery, upgrade/restore, compatibility, hostile-input conformance, semantic truth calibration, privacy, tamper-evident activity history, explicit authorization, Observatory budgets, resource limits, scanner, reliability, scale, distribution, reproducible-build, and provenance reports are commit-bound evidence; semantic providers cannot outlive their lifecycle boundary; and release promotion rejects every candidate missing independent reviewer evidence. A public tag or GitHub release remains a separate action after an independent reviewer approves the exact manifest.
+The plan is complete when all dynamic SQLite identifiers are allow-listed; database and source-mutation recovery, upgrade/restore, compatibility, hostile-input conformance, semantic truth calibration, privacy, tamper-evident activity history, explicit authorization, Observatory budgets, resource limits, scanner, reliability, scale, distribution, reproducible-build, and provenance reports are commit-bound evidence; semantic providers cannot outlive their lifecycle boundary; and release promotion rejects every candidate missing channel-appropriate authorization evidence. A public tag or GitHub release remains a separate action after exact-commit maintainer authorization for an alpha pre-release or independent approval for a stable release.

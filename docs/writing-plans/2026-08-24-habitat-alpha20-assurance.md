@@ -4,7 +4,7 @@
 
 **Goal:** make a Habitat workspace demonstrably safe to evolve by strengthening mutation admission, protocol conformance, artifact provenance, and observer isolation with machine-verifiable evidence.
 
-**Architecture:** Alpha.20 treats four boundaries as separate proof targets: untrusted mutation payload → policy/transaction state, untrusted NDJSON → protocol dispatch, source checkout → reproducible distributable artifacts, and authoritative SQLite state → observer projection. Each boundary gets a minimal fail-closed implementation, a regression test that records the formerly unsafe transition, and a commit-bound evidence artefact. A release remains blocked until every artefact is independently reviewed.
+**Architecture:** Alpha.20 treats four boundaries as separate proof targets: untrusted mutation payload → policy/transaction state, untrusted NDJSON → protocol dispatch, source checkout → reproducible distributable artifacts, and authoritative SQLite state → observer projection. Each boundary gets a minimal fail-closed implementation, a regression test that records the formerly unsafe transition, and a commit-bound evidence artefact. Publication remains blocked until every artefact is covered by the channel-appropriate authorization in `docs/runbooks/RELEASE-ADMISSION.md`.
 
 **Tech Stack:** Python 3.10+, `unittest`/`pytest`, SQLite, strict JSON/NDJSON, Git, Python build/sdist tooling, existing Habitat CLI/MCP/Observatory.
 
@@ -17,7 +17,7 @@
 - The Observatory stays loopback, read-only, and uses a separate query-only SQLite connection.
 - Every code change follows red → green testing; a failing test must name the previously unsafe production transition.
 - Every emitted machine report binds the exact 40-character commit SHA and hashes its canonical JSON form.
-- No Git tag, GitHub release, or claim of hostile-code isolation is allowed without the existing admission gate and independent review.
+- No Git tag, GitHub release, or claim of hostile-code isolation is allowed without the existing admission gate and channel-appropriate publication authorization; stable releases still require independent review.
 
 ---
 
@@ -39,7 +39,7 @@
 
 ## Task 1: Make mutation admission side-effect free before authorization
 
-**Status:** Completed locally on the candidate; regression evidence covers stale-source reconciliation and approval-token consumption. The focused suite and matrix remain release evidence, not a substitute for independent review.
+**Status:** Completed locally on the candidate; regression evidence covers stale-source reconciliation and approval-token consumption. The focused suite and matrix remain release evidence, not a substitute for the publication authorization required by the release channel.
 
 **Files:**
 
@@ -325,7 +325,7 @@ git commit -m "security: prove observatory reads are state neutral"
 - [ ] Run the full balanced matrix once on the candidate commit.
 - [ ] Run Semgrep/CodeQL according to the existing CI workflow and preserve the commit-bound reports.
 - [ ] Build the candidate manifest in dry-run mode and confirm that every required report is same-commit, passed, and hash-valid.
-- [ ] Request an independent reviewer to inspect the manifest and candidate diff. Do not create a tag or GitHub Release while this review is missing.
+- [ ] For a stable release, request an independent reviewer to inspect the manifest and candidate diff. For an alpha pre-release, retain an exact-commit `maintainer-authorization` record. Do not create a tag or GitHub Release while the channel-appropriate record is missing.
 
 ## Coverage review
 
