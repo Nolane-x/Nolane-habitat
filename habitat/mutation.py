@@ -182,13 +182,16 @@ class MutationEngine:
         try: return json.loads(p.read_text(encoding="utf-8"))
         except Exception: return None
 
-    def begin(self, operations: list[dict]) -> TransactionRecord:
+    def _begin_normalized(self, normalized: list[dict]) -> TransactionRecord:
         self.workspace.reconcile()
-        base=self.workspace.revision; normalized=self._normalize_operations(operations); _,_,preview=self._prepare(normalized)
+        base=self.workspace.revision; _,_,preview=self._prepare(normalized)
         txid=stable_id("tx",base,utc_now(),json.dumps(normalized,sort_keys=True))
         tx=TransactionRecord(txid,base,"staged",normalized,preview=preview)
         self.workspace.store.save_json("transactions",tx.id,tx.__dict__)
         return tx
+
+    def begin(self, operations: list[dict]) -> TransactionRecord:
+        return self._begin_normalized(self._normalize_operations(operations))
 
     def load(self, txid: str) -> TransactionRecord:
         value=self.workspace.store.load_json("transactions",txid)

@@ -6,7 +6,7 @@ For an alpha candidate, the gate requires hash-bound `truth-core`, `matrix`, `fa
 
 ## Reproducible-build evidence
 
-CI builds the wheel and sdist twice on each OS/Python lane with `SOURCE_DATE_EPOCH=0`. `normalize_sdist.py` then rewrites only archive metadata that Setuptools leaves time-varying: gzip/tar timestamps, owner/group fields, and deterministic member order. It preserves every permitted entry's path, mode, and file bytes, and rejects links or other unsupported member types. `reproducible-build.json` blocks the alpha gate unless both normalised artifact sets have the same SHA-256 values. This proves repeatability for two builds in the same CI lane; it does not yet claim clean-checkout or cross-environment reproducibility.
+CI checks out the candidate commit twice into distinct clean Git worktrees, then builds the wheel and sdist once in each copy with `SOURCE_DATE_EPOCH=0`. `normalize_sdist.py` rewrites only archive metadata that Setuptools leaves time-varying: gzip/tar timestamps, owner/group fields, and deterministic member order. It preserves every permitted entry's path, mode, and file bytes, and rejects links or other unsupported member types. `reproducible-build.json` blocks the alpha gate unless both worktrees are clean, both resolve to the candidate SHA, their hashed checkout identities differ, and both normalised artifact sets have the same SHA-256 values. The evidence records no absolute worktree paths. It proves repeatability across two clean copies in one CI OS/Python environment; it does not claim cross-environment, dependency-hermetic, or supply-chain reproducibility.
 
 ## CI scanner evidence
 
@@ -35,12 +35,27 @@ python tools\run_reliability_suite.py --source-commit $commit --out .test-artifa
 python tools\verify_contracts.py --source-commit $commit --fixture tests\fixtures\contracts\agent-v1alpha2.json --out .test-artifacts\contract.json
 python tools\run_protocol_conformance_suite.py --source-commit $commit --out .test-artifacts\protocol-conformance.json
 $env:SOURCE_DATE_EPOCH = "0"
-python -m build --no-isolation --outdir .test-artifacts\dist-first
-python tools\normalize_sdist.py --dist .test-artifacts\dist-first --epoch 0
-python -m build --no-isolation --outdir .test-artifacts\dist-second
-python tools\normalize_sdist.py --dist .test-artifacts\dist-second --epoch 0
+$copies = Join-Path (Resolve-Path .test-artifacts) "reproducibility-copies"
+$firstSource = Join-Path $copies "source-first"
+$secondSource = Join-Path $copies "source-second"
+$firstDist = Join-Path (Resolve-Path .test-artifacts) "dist-first"
+$secondDist = Join-Path (Resolve-Path .test-artifacts) "dist-second"
+New-Item -ItemType Directory -Force $copies | Out-Null
+git clone --no-local . $firstSource
+git clone --no-local . $secondSource
+git -C $firstSource checkout --detach $commit
+git -C $secondSource checkout --detach $commit
+Push-Location $firstSource
+python -m build --no-isolation --outdir $firstDist
+Pop-Location
+python tools\normalize_sdist.py --dist $firstDist --epoch 0
+Push-Location $secondSource
+python -m build --no-isolation --outdir $secondDist
+Pop-Location
+python tools\normalize_sdist.py --dist $secondDist --epoch 0
 python tools\verify_reproducible_build.py --source-commit $commit `
-  --first .test-artifacts\dist-first --second .test-artifacts\dist-second `
+  --first $firstDist --second $secondDist `
+  --first-source $firstSource --second-source $secondSource `
   --out .test-artifacts\reproducible-build.json
 python tools\verify_distribution.py --source-commit $commit --dist .test-artifacts\dist-first --out .test-artifacts\artifacts.json
 ```

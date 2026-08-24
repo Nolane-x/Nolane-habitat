@@ -2444,6 +2444,8 @@ class HabitatWorkspace:
                 "side_effects":False,"claim_boundary":"Policy preflight only; source digests, semantic anchors and transaction preconditions are validated again during staging/commit."}
 
     def stage_change(self, operations: list[dict], episode_id: str | None = None, agent_id: str | None = None, lease_ttl_s: float = 120.0, approval_id: str | None = None) -> dict:
+        engine=MutationEngine(self)
+        normalized_operations=engine._normalize_operations(operations)
         episode = self._require_active_episode(episode_id) if episode_id is not None else None
         if agent_id is not None and not self.store.agent_session(agent_id): raise KeyError(agent_id)
         # Policy and lease checks happen before MutationEngine.begin(), which itself may persist a staged transaction.
@@ -2475,7 +2477,7 @@ class HabitatWorkspace:
                     raise TransactionConflict(f"path is leased by another agent: {path}")
                 acquired.append(path)
         try:
-            tx_obj=MutationEngine(self).begin(operations)
+            tx_obj=engine._begin_normalized(normalized_operations)
             tx_obj.owner_agent_id=agent_id; tx_obj.lease_resources=sorted(set(acquired))
             self.store.save_json("transactions",tx_obj.id,tx_obj.__dict__)
             tx = to_dict(tx_obj)

@@ -7,6 +7,58 @@ from habitat.workspace import HabitatWorkspace
 
 
 class MutationRecoveryTests(unittest.TestCase):
+    def test_rejects_invalid_operations_before_reconciling_or_persisting(self):
+        with tempfile.TemporaryDirectory() as td:
+            base = Path(td)
+            project = base / "project"
+            project.mkdir()
+            source = project / "a.py"
+            source.write_text("value = 1\n", encoding="utf-8")
+            workspace_path = base / "workspace"
+            workspace = HabitatWorkspace.create(project, workspace_path)
+            try:
+                # Deliberately make the source manifest stale. An invalid request must
+                # still fail before it can reconcile that drift into SQLite state.
+                source.write_text("value = 2\n", encoding="utf-8")
+                source_before = source.read_bytes()
+                revision_before = workspace.revision
+                database_before = "\n".join(workspace.store.conn.iterdump())
+
+                with self.assertRaisesRegex(ValueError, "operations must be a non-empty list"):
+                    workspace.stage_change([])
+
+                self.assertEqual(source_before, source.read_bytes())
+                self.assertEqual(revision_before, workspace.revision)
+                self.assertEqual(database_before, "\n".join(workspace.store.conn.iterdump()))
+                self.assertFalse((workspace_path / "transactions").exists())
+            finally:
+                workspace.close()
+
+    def test_rejects_invalid_payload_before_consuming_approval(self):
+        with tempfile.TemporaryDirectory() as td:
+            base = Path(td)
+            project = base / "project"
+            project.mkdir()
+            (project / "a.py").write_text("value = 1\n", encoding="utf-8")
+            workspace = HabitatWorkspace.create(project, base / "workspace")
+            try:
+                workspace.policy_update({"structural_mutation": {"approval_required": True}})
+                approval = workspace.approval_grant("edit", granted_by="reviewer")
+
+                with self.assertRaisesRegex(ValueError, "create_file requires UTF-8 string content"):
+                    workspace.stage_change(
+                        [{"op": "create_file", "path": "new.py", "content": 7}],
+                        approval_id=approval["id"],
+                    )
+
+                consumed_at = workspace.store.conn.execute(
+                    "SELECT consumed_at FROM approvals WHERE id=?", (approval["id"],)
+                ).fetchone()[0]
+                self.assertIsNone(consumed_at)
+                self.assertFalse((project / "new.py").exists())
+            finally:
+                workspace.close()
+
     def test_reopen_rolls_back_an_interrupted_text_replacement_once(self):
         with tempfile.TemporaryDirectory() as td:
             base = Path(td)

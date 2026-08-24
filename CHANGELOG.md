@@ -12,6 +12,8 @@
 - Added a release-manifest builder that derives SHA-256 evidence and artifact bindings directly from supplied files.
 - Made capability discovery report malformed npm manifests explicitly and avoid timing-dependent full imports when probing Python module presence.
 - Added a quality-gate collector that records missing, unreadable, failed, timed-out, or finding-bearing required evidence as a blocked result.
+- Rejected malformed mutation payloads before reconciliation, approval consumption, lease acquisition, transaction persistence, backup, or journal creation.
+- Strengthened reproducibility evidence from two builds in one checkout to two distinct clean checkouts of the candidate commit, with non-reversible checkout identities and build-environment provenance.
 
 ## 0.1.0-alpha.18 — 2026-08-09
 
