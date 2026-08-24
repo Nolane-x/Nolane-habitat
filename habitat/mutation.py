@@ -31,23 +31,26 @@ class MutationEngine:
         except ValueError as exc:
             raise ValueError("mutation path escapes source root") from exc
 
-    def _normalize_operations(self, operations: list[dict]) -> list[dict]:
+    def _preflight_operations(self, operations: list[dict]) -> list[dict]:
         if not isinstance(operations,list) or not operations:
             raise ValueError("operations must be a non-empty list")
-        normalized=[]
+        preflight=[]
         structural_paths=set()
         for raw in operations:
             if not isinstance(raw,dict): raise TypeError("each mutation operation must be an object")
             op=dict(raw); kind=op.get("op")
+            if not isinstance(kind,str) or not kind:
+                raise ValueError("operation op must be a string")
+            if "expected_digest" in op:
+                if not isinstance(op["expected_digest"],str):
+                    raise ValueError("expected_digest must be a string")
+                if not op["expected_digest"]:
+                    raise ValueError("expected_digest must not be empty")
             if kind == "replace_text":
                 rel=self._valid_rel(op.get("path")); op["path"]=rel
-                if not self.workspace.source_is_file(rel): raise FileNotFoundError(rel)
-                op.setdefault("expected_digest",sha256_bytes(self.workspace.read_source_bytes(rel)))
                 if not isinstance(op.get("old"),str) or not isinstance(op.get("new"),str): raise ValueError("replace_text requires string old/new")
             elif kind == "replace_span":
                 rel=self._valid_rel(op.get("path")); op["path"]=rel
-                if not self.workspace.source_is_file(rel): raise FileNotFoundError(rel)
-                op.setdefault("expected_digest",sha256_bytes(self.workspace.read_source_bytes(rel)))
                 for key in ("start_line","end_line","start_column","end_column"):
                     if not isinstance(op.get(key),int) or isinstance(op.get(key),bool): raise ValueError(f"replace_span requires integer {key}")
                 if op["start_line"]!=op["end_line"] or op["start_line"]<1 or op["start_column"]<0 or op["end_column"]<op["start_column"]:
@@ -55,39 +58,68 @@ class MutationEngine:
                 if not isinstance(op.get("expected_text"),str) or not isinstance(op.get("new_text"),str): raise ValueError("replace_span requires expected_text/new_text strings")
             elif kind == "replace_symbol_source":
                 sid=op.get("symbol_id")
-                if not isinstance(sid,str): raise ValueError("replace_symbol_source requires symbol_id")
+                if not isinstance(sid,str) or not sid: raise ValueError("replace_symbol_source requires symbol_id")
+                if not isinstance(op.get("new_source"),str): raise ValueError("replace_symbol_source requires new_source string")
                 sym=self.workspace.store.symbol_by_id(sid)
                 if not sym: raise KeyError(sid)
-                if sym["trust"] == "heuristic": raise TransactionConflict("semantic mutation refuses heuristic symbol anchors; inspect exact source and use a safer operation")
-                fr=self.workspace.store.file_by_id(sym["file_id"])
-                if not fr: raise KeyError(sym["file_id"])
-                source=self.workspace.inspect(sid,"body")["source"]
-                op.update({"path":sym["path"],"start_line":sym["start_line"],"end_line":sym["end_line"],"expected_digest":fr["digest"],"expected_source":source,"symbol_trust":sym["trust"]})
-                if not isinstance(op.get("new_source"),str): raise ValueError("replace_symbol_source requires new_source string")
+                op["path"]=self._valid_rel(sym["path"])
             elif kind == "create_file":
                 rel=self._valid_rel(op.get("path")); op["path"]=rel
-                if self.workspace.source_is_file(rel): raise FileExistsError(rel)
                 if not isinstance(op.get("content"),str): raise ValueError("create_file requires UTF-8 string content")
                 mode=op.get("mode",0o644)
                 if not isinstance(mode,int) or isinstance(mode,bool) or mode<0 or mode>0o7777: raise ValueError("create_file mode must be an integer permission mask")
                 op["mode"]=mode; structural_paths.add(rel)
             elif kind == "delete_file":
                 rel=self._valid_rel(op.get("path")); op["path"]=rel
-                if not self.workspace.source_is_file(rel): raise FileNotFoundError(rel)
-                op.setdefault("expected_digest",sha256_bytes(self.workspace.read_source_bytes(rel))); structural_paths.add(rel)
+                structural_paths.add(rel)
             elif kind == "move_file":
                 src=self._valid_rel(op.get("from_path")); dst=self._valid_rel(op.get("to_path")); op["from_path"]=src; op["to_path"]=dst
-                if not self.workspace.source_is_file(src): raise FileNotFoundError(src)
-                if self.workspace.source_is_file(dst): raise FileExistsError(dst)
-                op.setdefault("expected_digest",sha256_bytes(self.workspace.read_source_bytes(src))); structural_paths.update({src,dst})
+                structural_paths.update({src,dst})
             else:
                 raise ValueError(f"unsupported mutation: {kind}")
-            normalized.append(op)
+            preflight.append(op)
         # Structural operations cannot be mixed with text edits of the same path in one transaction.
-        for op in normalized:
+        for op in preflight:
             if op["op"] in {"replace_text","replace_span","replace_symbol_source"} and op["path"] in structural_paths:
                 raise ValueError(f"cannot mix structural and text mutation for {op['path']} in one transaction")
+        return preflight
+
+    def _materialize_operations(self, preflight: list[dict]) -> list[dict]:
+        normalized=[]
+        for raw in preflight:
+            op=dict(raw); kind=op["op"]
+            if kind in {"replace_text","replace_span"}:
+                rel=op["path"]
+                if not self.workspace.source_is_file(rel): raise FileNotFoundError(rel)
+                op.setdefault("expected_digest",sha256_bytes(self.workspace.read_source_bytes(rel)))
+            elif kind == "replace_symbol_source":
+                sid=op["symbol_id"]; sym=self.workspace.store.symbol_by_id(sid)
+                if not sym: raise KeyError(sid)
+                if self._valid_rel(sym["path"]) != op["path"]:
+                    raise TransactionConflict("symbol path changed after mutation policy admission")
+                if sym["trust"] == "heuristic": raise TransactionConflict("semantic mutation refuses heuristic symbol anchors; inspect exact source and use a safer operation")
+                fr=self.workspace.store.file_by_id(sym["file_id"])
+                if not fr: raise KeyError(sym["file_id"])
+                inspected=self.workspace.inspect(sid,"body")
+                if self._valid_rel(inspected["path"]) != op["path"]:
+                    raise TransactionConflict("inspected symbol path changed after mutation policy admission")
+                op.update({"start_line":sym["start_line"],"end_line":sym["end_line"],"expected_digest":fr["digest"],"expected_source":inspected["source"],"symbol_trust":sym["trust"]})
+            elif kind == "create_file":
+                if self.workspace.source_is_file(op["path"]): raise FileExistsError(op["path"])
+            elif kind == "delete_file":
+                rel=op["path"]
+                if not self.workspace.source_is_file(rel): raise FileNotFoundError(rel)
+                op.setdefault("expected_digest",sha256_bytes(self.workspace.read_source_bytes(rel)))
+            elif kind == "move_file":
+                src=op["from_path"]; dst=op["to_path"]
+                if not self.workspace.source_is_file(src): raise FileNotFoundError(src)
+                if self.workspace.source_is_file(dst): raise FileExistsError(dst)
+                op.setdefault("expected_digest",sha256_bytes(self.workspace.read_source_bytes(src)))
+            normalized.append(op)
         return normalized
+
+    def _normalize_operations(self, operations: list[dict]) -> list[dict]:
+        return self._materialize_operations(self._preflight_operations(operations))
 
     @staticmethod
     def _newline_style(original: bytes) -> str:

@@ -7,6 +7,39 @@ from habitat.workspace import HabitatWorkspace
 
 
 class MutationRecoveryTests(unittest.TestCase):
+    @staticmethod
+    def _mutation_state(workspace, project: Path, workspace_path: Path) -> dict:
+        journal_root = workspace_path / "transactions"
+        return {
+            "revision": workspace.revision,
+            "database": "\n".join(workspace.store.conn.iterdump()),
+            "approvals": [
+                tuple(row)
+                for row in workspace.store.conn.execute(
+                    "SELECT id, consumed_at FROM approvals ORDER BY id"
+                ).fetchall()
+            ],
+            "leases": [
+                tuple(row)
+                for row in workspace.store.conn.execute(
+                    "SELECT resource_kind, resource_id, agent_id, transaction_id "
+                    "FROM resource_leases ORDER BY resource_kind, resource_id"
+                ).fetchall()
+            ],
+            "journals": [
+                (path.relative_to(journal_root).as_posix(), path.read_bytes())
+                for path in sorted(journal_root.rglob("*"))
+                if path.is_file()
+            ]
+            if journal_root.exists()
+            else [],
+            "source": [
+                (path.relative_to(project).as_posix(), path.read_bytes())
+                for path in sorted(project.rglob("*"))
+                if path.is_file()
+            ],
+        }
+
     def test_canonical_policy_path_blocks_equivalent_git_hook_mutations(self):
         variants = (
             "./.git/hooks/pre-commit",
@@ -129,6 +162,196 @@ class MutationRecoveryTests(unittest.TestCase):
                         ],
                         agent_id=second_agent,
                     )
+            finally:
+                workspace.close()
+
+    def test_malformed_operation_shapes_are_rejected_before_any_mutation_state(self):
+        cases = (
+            (
+                "operation kind container",
+                [{"op": ["replace_text"], "path": "a.py"}],
+                "operation op must be a string",
+            ),
+            (
+                "replace text digest container",
+                [
+                    {
+                        "op": "replace_text",
+                        "path": "a.py",
+                        "old": "return 2",
+                        "new": "return 3",
+                        "expected_digest": ["not-a-digest"],
+                    }
+                ],
+                "expected_digest must be a string",
+            ),
+            (
+                "replace span digest container",
+                [
+                    {
+                        "op": "replace_span",
+                        "path": "a.py",
+                        "start_line": 2,
+                        "end_line": 2,
+                        "start_column": 11,
+                        "end_column": 12,
+                        "expected_text": "2",
+                        "new_text": "3",
+                        "expected_digest": {"sha256": "not-a-digest"},
+                    }
+                ],
+                "expected_digest must be a string",
+            ),
+            (
+                "symbol source container",
+                [{"op": "replace_symbol_source", "symbol_id": "placeholder", "new_source": 7}],
+                "replace_symbol_source requires new_source string",
+            ),
+            (
+                "create content scalar",
+                [{"op": "create_file", "path": "new.py", "content": 7}],
+                "create_file requires UTF-8 string content",
+            ),
+            (
+                "delete digest container",
+                [
+                    {
+                        "op": "delete_file",
+                        "path": "a.py",
+                        "expected_digest": ["not-a-digest"],
+                    }
+                ],
+                "expected_digest must be a string",
+            ),
+            (
+                "move digest container",
+                [
+                    {
+                        "op": "move_file",
+                        "from_path": "a.py",
+                        "to_path": "moved.py",
+                        "expected_digest": ["not-a-digest"],
+                    }
+                ],
+                "expected_digest must be a string",
+            ),
+        )
+        for label, operations, message in cases:
+            with self.subTest(label=label), tempfile.TemporaryDirectory() as td:
+                base = Path(td)
+                project = base / "project"
+                project.mkdir()
+                source = project / "a.py"
+                source.write_text("def target():\n    return 1\n", encoding="utf-8")
+                workspace_path = base / "workspace"
+                workspace = HabitatWorkspace.create(project, workspace_path)
+                try:
+                    symbol_id = workspace.store.conn.execute(
+                        "SELECT id FROM symbols WHERE name='target'"
+                    ).fetchone()[0]
+                    if operations[0].get("op") == "replace_symbol_source":
+                        operations[0]["symbol_id"] = symbol_id
+                    workspace.policy_update(
+                        {
+                            "source": {"approval": ["a.py"]},
+                            "structural_mutation": {"approval_required": True},
+                        }
+                    )
+                    approval = workspace.approval_grant("edit", granted_by="reviewer")
+                    agent_id = workspace.agent_open("preflight-agent")["id"]
+                    source.write_text("def target():\n    return 2\n", encoding="utf-8")
+                    before = self._mutation_state(workspace, project, workspace_path)
+
+                    with self.assertRaises(Exception) as caught:
+                        workspace.stage_change(
+                            operations,
+                            approval_id=approval["id"],
+                            agent_id=agent_id,
+                        )
+
+                    self.assertEqual(before, self._mutation_state(workspace, project, workspace_path))
+                    self.assertIsInstance(caught.exception, (TypeError, ValueError))
+                    self.assertRegex(str(caught.exception), message)
+                finally:
+                    workspace.close()
+
+    def test_denied_symbol_mutation_does_not_reconcile_before_policy_admission(self):
+        with tempfile.TemporaryDirectory() as td:
+            base = Path(td)
+            project = base / "project"
+            project.mkdir()
+            source = project / "a.py"
+            source.write_text("def target():\n    return 1\n", encoding="utf-8")
+            workspace_path = base / "workspace"
+            workspace = HabitatWorkspace.create(project, workspace_path)
+            try:
+                symbol_id = workspace.store.conn.execute(
+                    "SELECT id FROM symbols WHERE name='target'"
+                ).fetchone()[0]
+                workspace.policy_update(
+                    {
+                        "source": {"edit": ["**"], "deny": ["a.py"]},
+                        "structural_mutation": {"approval_required": False},
+                    }
+                )
+                approval = workspace.approval_grant("edit", granted_by="reviewer")
+                agent_id = workspace.agent_open("denied-agent")["id"]
+                source.write_text("def target():\n    return 2\n", encoding="utf-8")
+                before = self._mutation_state(workspace, project, workspace_path)
+
+                with self.assertRaises(PermissionError):
+                    workspace.stage_change(
+                        [
+                            {
+                                "op": "replace_symbol_source",
+                                "symbol_id": symbol_id,
+                                "new_source": "def target():\n    return 3",
+                            }
+                        ],
+                        approval_id=approval["id"],
+                        agent_id=agent_id,
+                    )
+
+                self.assertEqual(before, self._mutation_state(workspace, project, workspace_path))
+            finally:
+                workspace.close()
+
+    def test_unapproved_symbol_mutation_does_not_reconcile_before_source_anchor(self):
+        with tempfile.TemporaryDirectory() as td:
+            base = Path(td)
+            project = base / "project"
+            project.mkdir()
+            source = project / "a.py"
+            source.write_text("def target():\n    return 1\n", encoding="utf-8")
+            workspace_path = base / "workspace"
+            workspace = HabitatWorkspace.create(project, workspace_path)
+            try:
+                symbol_id = workspace.store.conn.execute(
+                    "SELECT id FROM symbols WHERE name='target'"
+                ).fetchone()[0]
+                workspace.policy_update(
+                    {
+                        "source": {"edit": ["**"], "approval": ["a.py"], "deny": []},
+                        "structural_mutation": {"approval_required": False},
+                    }
+                )
+                agent_id = workspace.agent_open("unapproved-agent")["id"]
+                source.write_text("def target():\n    return 2\n", encoding="utf-8")
+                before = self._mutation_state(workspace, project, workspace_path)
+
+                with self.assertRaises(PermissionError):
+                    workspace.stage_change(
+                        [
+                            {
+                                "op": "replace_symbol_source",
+                                "symbol_id": symbol_id,
+                                "new_source": "def target():\n    return 3",
+                            }
+                        ],
+                        agent_id=agent_id,
+                    )
+
+                self.assertEqual(before, self._mutation_state(workspace, project, workspace_path))
             finally:
                 workspace.close()
 

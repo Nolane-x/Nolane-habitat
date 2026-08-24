@@ -379,6 +379,17 @@ class HabitatWorkspace:
         import time
         return bool(self.store.consume_approval(approval_id,action=action,resource=resource,agent_id=agent_id,consumed_at=utc_now(),now_ts=time.time()))
 
+    def _approval_is_valid(self, approval_id: str | None, *, action: str, resource: str | None, agent_id: str | None) -> bool:
+        if not isinstance(approval_id,str) or not approval_id: return False
+        import time
+        row=self.store.conn.execute("SELECT * FROM approvals WHERE id=?",(approval_id,)).fetchone()
+        return bool(
+            row and row["status"]=="active" and float(row["expires_at"])>time.time()
+            and row["action"]==action
+            and (row["resource"] is None or row["resource"]==resource)
+            and (row["agent_id"] is None or row["agent_id"]==agent_id)
+        )
+
     def policy_status(self) -> dict:
         return {"revision":self.revision,"policy":self.policy.status()}
 
@@ -2445,13 +2456,13 @@ class HabitatWorkspace:
 
     def stage_change(self, operations: list[dict], episode_id: str | None = None, agent_id: str | None = None, lease_ttl_s: float = 120.0, approval_id: str | None = None) -> dict:
         engine=MutationEngine(self)
-        normalized_operations=engine._normalize_operations(operations)
+        preflight_operations=engine._preflight_operations(operations)
         episode = self._require_active_episode(episode_id) if episode_id is not None else None
         if agent_id is not None and not self.store.agent_session(agent_id): raise KeyError(agent_id)
         # Policy and lease checks happen before MutationEngine.begin(), which itself may persist a staged transaction.
         paths=[]; approval_needed=False
         structural_ops={"create_file","delete_file","move_file"}
-        for op in normalized_operations:
+        for op in preflight_operations:
             kind=op.get("op")
             op_paths=[op.get("from_path"),op.get("to_path")] if kind=="move_file" else [op.get("path")]
             if kind=="replace_symbol_source" and not op.get("path"):
@@ -2465,6 +2476,9 @@ class HabitatWorkspace:
                     else:
                         raise PermissionError(decision.reason)
                 paths.append(path)
+        if approval_needed and not self._approval_is_valid(approval_id,action="edit",resource=None,agent_id=agent_id):
+            raise PermissionError("source mutation requires a valid host approval token")
+        normalized_operations=engine._materialize_operations(preflight_operations)
         if approval_needed and not self._consume_approval(approval_id,action="edit",resource=None,agent_id=agent_id):
             raise PermissionError("source mutation requires a valid host approval token")
         acquired=[]
