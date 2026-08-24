@@ -15,6 +15,7 @@ from .context.virtual_memory import ContextVirtualMemory
 from .model import DiagnosticRecord, EventRecord, FileRecord, Revision, SymbolRecord, to_dict
 from .merkle import build_snapshot as build_merkle_snapshot, resolve_store_path as resolve_merkle_path, diff_store_roots as diff_merkle_roots
 from .mutation import MutationEngine, TransactionConflict
+from .policy import canonical_source_path
 from .residency import ContextResidency
 from .semantic.fabric import semantic_fabric_report
 from .effect_twin import compile_effects, effect_snapshot, analyze_effect_text
@@ -244,10 +245,12 @@ class HabitatWorkspace:
     def lease_acquire(self, agent_id: str, resource_kind: str, resource_id: str, ttl_s: float = 120.0, transaction_id: str | None = None) -> dict:
         if not isinstance(ttl_s,(int,float)) or isinstance(ttl_s,bool) or ttl_s<=0 or ttl_s>3600: raise ValueError("ttl_s must be in (0,3600]")
         if resource_kind not in {"path","symbol","subsystem"}: raise ValueError("unsupported lease resource kind")
+        if resource_kind == "path": resource_id=canonical_source_path(resource_id)
         import time
         return self.store.acquire_lease(resource_kind,resource_id,agent_id,self.revision,utc_now(),time.time()+float(ttl_s),transaction_id)
 
     def lease_release(self, agent_id: str, resource_kind: str, resource_id: str) -> dict:
+        if resource_kind == "path": resource_id=canonical_source_path(resource_id)
         return {"released":self.store.release_lease(resource_kind,resource_id,agent_id),"agent_id":agent_id,"resource_kind":resource_kind,"resource_id":resource_id}
 
     def lease_status(self, agent_id: str | None = None) -> dict:
@@ -2490,7 +2493,7 @@ class HabitatWorkspace:
                 if not lease.get("acquired"):
                     for held in acquired: self.store.release_lease("path",held,agent_id)
                     raise TransactionConflict(f"path is leased by another agent: {path}")
-                acquired.append(path)
+                acquired.append(lease["resource_id"])
         try:
             tx_obj=engine._begin_normalized(normalized_operations)
             tx_obj.owner_agent_id=agent_id; tx_obj.lease_resources=sorted(set(acquired))

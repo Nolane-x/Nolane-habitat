@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import fnmatch
 import json
+import os
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
@@ -9,8 +10,8 @@ from typing import Any
 from .util import utc_now
 
 
-def canonical_source_path(path: str) -> str:
-    """Return one portable identity for a source-relative path."""
+def normalize_source_path(path: str) -> str:
+    """Normalize a source-relative path without changing its file name case."""
     if not isinstance(path, str) or not path:
         raise ValueError("source path must be a non-empty string")
     portable = path.replace("\\", "/")
@@ -24,10 +25,18 @@ def canonical_source_path(path: str) -> str:
             continue
         if part == "..":
             raise ValueError("source path escapes source root")
+        if os.name == "nt" and (":" in part or part.endswith((".", " "))):
+            raise ValueError("source path uses an unsafe Windows alias")
         parts.append(part)
     if not parts:
         raise ValueError("source path must identify a file")
     return "/".join(parts)
+
+
+def canonical_source_path(path: str) -> str:
+    """Return one filesystem-aware identity for a source-relative path."""
+    normalized = normalize_source_path(path)
+    return normalized.casefold() if os.name == "nt" else normalized
 
 
 @dataclass(frozen=True)
