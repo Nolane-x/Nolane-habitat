@@ -268,6 +268,28 @@ class ReleaseManifestTests(unittest.TestCase):
         ):
             ReleaseManifest.from_dict(value)
 
+    def test_manifest_rejects_unknown_provenance_fields(self):
+        value = {
+            "version": "0.1.0-alpha.20",
+            "commit": "a" * 40,
+            "report_provenance": {
+                "matrix": {
+                    "schema": 1,
+                    "source_commit": "a" * 40,
+                    "status": "passed",
+                    "report_sha256": "b" * 64,
+                    "evidence_type": "report",
+                    "release_channel": "stable",
+                }
+            },
+        }
+
+        with self.assertRaisesRegex(
+            ValueError,
+            "report_provenance.matrix has unknown fields: release_channel",
+        ):
+            ReleaseManifest.from_dict(value)
+
     def test_manifest_serializes_a_stable_self_hash(self):
         with tempfile.TemporaryDirectory() as td:
             root = Path(td)

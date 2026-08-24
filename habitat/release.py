@@ -16,6 +16,9 @@ REQUIRED_REPORTS = {
     "production-candidate": frozenset({"security", "slo", "sbom", "reproducibility"}),
 }
 SHA256 = re.compile(r"^[0-9a-f]{64}$")
+PROVENANCE_FIELDS = frozenset(
+    {"schema", "source_commit", "status", "report_sha256", "evidence_type"}
+)
 
 
 @dataclass(frozen=True)
@@ -120,6 +123,11 @@ def _provenance_mapping(value: Any, name: str) -> dict[str, dict[str, Any]]:
     for evidence_name, record in value.items():
         if not isinstance(evidence_name, str) or not evidence_name or not isinstance(record, Mapping):
             raise ValueError(f"{name} must map non-empty names to objects")
+        unknown = sorted(str(key) for key in record if key not in PROVENANCE_FIELDS)
+        if unknown:
+            raise ValueError(
+                f"{name}.{evidence_name} has unknown fields: {', '.join(unknown)}"
+            )
         source_commit = _required_string(record, "source_commit", name)
         status = _required_string(record, "status", name)
         report_sha256 = _required_string(record, "report_sha256", name)
