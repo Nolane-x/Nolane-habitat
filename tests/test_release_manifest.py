@@ -7,8 +7,9 @@ import tempfile
 import unittest
 from contextlib import redirect_stderr
 from pathlib import Path
+from unittest.mock import patch
 
-from habitat.release import REQUIRED_REPORTS, build_release_manifest
+from habitat.release import REQUIRED_REPORTS, ReleaseManifest, build_release_manifest
 from tools.build_release_manifest import main
 
 
@@ -164,6 +165,58 @@ class ReleaseManifestTests(unittest.TestCase):
                 },
                 manifest.report_provenance["matrix"],
             )
+
+    def test_manifest_reads_each_report_and_review_once_from_one_snapshot(self):
+        commit = "a" * 40
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            report = root / "matrix.json"
+            review = root / "review.json"
+            report.write_bytes(b"placeholder")
+            review.write_bytes(b"placeholder")
+            first_report = json.dumps(self._commit_bound_report(commit)).encode("utf-8")
+            first_review = json.dumps(
+                self._commit_bound_report(commit, evidence_type="review")
+            ).encode("utf-8")
+            snapshots = {
+                report: [first_report, b'{"status":"changed"}'],
+                review: [first_review, b'{"status":"changed"}'],
+            }
+            reads: list[Path] = []
+
+            def read_snapshot(path: Path) -> bytes:
+                reads.append(path)
+                return snapshots[path].pop(0)
+
+            with patch("habitat.release._read_snapshot", side_effect=read_snapshot):
+                manifest = build_release_manifest(
+                    version="0.1.0-alpha.20", commit=commit,
+                    reports={"matrix": report}, artifacts={}, reviewers={"review": review},
+                )
+
+            self.assertEqual([report, review], reads)
+            self.assertEqual(hashlib.sha256(first_report).hexdigest(), manifest.reports["matrix"])
+            self.assertEqual(
+                self._commit_bound_report(commit)["report_sha256"],
+                manifest.report_provenance["matrix"]["report_sha256"],
+            )
+            self.assertEqual(
+                self._commit_bound_report(commit, evidence_type="review")["report_sha256"],
+                manifest.review_provenance["review"]["report_sha256"],
+            )
+
+    def test_manifest_round_trips_through_its_in_memory_dictionary(self):
+        commit = "a" * 40
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            report = root / "matrix.json"
+            report.write_text(json.dumps(self._commit_bound_report(commit)), encoding="utf-8")
+            manifest = build_release_manifest(
+                version="0.1.0-alpha.20", commit=commit,
+                reports={"matrix": report}, artifacts={}, residual_risks=("known risk",),
+            )
+
+            self.assertEqual(manifest, ReleaseManifest.from_dict(manifest.as_dict()))
 
     def test_manifest_serializes_a_stable_self_hash(self):
         with tempfile.TemporaryDirectory() as td:

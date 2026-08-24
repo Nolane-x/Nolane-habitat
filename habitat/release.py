@@ -61,7 +61,10 @@ class ReleaseManifest:
         )
 
     def as_dict(self) -> dict[str, Any]:
-        return asdict(self)
+        value = asdict(self)
+        value["residual_risks"] = list(self.residual_risks)
+        value["reviewer_hashes"] = list(self.reviewer_hashes)
+        return value
 
 
 @dataclass(frozen=True)
@@ -173,8 +176,12 @@ def _read_named_files(values: Mapping[str, Path]) -> dict[str, bytes]:
         resolved = Path(path)
         if not resolved.is_file():
             raise FileNotFoundError(resolved)
-        snapshots[name] = resolved.read_bytes()
+        snapshots[name] = _read_snapshot(resolved)
     return snapshots
+
+
+def _read_snapshot(path: Path) -> bytes:
+    return path.read_bytes()
 
 
 def _hash_named_files(values: Mapping[str, Path]) -> dict[str, str]:
