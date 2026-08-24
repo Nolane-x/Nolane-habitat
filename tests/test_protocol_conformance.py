@@ -61,6 +61,28 @@ class ProtocolConformanceTests(unittest.TestCase):
 
         self.assertEqual("REQUEST_TOO_LARGE", raised.exception.code)
 
+    def test_declared_read_only_calls_leave_source_and_logical_state_unchanged(self):
+        with TemporaryDirectory() as td:
+            workspace = self._workspace(Path(td))
+            try:
+                protocol = HabitatProtocol(workspace)
+                source = workspace.source_root / "main.py"
+                workspace.trace_start("protocol-conformance")
+                before_source = source.read_bytes()
+                before_revision = workspace.revision
+                before_state = "\n".join(workspace.store.conn.iterdump())
+
+                capabilities = protocol.handle({"id": "capabilities", "method": "protocol.capabilities", "params": {}})
+                source_read = protocol.handle({"id": "source", "method": "workspace.source.read", "params": {"path": "main.py"}})
+
+                self.assertTrue(capabilities["ok"])
+                self.assertTrue(source_read["ok"])
+                self.assertEqual(before_source, source.read_bytes())
+                self.assertEqual(before_revision, workspace.revision)
+                self.assertEqual(before_state, "\n".join(workspace.store.conn.iterdump()))
+            finally:
+                workspace.close()
+
 
 if __name__ == "__main__":
     unittest.main()

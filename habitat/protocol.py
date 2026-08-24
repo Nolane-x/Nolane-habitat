@@ -52,6 +52,15 @@ def parse_json_request(raw: str) -> dict[str, Any]:
     return request
 
 class HabitatProtocol:
+    # These operations are safe projections. They must not create activity or trace rows merely
+    # because a client observed state; additions require logical-state conformance evidence.
+    READ_ONLY_METHODS = frozenset({
+        "protocol.capabilities", "workspace.enter", "workspace.query", "workspace.inspect",
+        "workspace.inspect.batch", "workspace.references", "workspace.impact",
+        "workspace.source.read", "workspace.verification.plan", "workspace.diff.since",
+        "workspace.state.merkle", "workspace.state.merkle.diff", "workspace.backend.info",
+        "workspace.semantic.providers", "workspace.semantic.fabric", "workspace.evidence.active",
+    })
     METHODS = [
         "protocol.capabilities","workspace.enter","workspace.refresh","workspace.orient","workspace.explore","workspace.context.page","workspace.context.refresh",
         "workspace.query","workspace.inspect","workspace.inspect.batch","workspace.context.materialize","workspace.context.address_space","workspace.context.fetch","workspace.context.prefetch","workspace.context.plan_next","workspace.context.feedback","workspace.context.efficiency","workspace.references","workspace.impact","workspace.source.read",
@@ -112,7 +121,10 @@ class HabitatProtocol:
         elif not isinstance(params,dict):
             response=self._error(rid,"INVALID_REQUEST","params must be an object")
         else:
-            activity_allowed=not method.startswith(("workspace.activity.","workspace.observatory.","workspace.trace."))
+            activity_allowed=(
+                method not in self.READ_ONLY_METHODS
+                and not method.startswith(("workspace.activity.","workspace.observatory.","workspace.trace."))
+            )
             agent_id=params.get("agent_id") if isinstance(params.get("agent_id"),str) else None
             episode_id=params.get("episode_id") if isinstance(params.get("episode_id"),str) else None
             path=params.get("path") if isinstance(params.get("path"),str) else None
@@ -133,7 +145,7 @@ class HabitatProtocol:
                 except Exception: pass
         # Trace is measurement infrastructure, not a source-state mutation. Control calls are excluded so
         # start/stop do not bias the measured workload they bracket.
-        if isinstance(method,str) and not method.startswith("workspace.trace."):
+        if isinstance(method,str) and method not in self.READ_ONLY_METHODS and not method.startswith("workspace.trace."):
             try:
                 req_bytes=len(json.dumps(request,ensure_ascii=False,default=str,separators=(",",":")).encode("utf-8"))
                 resp_bytes=len(json.dumps(response,ensure_ascii=False,default=str,separators=(",",":")).encode("utf-8"))

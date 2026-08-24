@@ -2384,7 +2384,6 @@ class HabitatWorkspace:
         self.store.append_trace_call(active["id"], method, ok, duration_ms, request_bytes, response_bytes, source_bytes, self.revision, utc_now())
 
     def read_source(self, path: str, start_line: int = 1, max_lines: int = 200) -> dict:
-        self.reconcile()
         if start_line < 1 or max_lines < 1 or max_lines > 2000:
             raise ValueError("invalid source paging bounds")
         row = self.store.file_by_path(path)
