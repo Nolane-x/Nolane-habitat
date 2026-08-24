@@ -225,6 +225,18 @@ class ReleaseManifestTests(unittest.TestCase):
 
             self.assertEqual(manifest, ReleaseManifest.from_dict(manifest.as_dict()))
 
+    def test_manifest_rejects_appended_semantic_fields(self):
+        value = {
+            "version": "0.1.0-alpha.20",
+            "commit": "a" * 40,
+            "release_channel": "stable",
+        }
+
+        with self.assertRaisesRegex(
+            ValueError, "manifest has unknown fields: release_channel"
+        ):
+            ReleaseManifest.from_dict(value)
+
     def test_manifest_serializes_a_stable_self_hash(self):
         with tempfile.TemporaryDirectory() as td:
             root = Path(td)

@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from dataclasses import asdict, dataclass, field, replace
+from dataclasses import asdict, dataclass, field, fields, replace
 import hashlib
 import json
 import math
@@ -35,6 +35,10 @@ class ReleaseManifest:
     def from_dict(cls, value: Mapping[str, Any]) -> "ReleaseManifest":
         if not isinstance(value, Mapping):
             raise ValueError("manifest must be an object")
+        allowed = {item.name for item in fields(cls)}
+        unknown = sorted(str(key) for key in value if key not in allowed)
+        if unknown:
+            raise ValueError(f"manifest has unknown fields: {', '.join(unknown)}")
         reviewers = _string_mapping(value.get("reviewers", {}), "reviewers")
         reviewer_hashes = _string_sequence(
             value.get("reviewer_hashes", []), "reviewer_hashes"
