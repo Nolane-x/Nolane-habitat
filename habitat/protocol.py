@@ -54,13 +54,7 @@ def parse_json_request(raw: str) -> dict[str, Any]:
 class HabitatProtocol:
     # These operations are safe projections. They must not create activity or trace rows merely
     # because a client observed state; additions require logical-state conformance evidence.
-    READ_ONLY_METHODS = frozenset({
-        "protocol.capabilities", "workspace.enter", "workspace.query", "workspace.inspect",
-        "workspace.inspect.batch", "workspace.references", "workspace.impact",
-        "workspace.source.read", "workspace.verification.plan", "workspace.diff.since",
-        "workspace.state.merkle", "workspace.state.merkle.diff", "workspace.backend.info",
-        "workspace.semantic.providers", "workspace.semantic.fabric", "workspace.evidence.active",
-    })
+    READ_ONLY_METHODS = frozenset({"protocol.capabilities", "workspace.source.read"})
     METHODS = [
         "protocol.capabilities","workspace.enter","workspace.refresh","workspace.orient","workspace.explore","workspace.context.page","workspace.context.refresh",
         "workspace.query","workspace.inspect","workspace.inspect.batch","workspace.context.materialize","workspace.context.address_space","workspace.context.fetch","workspace.context.prefetch","workspace.context.plan_next","workspace.context.feedback","workspace.context.efficiency","workspace.references","workspace.impact","workspace.source.read",

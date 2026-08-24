@@ -1,7 +1,9 @@
 import io
 import json
 from pathlib import Path
+import sys
 from tempfile import TemporaryDirectory
+import types
 import unittest
 
 from habitat.protocol import MAX_REQUEST_BYTES, HabitatProtocol, ProtocolError, parse_json_request
@@ -82,6 +84,56 @@ class ProtocolConformanceTests(unittest.TestCase):
                 self.assertEqual(before_state, "\n".join(workspace.store.conn.iterdump()))
             finally:
                 workspace.close()
+
+    def test_mcp_read_tools_leave_logical_state_unchanged(self):
+        from habitat import mcp_adapter
+
+        class FakeMCPServer:
+            def __init__(self, _name):
+                self.tools = {}
+                self.resources = {}
+
+            def tool(self):
+                return lambda function: self.tools.setdefault(function.__name__, function)
+
+            def resource(self, uri):
+                return lambda function: self.resources.setdefault(uri, function)
+
+        previous_mcp = sys.modules.get("mcp")
+        previous_server = sys.modules.get("mcp.server")
+        mcp_module = types.ModuleType("mcp")
+        server_module = types.ModuleType("mcp.server")
+        server_module.MCPServer = FakeMCPServer
+        mcp_module.server = server_module
+        sys.modules["mcp"] = mcp_module
+        sys.modules["mcp.server"] = server_module
+        try:
+            with TemporaryDirectory() as td:
+                root = Path(td)
+                workspace = self._workspace(root)
+                workspace.close()
+                server, bound = mcp_adapter.build_server(root / "state")
+                try:
+                    object_id = bound.store.all_symbols()[0]["id"]
+                    before_state = "\n".join(bound.store.conn.iterdump())
+
+                    inspected = server.tools["habitat_inspect"](object_id, include_source="none")
+                    references = server.tools["habitat_references"](object_id)
+
+                    self.assertIsInstance(inspected, dict)
+                    self.assertIsInstance(references, dict)
+                    self.assertEqual(before_state, "\n".join(bound.store.conn.iterdump()))
+                finally:
+                    bound.close()
+        finally:
+            if previous_mcp is None:
+                sys.modules.pop("mcp", None)
+            else:
+                sys.modules["mcp"] = previous_mcp
+            if previous_server is None:
+                sys.modules.pop("mcp.server", None)
+            else:
+                sys.modules["mcp.server"] = previous_server
 
 
 if __name__ == "__main__":

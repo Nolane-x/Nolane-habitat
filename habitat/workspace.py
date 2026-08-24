@@ -2052,6 +2052,9 @@ class HabitatWorkspace:
 
     def references(self, object_id: str, limit: int = 200) -> dict:
         self.reconcile()
+        return self.references_snapshot(object_id, limit)
+
+    def references_snapshot(self, object_id: str, limit: int = 200) -> dict:
         if limit < 1 or limit > 2000:
             raise ValueError("limit must be in [1, 2000]")
         if not (self.store.symbol_by_id(object_id) or self.store.file_by_id(object_id)):
@@ -2121,6 +2124,9 @@ class HabitatWorkspace:
             fr=self.store.file_by_path(value["path"])
             if fr: self.store.record_agent_observation(agent_id,value["path"],fr["digest"],self.revision,"inspect",object_id,utc_now())
         return value
+
+    def inspect_snapshot(self, object_id: str, include_source: str = "none") -> dict:
+        return self._inspect_object(object_id, include_source)
 
     def inspect_many(self, object_ids: list[str], include_source: str = "none", max_objects: int = 50) -> dict:
         self.reconcile()

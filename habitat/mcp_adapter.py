@@ -101,7 +101,9 @@ def build_server(workspace_path: str | Path, *, auto_observatory: bool = False, 
         if not ws.store.agent_session(aid): raise KeyError(aid)
         return aid
 
-    def observed_call(name: str, aid: str, fn):
+    def observed_call(name: str, aid: str, fn, *, observe: bool = True):
+        if not observe:
+            return fn()
         ws.activity_emit("tool.started","tool",agent_id=aid,ref_id=name,status="running",summary=name)
         try:
             result=fn(); ws.activity_emit("tool.completed","tool",agent_id=aid,ref_id=name,status="passed",summary=name+" completed")
@@ -128,12 +130,12 @@ def build_server(workspace_path: str | Path, *, auto_observatory: bool = False, 
     @mcp.tool()
     def habitat_inspect(object_id: str, include_source: str = "body", agent_id: str | None = None) -> dict:
         """Inspect one semantic object; source may be none, body, or exact supported by Habitat."""
-        aid=use_agent(agent_id); return observed_call("habitat_inspect",aid,lambda: ws.inspect(object_id, include_source, aid))
+        aid=use_agent(agent_id); return observed_call("habitat_inspect",aid,lambda: ws.inspect_snapshot(object_id, include_source),observe=False)
 
     @mcp.tool()
     def habitat_references(object_id: str, limit: int = 200, agent_id: str | None = None) -> dict:
         """Return project references with role, provider, trust, and source anchors."""
-        aid=use_agent(agent_id); return observed_call("habitat_references",aid,lambda: ws.references(object_id, limit))
+        aid=use_agent(agent_id); return observed_call("habitat_references",aid,lambda: ws.references_snapshot(object_id, limit),observe=False)
 
     @mcp.tool()
     def habitat_change_symbol(symbol_id: str, new_source: str, verify: bool = True, episode_id: str | None = None, agent_id: str | None = None) -> dict:
