@@ -6,9 +6,46 @@ from unittest.mock import patch
 
 from habitat.model import FileRecord
 from habitat.storage import SCHEMA_VERSION, Store
+from habitat.storage_migrations import create_pre_migration_backup
 
 
 class StorageMigrationTests(unittest.TestCase):
+    def test_existing_version_backup_is_not_reused_for_a_different_preimage(self):
+        with tempfile.TemporaryDirectory() as td:
+            db_path = Path(td) / "legacy.sqlite3"
+            source = sqlite3.connect(db_path)
+            source.execute("CREATE TABLE marker(value TEXT NOT NULL)")
+            source.execute("INSERT INTO marker VALUES('current-preimage')")
+            source.commit()
+
+            stale = db_path.with_name("legacy.sqlite3.pre-migration-v1")
+            stale_conn = sqlite3.connect(stale)
+            stale_conn.execute("CREATE TABLE marker(value TEXT NOT NULL)")
+            stale_conn.execute("INSERT INTO marker VALUES('stale-preimage')")
+            stale_conn.commit()
+            stale_conn.close()
+
+            backup = create_pre_migration_backup(source, db_path, 1)
+            source.close()
+
+            self.assertNotEqual(stale, backup)
+            backup_conn = sqlite3.connect(backup)
+            try:
+                self.assertEqual(
+                    "current-preimage",
+                    backup_conn.execute("SELECT value FROM marker").fetchone()[0],
+                )
+            finally:
+                backup_conn.close()
+            stale_conn = sqlite3.connect(stale)
+            try:
+                self.assertEqual(
+                    "stale-preimage",
+                    stale_conn.execute("SELECT value FROM marker").fetchone()[0],
+                )
+            finally:
+                stale_conn.close()
+
     def test_legacy_files_table_is_repaired_before_schema_version_is_recorded(self):
         with tempfile.TemporaryDirectory() as td:
             db_path = Path(td) / "legacy.sqlite3"

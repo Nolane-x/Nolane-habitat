@@ -2,8 +2,11 @@
 
 from __future__ import annotations
 
+import hashlib
+import os
 import sqlite3
 from pathlib import Path
+from tempfile import NamedTemporaryFile
 from types import MappingProxyType
 
 from .sql_safety import quote_identifier
@@ -89,19 +92,46 @@ def create_pre_migration_backup(
 ) -> Path:
     """Atomically retain the original SQLite database before a compatibility repair."""
 
-    target = db_path.with_name(f"{db_path.name}.pre-migration-v{source_version}")
-    if target.exists():
-        return target
-    temporary = target.with_name(f"{target.name}.tmp")
-    if temporary.exists():
-        temporary.unlink()
-    destination = sqlite3.connect(str(temporary))
+    base_target = db_path.with_name(f"{db_path.name}.pre-migration-v{source_version}")
+    with NamedTemporaryFile(
+        dir=db_path.parent,
+        prefix=f".{base_target.name}.",
+        suffix=".tmp",
+        delete=False,
+    ) as handle:
+        temporary = Path(handle.name)
     try:
-        conn.backup(destination)
+        destination = sqlite3.connect(str(temporary))
+        try:
+            conn.backup(destination)
+        finally:
+            destination.close()
+        digest = _file_sha256(temporary)
+        target = base_target
+        if target.exists():
+            if _file_sha256(target) == digest:
+                return target
+            target = base_target.with_name(f"{base_target.name}.{digest}")
+            if target.exists():
+                if _file_sha256(target) == digest:
+                    return target
+                raise RuntimeError("pre-migration backup digest collision")
+        try:
+            os.link(temporary, target)
+        except FileExistsError:
+            if _file_sha256(target) != digest:
+                raise RuntimeError("pre-migration backup target changed concurrently")
+        return target
     finally:
-        destination.close()
-    temporary.replace(target)
-    return target
+        temporary.unlink(missing_ok=True)
+
+
+def _file_sha256(path: Path) -> str:
+    digest = hashlib.sha256()
+    with path.open("rb") as handle:
+        for chunk in iter(lambda: handle.read(1024 * 1024), b""):
+            digest.update(chunk)
+    return digest.hexdigest()
 
 
 def repair_additive_columns(conn: sqlite3.Connection) -> None:
