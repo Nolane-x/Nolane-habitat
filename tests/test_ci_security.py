@@ -56,6 +56,10 @@ class CiSecurityTests(unittest.TestCase):
             workflow,
         )
         self.assertIn(
+            "python tools/run_protocol_conformance_suite.py --source-commit ${{ github.sha }} --out .test-artifacts/protocol-conformance.json",
+            workflow,
+        )
+        self.assertIn(
             "python tools/normalize_sdist.py --dist .test-artifacts/dist-first --epoch 0",
             workflow,
         )

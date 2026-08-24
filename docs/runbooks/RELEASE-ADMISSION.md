@@ -2,7 +2,7 @@
 
 `tools/promote_release.py` evaluates a supplied release manifest and writes a machine-readable verdict. It never creates a Git tag, publishes a package, uploads an artifact, or creates a GitHub release.
 
-For an alpha candidate, the gate requires hash-bound `truth-core`, `matrix`, `faults`, `artifacts`, `scanner`, `db-recovery`, `mutation-recovery`, `reproducible-build`, and `contract` reports, at least one artifact, and at least one review record. Every required report must contain a verified payload hash, `status: passed`, and the same 40-character commit SHA as the manifest. Distribution evidence includes a deterministic member manifest and rejects unsafe paths, `.env` files, private-key extensions, local databases, Habitat state, and Python bytecode caches. It also extracts the wheel `METADATA` and sdist `PKG-INFO`, checks their normalized project name and package version, and blocks if their canonical `Requires-Dist` inventories differ. The resulting `dependency_inventory_sha256` binds that inventory into the artifact report. The review record is hashed by the builder; its digest must not be reused from any report or artifact. This is a binding check, not a claim that a filename proves reviewer identity—follow the independent-review procedure before supplying the record.
+For an alpha candidate, the gate requires hash-bound `truth-core`, `matrix`, `faults`, `artifacts`, `scanner`, `db-recovery`, `mutation-recovery`, `reproducible-build`, `protocol-conformance`, and `contract` reports, at least one artifact, and at least one review record. Every required report must contain a verified payload hash, `status: passed`, and the same 40-character commit SHA as the manifest. Distribution evidence includes a deterministic member manifest and rejects unsafe paths, `.env` files, private-key extensions, local databases, Habitat state, and Python bytecode caches. It also extracts the wheel `METADATA` and sdist `PKG-INFO`, checks their normalized project name and package version, and blocks if their canonical `Requires-Dist` inventories differ. The resulting `dependency_inventory_sha256` binds that inventory into the artifact report. The review record is hashed by the builder; its digest must not be reused from any report or artifact. This is a binding check, not a claim that a filename proves reviewer identity—follow the independent-review procedure before supplying the record.
 
 ## Reproducible-build evidence
 
@@ -33,6 +33,7 @@ python tools\run_db_recovery_suite.py --source-commit $commit --out .test-artifa
 python tools\run_mutation_recovery_suite.py --source-commit $commit --out .test-artifacts\mutation-recovery.json
 python tools\run_reliability_suite.py --source-commit $commit --out .test-artifacts\faults.json
 python tools\verify_contracts.py --source-commit $commit --fixture tests\fixtures\contracts\agent-v1alpha2.json --out .test-artifacts\contract.json
+python tools\run_protocol_conformance_suite.py --source-commit $commit --out .test-artifacts\protocol-conformance.json
 $env:SOURCE_DATE_EPOCH = "0"
 python -m build --no-isolation --outdir .test-artifacts\dist-first
 python tools\normalize_sdist.py --dist .test-artifacts\dist-first --epoch 0
@@ -57,6 +58,7 @@ python tools\build_release_manifest.py --version 0.1.0-alpha.19 --commit $commit
   --report db-recovery=.test-artifacts\db-recovery.json `
   --report mutation-recovery=.test-artifacts\mutation-recovery.json `
   --report reproducible-build=.test-artifacts\reproducible-build.json `
+  --report protocol-conformance=.test-artifacts\protocol-conformance.json `
   --report contract=.test-artifacts\contract.json `
   --artifact wheel=.test-artifacts\dist-first\nolane_habitat-0.1.0a19-py3-none-any.whl `
   --artifact sdist=.test-artifacts\dist-first\nolane_habitat-0.1.0a19.tar.gz `

@@ -109,7 +109,7 @@ class ReleasePromotionTests(unittest.TestCase):
     def test_alpha_candidate_requires_reproducible_build_evidence(self):
         commit = "a" * 40
         required_without_reproducible_build = {
-            "truth-core", "matrix", "faults", "artifacts", "scanner", "db-recovery", "mutation-recovery", "contract"
+            "truth-core", "matrix", "faults", "artifacts", "scanner", "db-recovery", "mutation-recovery", "protocol-conformance", "contract"
         }
         manifest = ReleaseManifest(
             version="0.1.0-alpha.20",
@@ -154,7 +154,7 @@ class ReleasePromotionTests(unittest.TestCase):
     def test_alpha_candidate_rejects_reports_without_matching_passed_provenance(self):
         commit = "a" * 40
         required = {
-            "truth-core", "matrix", "faults", "artifacts", "scanner", "db-recovery", "mutation-recovery", "reproducible-build", "contract"
+            "truth-core", "matrix", "faults", "artifacts", "scanner", "db-recovery", "mutation-recovery", "reproducible-build", "protocol-conformance", "contract"
         }
         manifest = ReleaseManifest(
             version="0.1.0-alpha.20",
@@ -177,7 +177,7 @@ class ReleasePromotionTests(unittest.TestCase):
     def test_alpha_candidate_accepts_complete_passed_commit_bound_evidence(self):
         commit = "a" * 40
         required = {
-            "truth-core", "matrix", "faults", "artifacts", "scanner", "db-recovery", "mutation-recovery", "reproducible-build", "contract"
+            "truth-core", "matrix", "faults", "artifacts", "scanner", "db-recovery", "mutation-recovery", "reproducible-build", "protocol-conformance", "contract"
         }
         manifest = ReleaseManifest(
             version="0.1.0-alpha.20",
@@ -227,7 +227,7 @@ class ReleasePromotionTests(unittest.TestCase):
             self.assertEqual(1, exit_code)
             self.assertEqual("not-attempted", verdict["publication"])
             self.assertEqual(
-                ["artifacts", "contract", "db-recovery", "faults", "matrix", "mutation-recovery", "reproducible-build", "scanner", "truth-core"],
+                ["artifacts", "contract", "db-recovery", "faults", "matrix", "mutation-recovery", "protocol-conformance", "reproducible-build", "scanner", "truth-core"],
                 verdict["required_reports"],
             )
             self.assertFalse(verdict["verdict"]["admitted"])
