@@ -47,6 +47,16 @@ def check_identity(root: Path, *, source_commit: str | None = None) -> dict:
         if expected not in content:
             errors.append(f"{relative} does not contain {expected!r}")
 
+    plugin_relative = "plugins/nolane-habitat/.codex-plugin/plugin.json"
+    plugin_path = root / plugin_relative
+    try:
+        plugin = json.loads(plugin_path.read_text(encoding="utf-8"))
+    except (OSError, UnicodeDecodeError, json.JSONDecodeError) as exc:
+        errors.append(f"{plugin_relative} is unreadable: {type(exc).__name__}")
+    else:
+        if not isinstance(plugin, dict) or plugin.get("version") != version:
+            errors.append(f"{plugin_relative} version does not match VERSION")
+
     for relative, expected_for in CURRENT_DOCUMENTS.items():
         path = root / relative
         expected = expected_for(version)

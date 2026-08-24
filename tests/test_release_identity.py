@@ -11,6 +11,7 @@ class ReleaseIdentityTests(unittest.TestCase):
     def _write_identity_fixture(self, root: Path, version: str = "0.1.0-alpha.19") -> None:
         (root / "habitat").mkdir()
         (root / "docs").mkdir()
+        (root / "plugins" / "nolane-habitat" / ".codex-plugin").mkdir(parents=True)
         (root / "VERSION").write_text(version + "\n", encoding="utf-8")
         (root / "pyproject.toml").write_text(
             'version = "0.1.0a19"\n', encoding="utf-8"
@@ -24,6 +25,10 @@ class ReleaseIdentityTests(unittest.TestCase):
         (root / "README.md").write_text(version + "\n", encoding="utf-8")
         (root / "docs" / "CODEX-INTEGRATION.md").write_text(
             f"--ref v{version}\n", encoding="utf-8"
+        )
+        (root / "plugins" / "nolane-habitat" / ".codex-plugin" / "plugin.json").write_text(
+            json.dumps({"name": "nolane-habitat", "version": version}),
+            encoding="utf-8",
         )
 
     def test_consistent_release_identity_has_no_errors(self):
@@ -46,6 +51,24 @@ class ReleaseIdentityTests(unittest.TestCase):
 
         self.assertFalse(report["ok"])
         self.assertIn("README.md", report["errors"][0])
+
+    def test_stale_bundled_plugin_version_is_reported(self):
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            self._write_identity_fixture(root)
+            plugin = root / "plugins" / "nolane-habitat" / ".codex-plugin" / "plugin.json"
+            plugin.write_text(
+                json.dumps({"name": "nolane-habitat", "version": "0.1.0-alpha.18"}),
+                encoding="utf-8",
+            )
+
+            report = check_identity(root)
+
+        self.assertFalse(report["ok"])
+        self.assertIn(
+            "plugins/nolane-habitat/.codex-plugin/plugin.json version does not match VERSION",
+            report["errors"],
+        )
 
     def test_candidate_documentation_need_not_claim_an_unpublished_tag(self):
         with tempfile.TemporaryDirectory() as td:
