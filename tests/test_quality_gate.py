@@ -13,6 +13,20 @@ def _signed_report(**values):
     return report
 
 
+def _signed_report_utf8(**values):
+    report = dict(values)
+    report["report_sha256"] = hashlib.sha256(
+        json.dumps(
+            report,
+            sort_keys=True,
+            separators=(",", ":"),
+            ensure_ascii=False,
+            allow_nan=False,
+        ).encode("utf-8")
+    ).hexdigest()
+    return report
+
+
 class QualityGateTests(unittest.TestCase):
     def test_truth_core_validates_identity_and_matrix_envelopes(self):
         commit = "a" * 40
@@ -58,6 +72,36 @@ class QualityGateTests(unittest.TestCase):
 
                 self.assertFalse(report["ok"])
                 self.assertIn(expected_gate, report["failed_gates"])
+
+    def test_truth_core_accepts_utf8_canonical_identity_evidence(self):
+        commit = "a" * 40
+        identity = _signed_report_utf8(
+            schema=1,
+            suite="release-identity",
+            source_commit=commit,
+            status="passed",
+            ok=True,
+            current_documents={
+                "docs/IMPLEMENTATION-STATUS.md": "Implementation Status — 0.1.0-alpha.19"
+            },
+        )
+        matrix = _signed_report(
+            schema=2,
+            suite="isolated-regression-matrix",
+            source_commit=commit,
+            status="passed",
+            statuses={"passed": 7, "failed": 0, "timeout": 0, "infra-error": 0},
+        )
+
+        report = evaluate_quality_gate(
+            identity=identity,
+            matrix=matrix,
+            scanners={},
+            expected_commit=commit,
+        )
+
+        self.assertTrue(report["ok"])
+        self.assertNotIn("identity:report-hash-mismatch", report["failed_gates"])
 
     def test_quality_gate_accepts_complete_passing_evidence(self):
         report = evaluate_quality_gate(
