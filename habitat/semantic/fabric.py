@@ -50,9 +50,9 @@ def _find_first(commands: Iterable[str]) -> str | None:
 def semantic_fabric_report(root: Path) -> dict:
     """Report host detection separately from Habitat provider admission.
 
-    Detection says only that a runtime, executable, or index is present on the host. Admission is
-    a later Habitat decision that requires a concrete provider contract and evidence. Keeping the
-    two states separate prevents capability discovery from overstating active semantic precision.
+    ``fabric_version`` remains the alpha.19 wire/report version. ``contract_version``
+    versions the provider-admission semantics independently so a stronger internal contract
+    does not silently break existing consumers of the diagnostic surface.
     """
     root = Path(root).resolve()
     tree_sitter_py = importlib.util.find_spec("tree_sitter") is not None
@@ -100,7 +100,8 @@ def semantic_fabric_report(root: Path) -> dict:
     detected_count = sum(1 for c in capabilities if c.available)
     admitted_count = sum(1 for c in capabilities if c.admitted)
     return {
-        "fabric_version": 2,
+        "fabric_version": 1,
+        "contract_version": 2,
         "root": str(root),
         "providers": providers,
         "available_count": detected_count,
@@ -111,5 +112,5 @@ def semantic_fabric_report(root: Path) -> dict:
             "provider_independent_objects": ["symbol", "type", "call", "implements", "reads", "writes", "throws", "dataflow"],
             "rule": "Agents consume Habitat semantic objects and trust/provenance; concrete parser/LSP/SCIP names are diagnostics, not required reasoning vocabulary.",
         },
-        "claim_boundary": "Host detection does not mean admitted. Tree-sitter/LSP/SCIP become active semantic providers only after Habitat admission evidence exists.",
+        "claim_boundary": "Host detection does not mean admitted. Detected Tree-sitter/LSP/SCIP capabilities are not claimed active until Habitat admission evidence exists.",
     }
