@@ -80,11 +80,12 @@ class SemanticFabricV2Tests(unittest.TestCase):
         self.assertFalse(descriptor.source_authority)
         self.assertFalse(descriptor.mutation_authority)
 
-    def test_discovery_fabric_distinguishes_detected_from_admitted_providers(self):
+    def test_discovery_fabric_preserves_wire_version_and_distinguishes_detected_from_admitted_providers(self):
         with tempfile.TemporaryDirectory() as td:
             report = semantic_fabric_report(Path(td))
 
-        self.assertEqual(2, report["fabric_version"])
+        self.assertEqual(1, report["fabric_version"])
+        self.assertEqual(2, report["contract_version"])
         self.assertEqual(report["available_count"], report["detected_count"])
         self.assertEqual(0, report["admitted_count"])
         self.assertTrue(report["providers"])
