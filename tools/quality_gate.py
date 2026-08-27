@@ -15,7 +15,11 @@ def _canonical_digest(report: Mapping[str, Any]) -> str | None:
     unsigned = {key: value for key, value in report.items() if key != "report_sha256"}
     try:
         payload = json.dumps(
-            unsigned, sort_keys=True, separators=(",", ":"), allow_nan=False
+            unsigned,
+            sort_keys=True,
+            separators=(",", ":"),
+            ensure_ascii=False,
+            allow_nan=False,
         ).encode("utf-8")
     except (TypeError, ValueError):
         return None
@@ -125,9 +129,7 @@ def evaluate_quality_gate(
                 "status": "passed" if not failed else "failed",
             }
         )
-        report["report_sha256"] = hashlib.sha256(
-            json.dumps(report, sort_keys=True, separators=(",", ":")).encode("utf-8")
-        ).hexdigest()
+        report["report_sha256"] = _canonical_digest(report)
     return report
 
 
@@ -154,7 +156,7 @@ def _parse_named_paths(values: list[str]) -> dict[str, Path]:
 def _write_json_atomically(path: Path, value: dict[str, Any]) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     with NamedTemporaryFile("w", encoding="utf-8", dir=path.parent, delete=False) as handle:
-        json.dump(value, handle, indent=2, sort_keys=True)
+        json.dump(value, handle, indent=2, sort_keys=True, ensure_ascii=False, allow_nan=False)
         handle.write("\n")
         temporary = Path(handle.name)
     os.replace(temporary, path)
