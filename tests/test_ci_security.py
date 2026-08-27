@@ -113,6 +113,39 @@ class CiSecurityTests(unittest.TestCase):
         )
         self.assertIn("--out .test-artifacts/truth-core.json", workflow)
 
+    def test_ci_collects_foundation_baseline_as_non_gating_evidence(self) -> None:
+        root = Path(__file__).parents[1]
+        workflow = (root / ".github" / "workflows" / "ci.yml").read_text(encoding="utf-8")
+
+        self.assertIn("name: Collect non-gating foundation baseline evidence", workflow)
+        baseline_step = re.search(
+            r"- name: Collect non-gating foundation baseline evidence\n(?P<body>(?:\s{8,}.+\n)+)",
+            workflow,
+        )
+        self.assertIsNotNone(baseline_step)
+        body = baseline_step.group("body")
+        self.assertIn("continue-on-error: true", body)
+        self.assertIn(
+            "python benchmarks/foundation_baseline.py --repo . --out .test-artifacts/foundation-baseline.json",
+            body,
+        )
+        self.assertNotRegex(
+            workflow,
+            r"quality_gate\.py[^\n]*foundation-baseline",
+        )
+
+    def test_repository_governance_doc_states_current_enforcement_truth(self) -> None:
+        root = Path(__file__).parents[1]
+        governance = (root / "docs" / "REPOSITORY-GOVERNANCE.md").read_text(encoding="utf-8")
+
+        self.assertIn("Current repository enforcement status", governance)
+        self.assertIn("`main` branch protection: **not enabled**", governance)
+        self.assertIn("Repository rulesets: **none configured**", governance)
+        self.assertIn("Desired admin-enforced controls", governance)
+        self.assertIn("Habitat CI", governance)
+        self.assertIn("Habitat CodeQL", governance)
+        self.assertIn("artifact attestations", governance.lower())
+
     def test_ci_installs_the_declared_build_backend_before_no_isolation_build(self) -> None:
         root = Path(__file__).parents[1]
         workflow = (root / ".github" / "workflows" / "ci.yml").read_text(encoding="utf-8")
