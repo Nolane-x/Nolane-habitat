@@ -12,8 +12,11 @@ from tempfile import NamedTemporaryFile
 
 
 CURRENT_DOCUMENTS = {
-    "README.md": lambda version: version,
+    "README.md": lambda version: f"Nolane Habitat {version}",
+    "docs/IMPLEMENTATION-STATUS.md": lambda version: f"Implementation Status — {version}",
+    "docs/LIMITATIONS.md": lambda version: f"Habitat {version} Limitations and Claim Boundary",
 }
+LOCAL_MARKDOWN_LINK = re.compile(r"\[[^\]]+\]\((?!https?://|mailto:|#)([^)]+)\)")
 RELEASE_REF = re.compile(r"--ref\s+v(\d+\.\d+\.\d+-alpha\.\d+)")
 
 
@@ -25,6 +28,24 @@ def _report_digest(value: dict) -> str:
     return hashlib.sha256(
         json.dumps(value, ensure_ascii=False, sort_keys=True, separators=(",", ":")).encode("utf-8")
     ).hexdigest()
+
+
+def _broken_local_markdown_links(root: Path, relative: str, content: str) -> list[str]:
+    base = (root / relative).parent
+    broken: list[str] = []
+    for raw in LOCAL_MARKDOWN_LINK.findall(content):
+        target = raw.split("#", 1)[0].strip()
+        if not target:
+            continue
+        if target.startswith("<") and target.endswith(">"):
+            target = target[1:-1].strip()
+        candidate = (base / target).resolve()
+        if root != candidate and root not in candidate.parents:
+            broken.append(raw)
+            continue
+        if not candidate.exists():
+            broken.append(raw)
+    return sorted(set(broken))
 
 
 def check_identity(root: Path, *, source_commit: str | None = None) -> dict:
@@ -57,12 +78,18 @@ def check_identity(root: Path, *, source_commit: str | None = None) -> dict:
         if not isinstance(plugin, dict) or plugin.get("version") != version:
             errors.append(f"{plugin_relative} version does not match VERSION")
 
+    current_documents: dict[str, str] = {}
+    broken_links: list[str] = []
     for relative, expected_for in CURRENT_DOCUMENTS.items():
         path = root / relative
         expected = expected_for(version)
+        current_documents[relative] = expected
         content = path.read_text(encoding="utf-8") if path.is_file() else ""
         if expected not in content:
             errors.append(f"{relative} does not contain {expected!r}")
+        for broken in _broken_local_markdown_links(root, relative, content):
+            broken_links.append(broken)
+            errors.append(f"{relative} has broken local Markdown link {broken!r}")
 
     integration = root / "docs" / "CODEX-INTEGRATION.md"
     if integration.is_file():
@@ -79,6 +106,8 @@ def check_identity(root: Path, *, source_commit: str | None = None) -> dict:
         "ok": not errors,
         "version": version,
         "package_version": expected_package_version,
+        "current_documents": current_documents,
+        "broken_links": sorted(set(broken_links)),
         "errors": errors,
     }
     if source_commit is not None:
