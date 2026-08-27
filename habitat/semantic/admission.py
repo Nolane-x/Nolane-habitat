@@ -45,6 +45,7 @@ class SemanticAdmissionRegistry:
 
     def probe(self, provider_id: str) -> SemanticProviderProbe:
         provider = self._provider(provider_id)
+        self._admissions.pop(provider_id, None)
         detected, reason = provider.available()
         result = SemanticProviderProbe(provider_id, bool(detected), str(reason or ""))
         self._probes[provider_id] = result
