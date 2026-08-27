@@ -122,7 +122,12 @@ class ReleaseIdentityTests(unittest.TestCase):
             self.assertEqual("passed", report["status"])
             self.assertEqual(
                 hashlib.sha256(
-                    json.dumps(unsigned, sort_keys=True, separators=(",", ":")).encode("utf-8")
+                    json.dumps(
+                        unsigned,
+                        ensure_ascii=False,
+                        sort_keys=True,
+                        separators=(",", ":"),
+                    ).encode("utf-8")
                 ).hexdigest(),
                 report["report_sha256"],
             )
