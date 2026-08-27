@@ -101,7 +101,7 @@ This loop makes context, changes, evidence, and handoffs durable across longer-r
 - [Understand execution capability boundaries](docs/security/CAPABILITY-MATRIX.md)
 - [Evaluate release admission without publishing](docs/runbooks/RELEASE-ADMISSION.md)
 - [Use the agent protocol](docs/AGENT-PROTOCOL.md)
-- [Explore the architecture](docs/architecture/ALPHA17-ARCHITECTURE.md)
+- [Foundation Convergence architecture](docs/design/FOUNDATION-CONVERGENCE.md)
 - [Review the changelog](CHANGELOG.md)
 
 ## Verify a checkout
