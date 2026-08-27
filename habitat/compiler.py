@@ -7,6 +7,7 @@ from html.parser import HTMLParser
 from pathlib import Path
 
 from .model import DiagnosticRecord, FileRecord, RelationRecord, SymbolRecord
+from .semantic.admission import SemanticAdmissionRegistry
 from .semantic.typescript import TypeScriptCompilerProvider, provider_version as typescript_provider_version
 from .util import detect_language, sha256_file, stable_id
 
@@ -284,7 +285,7 @@ def _fallback_js_ts(rel: str, file_id: str, language: str, text: str):
     return symbols, unresolved
 
 
-def compile_file(root: Path, path: Path) -> CompiledFile:
+def compile_file(root: Path, path: Path, *, semantic_registry: SemanticAdmissionRegistry | None = None) -> CompiledFile:
     rel = path.relative_to(root).as_posix()
     language = detect_language(path)
     st = path.stat()
@@ -332,8 +333,18 @@ def compile_file(root: Path, path: Path) -> CompiledFile:
                 "error", msg, exc.lineno, exc.offset, "python-ast", "exact"
             ))
     elif language in {"javascript", "typescript"} and parse_complete:
-        result = TypeScriptCompilerProvider().parse(root, path, text, file_id)
-        if result.available:
+        candidates = (
+            semantic_registry.providers_for("parse", language=language)
+            if semantic_registry is not None
+            else (TypeScriptCompilerProvider(),)
+        )
+        result = None
+        for candidate in candidates:
+            parsed = candidate.parse(root, path, text, file_id)
+            if parsed.available:
+                result = parsed
+                break
+        if result is not None:
             symbols, unresolved, diagnostics = result.symbols, result.unresolved_relations, result.diagnostics
             provider = result.provider
         else:
