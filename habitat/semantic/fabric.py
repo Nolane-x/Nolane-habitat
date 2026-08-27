@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import importlib.util
-import os
 import shutil
 from dataclasses import dataclass, asdict
 from pathlib import Path
@@ -18,9 +17,14 @@ class SemanticProviderCapability:
     reason: str
     command: str | None = None
     version: str | None = None
+    admitted: bool = False
+    trust_ceiling: str = "parser"
+    lifecycle: str = "stateless"
 
     def as_dict(self) -> dict:
-        return asdict(self)
+        value = asdict(self)
+        value["detected"] = self.available
+        return value
 
 
 def _command_version(command: str | None) -> str | None:
@@ -44,11 +48,11 @@ def _find_first(commands: Iterable[str]) -> str | None:
 
 
 def semantic_fabric_report(root: Path) -> dict:
-    """Report the provider fabric without pretending unavailable integrations exist.
+    """Report host detection separately from Habitat provider admission.
 
-    The fabric intentionally exposes *capability classes* to Habitat while hiding concrete
-    technology names from the agent-facing semantic object model. This function is an operator
-    diagnostic surface, not an agent requirement.
+    Detection says only that a runtime, executable, or index is present on the host. Admission is
+    a later Habitat decision that requires a concrete provider contract and evidence. Keeping the
+    two states separate prevents capability discovery from overstating active semantic precision.
     """
     root = Path(root).resolve()
     tree_sitter_py = importlib.util.find_spec("tree_sitter") is not None
@@ -76,13 +80,13 @@ def semantic_fabric_report(root: Path) -> dict:
             "syntax.tree-sitter", "syntax", tree_available, "parser",
             ("incremental-parse", "syntax-tree", "error-tolerant-parse"),
             "tree_sitter Python binding or tree-sitter CLI detected" if tree_available else "Tree-sitter runtime not installed on this host",
-            tree_cli, _command_version(tree_cli),
+            tree_cli, _command_version(tree_cli), False, "parser", "workspace-scoped",
         ),
         SemanticProviderCapability(
             "index.scip", "precomputed-semantic-index", bool(scip_cmd or scip_indexes), "semantic",
             ("occurrences", "symbols", "definitions", "references"),
             "SCIP command or index detected" if (scip_cmd or scip_indexes) else "No SCIP command/index detected",
-            scip_cmd, _command_version(scip_cmd),
+            scip_cmd, _command_version(scip_cmd), False, "semantic", "stateless",
         ),
     ]
     for lang, value in lsp.items():
@@ -90,17 +94,22 @@ def semantic_fabric_report(root: Path) -> dict:
             f"lsp.{lang}", "language-semantic-service", bool(value["available"]), "semantic",
             ("definition", "references", "diagnostics", "hover", "capability-negotiation"),
             "language server detected" if value["available"] else "language server not detected",
-            value["command"], value["version"],
+            value["command"], value["version"], False, "semantic", "workspace-scoped",
         ))
+    providers = [c.as_dict() for c in capabilities]
+    detected_count = sum(1 for c in capabilities if c.available)
+    admitted_count = sum(1 for c in capabilities if c.admitted)
     return {
-        "fabric_version": 1,
+        "fabric_version": 2,
         "root": str(root),
-        "providers": [c.as_dict() for c in capabilities],
-        "available_count": sum(1 for c in capabilities if c.available),
+        "providers": providers,
+        "available_count": detected_count,
+        "detected_count": detected_count,
+        "admitted_count": admitted_count,
         "scip_indexes": scip_indexes,
         "agent_abstraction": {
             "provider_independent_objects": ["symbol", "type", "call", "implements", "reads", "writes", "throws", "dataflow"],
             "rule": "Agents consume Habitat semantic objects and trust/provenance; concrete parser/LSP/SCIP names are diagnostics, not required reasoning vocabulary.",
         },
-        "claim_boundary": "Capability discovery only. Tree-sitter/LSP/SCIP are not claimed active unless the corresponding provider is detected and admitted.",
+        "claim_boundary": "Host detection does not mean admitted. Tree-sitter/LSP/SCIP become active semantic providers only after Habitat admission evidence exists.",
     }
