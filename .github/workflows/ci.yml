@@ -37,6 +37,9 @@ jobs:
         run: python tools/check_release_identity.py --source-commit ${{ env.HABITAT_SOURCE_COMMIT }} --out .test-artifacts/identity.json
       - name: Run full regression suite
         run: python -m unittest discover -q
+      - name: Collect non-gating foundation baseline evidence
+        continue-on-error: true
+        run: python benchmarks/foundation_baseline.py --repo . --out .test-artifacts/foundation-baseline.json
       - name: Run isolated regression matrix
         run: python tools/run_test_matrix.py --mode shard --workers 1 --timeout 600 --source-commit ${{ env.HABITAT_SOURCE_COMMIT }} --out .test-artifacts/matrix.json
       - name: Verify public compatibility contract
