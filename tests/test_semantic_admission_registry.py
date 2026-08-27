@@ -103,6 +103,26 @@ class SemanticAdmissionRegistryTests(unittest.TestCase):
         self.assertEqual((), tuple(p.id for p in typescript_parsers))
         self.assertEqual(("available-provider",), tuple(p.id for p in diagnostics))
 
+    def test_reprobe_invalidates_prior_admission_until_fresh_evidence_readmits(self):
+        api = self.admission_api()
+        registry = api.SemanticAdmissionRegistry()
+        registry.register(_AvailableProvider())
+        registry.probe("available-provider")
+        registry.admit("available-provider", evidence=("probe:first",))
+        self.assertEqual(
+            ("available-provider",),
+            tuple(p.id for p in registry.providers_for("parse", language="python")),
+        )
+
+        registry.probe("available-provider")
+        self.assertEqual((), registry.providers_for("parse", language="python"))
+
+        registry.admit("available-provider", evidence=("probe:second",))
+        self.assertEqual(
+            ("available-provider",),
+            tuple(p.id for p in registry.providers_for("parse", language="python")),
+        )
+
 
 if __name__ == "__main__":
     unittest.main()
