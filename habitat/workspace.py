@@ -129,6 +129,26 @@ class HabitatWorkspace(_core.HabitatWorkspace):
         with self._semantic_scope():
             return self._indexing().reconcile()
 
+    def query(self, query: str, limit: int = 20) -> list[dict]:
+        return self._queries().query(query, limit)
+
+    def inspect_snapshot(self, object_id: str, include_source: str = "none") -> dict:
+        return self._queries().inspect_snapshot(object_id, include_source)
+
+    def inspect_many(
+        self,
+        object_ids: list[str],
+        include_source: str = "none",
+        max_objects: int = 50,
+    ) -> dict:
+        return self._queries().inspect_many(object_ids, include_source, max_objects)
+
+    def references_snapshot(self, object_id: str, limit: int = 200) -> dict:
+        return self._queries().references_snapshot(object_id, limit)
+
+    def read_source(self, path: str, start_line: int = 1, max_lines: int = 200) -> dict:
+        return self._queries().read_source(path, start_line, max_lines)
+
     def counterfactual_evaluate(self, world_id: str) -> dict:
         with self._semantic_scope():
             return super().counterfactual_evaluate(world_id)
