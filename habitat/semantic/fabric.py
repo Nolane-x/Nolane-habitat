@@ -6,6 +6,8 @@ from dataclasses import dataclass, asdict
 from pathlib import Path
 from typing import Iterable
 
+from .admission import SemanticAdmissionRegistry
+
 
 @dataclass(frozen=True)
 class SemanticProviderCapability:
@@ -47,12 +49,20 @@ def _find_first(commands: Iterable[str]) -> str | None:
     return None
 
 
-def semantic_fabric_report(root: Path) -> dict:
+def semantic_fabric_report(
+    root: Path,
+    *,
+    semantic_registry: SemanticAdmissionRegistry | None = None,
+) -> dict:
     """Report host detection separately from Habitat provider admission.
 
     ``fabric_version`` remains the alpha.19 wire/report version. ``contract_version``
     versions the provider-admission semantics independently so a stronger internal contract
     does not silently break existing consumers of the diagnostic surface.
+
+    When a workspace registry is supplied, its admitted provider set is merged into this
+    diagnostic view so reporting and compilation share the same admission truth. Host discovery
+    alone still never implies admission.
     """
     root = Path(root).resolve()
     tree_sitter_py = importlib.util.find_spec("tree_sitter") is not None
@@ -97,8 +107,36 @@ def semantic_fabric_report(root: Path) -> dict:
             value["command"], value["version"], False, "semantic", "workspace-scoped",
         ))
     providers = [c.as_dict() for c in capabilities]
-    detected_count = sum(1 for c in capabilities if c.available)
-    admitted_count = sum(1 for c in capabilities if c.admitted)
+
+    if semantic_registry is not None:
+        provider_by_id = {provider["id"]: provider for provider in providers}
+        for identity in semantic_registry.cache_identity("parse"):
+            runtime_provider = {
+                "id": identity["provider_id"],
+                "layer": identity["layer"],
+                "available": True,
+                "detected": True,
+                "precision": identity["trust_ceiling"],
+                "capabilities": tuple(identity["capabilities"]),
+                "reason": identity["probe_reason"] or "provider admitted by Habitat semantic runtime",
+                "command": None,
+                "version": None,
+                "admitted": True,
+                "trust_ceiling": identity["trust_ceiling"],
+                "lifecycle": identity["lifecycle"],
+                "languages": tuple(identity["languages"]),
+                "incremental": bool(identity["incremental"]),
+                "admission_evidence": tuple(identity["admission_evidence"]),
+            }
+            current = provider_by_id.get(runtime_provider["id"])
+            if current is None:
+                providers.append(runtime_provider)
+                provider_by_id[runtime_provider["id"]] = runtime_provider
+            else:
+                current.update(runtime_provider)
+
+    detected_count = sum(1 for provider in providers if provider["detected"])
+    admitted_count = sum(1 for provider in providers if provider["admitted"])
     return {
         "fabric_version": 1,
         "contract_version": 2,
