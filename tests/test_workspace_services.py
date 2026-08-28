@@ -4,6 +4,7 @@ import unittest
 from pathlib import Path
 from unittest.mock import patch
 
+from habitat import _workspace_core as _core
 from habitat.services import IndexService, QueryService, RuntimeService, TransactionService
 from habitat.workspace import HabitatWorkspace
 from tests.support import WorkspaceTemporaryDirectory
@@ -70,6 +71,75 @@ class WorkspaceServiceOwnershipTests(unittest.TestCase):
                 self.assertIsNone(getattr(ws, "_lsp_runtime_manager", None))
                 self.assertIsNone(getattr(ws, "_scip_runtime_manager", None))
                 self.assertIsNone(getattr(ws, "_semantic_disagreement_state", None))
+            finally:
+                ws.close()
+
+
+class IndexServiceRoutingTests(unittest.TestCase):
+    def make_workspace(self, temp: WorkspaceTemporaryDirectory) -> HabitatWorkspace:
+        root = Path(temp)
+        source = root / "source"
+        source.mkdir()
+        (source / "sample.py").write_text("def target():\n    return 1\n", encoding="utf-8")
+        return HabitatWorkspace.create(source, root / "habitat")
+
+    def test_public_index_methods_route_once_through_index_service(self):
+        with WorkspaceTemporaryDirectory() as temp:
+            ws = self.make_workspace(temp)
+            calls: list[tuple] = []
+            try:
+                def fake_refresh(service, reason="refresh"):
+                    calls.append(("refresh", service, reason))
+                    return {"sentinel": "refresh"}
+
+                def fake_refresh_paths(service, paths, reason="targeted-refresh"):
+                    calls.append(("refresh_paths", service, tuple(paths), reason))
+                    return {"sentinel": "refresh_paths"}
+
+                def fake_reconcile(service):
+                    calls.append(("reconcile", service))
+                    return {"sentinel": "reconcile"}
+
+                with (
+                    patch.object(IndexService, "refresh", new=fake_refresh, create=True),
+                    patch.object(IndexService, "refresh_paths", new=fake_refresh_paths, create=True),
+                    patch.object(IndexService, "reconcile", new=fake_reconcile, create=True),
+                ):
+                    self.assertEqual(ws.refresh("route-refresh"), {"sentinel": "refresh"})
+                    self.assertEqual(
+                        ws.refresh_paths(["sample.py"], "route-paths"),
+                        {"sentinel": "refresh_paths"},
+                    )
+                    self.assertEqual(ws.reconcile(), {"sentinel": "reconcile"})
+
+                service = ws._indexing()
+                self.assertEqual(
+                    calls,
+                    [
+                        ("refresh", service, "route-refresh"),
+                        ("refresh_paths", service, ("sample.py",), "route-paths"),
+                        ("reconcile", service),
+                    ],
+                )
+            finally:
+                ws.close()
+
+    def test_index_service_calls_core_explicitly_without_public_recursion(self):
+        with WorkspaceTemporaryDirectory() as temp:
+            ws = self.make_workspace(temp)
+            service = ws._indexing()
+            try:
+                with patch.object(
+                    _core.HabitatWorkspace,
+                    "refresh",
+                    return_value={"sentinel": "core-refresh"},
+                ) as core_refresh:
+                    self.assertEqual(
+                        service.refresh("direct-core"),
+                        {"sentinel": "core-refresh"},
+                    )
+
+                core_refresh.assert_called_once_with(ws, "direct-core")
             finally:
                 ws.close()
 
