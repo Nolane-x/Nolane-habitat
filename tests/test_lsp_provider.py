@@ -3,6 +3,7 @@ from __future__ import annotations
 import sys
 import tempfile
 import unittest
+from datetime import datetime
 from pathlib import Path
 
 
@@ -48,7 +49,7 @@ class LspSemanticProviderTests(unittest.TestCase):
         self.assertFalse(descriptor.mutation_authority)
         self.assertEqual(
             descriptor.capabilities,
-            frozenset({"definition", "references", "hover", "document-symbols"}),
+            frozenset({"definition", "references", "hover", "document-symbols", "diagnostics"}),
         )
         forbidden = {"rename", "code-action", "format", "workspace-edit", "execute-command"}
         self.assertFalse(descriptor.capabilities & forbidden)
@@ -84,6 +85,9 @@ class LspSemanticProviderTests(unittest.TestCase):
         self.assertEqual(value["document_version"], 3)
         self.assertEqual(value["provider_fingerprint"], provider.provider_fingerprint())
         self.assertEqual(value["result"]["uri"], uri)
+        observed = datetime.fromisoformat(value["observed_at"])
+        self.assertIsNotNone(observed.tzinfo)
+        self.assertIsNotNone(observed.utcoffset())
 
     def test_query_methods_are_fixed_allowlist_not_arbitrary_passthrough(self):
         from habitat.semantic.lsp_provider import LspSemanticProvider
