@@ -60,6 +60,7 @@ class LspRuntimeManager:
         self._sessions: dict[str, LspProcessSession] = {}
         self._providers: dict[str, LspSemanticProvider] = {}
         self._documents: dict[tuple[str, Path], _DocumentState] = {}
+        self._diagnostics: dict[tuple[str, Path], dict[str, Any]] = {}
         self._lock = threading.RLock()
 
     def activate(self, spec: LspServerSpec) -> dict[str, Any]:
@@ -109,8 +110,8 @@ class LspRuntimeManager:
         position: dict | None = None,
     ) -> object:
         session, provider = self._ready_provider(provider_id)
-        if capability not in provider.capabilities:
-            raise ValueError(f"LSP capability is not admitted for {provider_id}: {capability}")
+        if capability not in provider.capabilities or capability == "diagnostics":
+            raise ValueError(f"LSP capability is not an admitted request for {provider_id}: {capability}")
 
         document = self._sync_document(provider_id, session, provider, path)
         if capability in {"definition", "references", "hover"}:
@@ -135,8 +136,32 @@ class LspRuntimeManager:
         else:
             raise ValueError(f"unsupported read-only LSP capability: {capability}")
 
+        # Notifications preceding the response are now deterministically visible. Capture only
+        # version/revision/digest-bound diagnostics, then independently re-check the request result.
+        self._capture_diagnostics(provider_id, session, provider)
         self._assert_fresh(provider_id, document)
         return result
+
+    def diagnostics(self, provider_id: str, path: Path) -> dict[str, Any] | None:
+        """Return current passive diagnostics, or None when no fresh version-bound snapshot exists."""
+        session, provider = self._ready_provider(provider_id)
+        if "diagnostics" not in provider.capabilities:
+            raise ValueError(f"LSP diagnostics lane is not admitted for {provider_id}")
+        document = self._sync_document(provider_id, session, provider, path)
+        self._capture_diagnostics(provider_id, session, provider)
+        self._assert_fresh(provider_id, document)
+        key = (provider_id, document.path)
+        with self._lock:
+            snapshot = self._diagnostics.get(key)
+        if snapshot is None:
+            return None
+        if (
+            snapshot.get("revision") != document.revision
+            or snapshot.get("source_digest") != document.source_digest
+            or snapshot.get("document_version") != document.version
+        ):
+            return None
+        return snapshot
 
     def close_provider(self, provider_id: str) -> None:
         with self._lock:
@@ -168,6 +193,9 @@ class LspRuntimeManager:
             stale_keys = [key for key in self._documents if key[0] == provider_id]
             for key in stale_keys:
                 self._documents.pop(key, None)
+            diagnostic_keys = [key for key in self._diagnostics if key[0] == provider_id]
+            for key in diagnostic_keys:
+                self._diagnostics.pop(key, None)
 
     def close(self) -> None:
         with self._lock:
@@ -197,6 +225,7 @@ class LspRuntimeManager:
                                 "version": state.version,
                                 "revision": state.revision,
                                 "source_digest": state.source_digest,
+                                "has_current_diagnostics": (provider_id, state.path) in self._diagnostics,
                             }
                             for (owner_id, _), state in sorted(
                                 self._documents.items(), key=lambda item: (item[0][0], str(item[0][1]))
@@ -266,6 +295,7 @@ class LspRuntimeManager:
                     },
                 )
             elif previous.source_digest != digest:
+                self._diagnostics.pop(key, None)
                 state = _DocumentState(
                     path=resolved,
                     uri=previous.uri,
@@ -282,6 +312,8 @@ class LspRuntimeManager:
                     },
                 )
             else:
+                if previous.revision != revision:
+                    self._diagnostics.pop(key, None)
                 state = _DocumentState(
                     path=resolved,
                     uri=previous.uri,
@@ -292,6 +324,60 @@ class LspRuntimeManager:
                 )
             self._documents[key] = state
             return state
+
+    def _capture_diagnostics(
+        self,
+        provider_id: str,
+        session: LspProcessSession,
+        provider: LspSemanticProvider,
+    ) -> None:
+        notifications = session.drain_notifications("textDocument/publishDiagnostics")
+        if not notifications:
+            return
+        with self._lock:
+            by_uri = {
+                state.uri: ((owner_id, path), state)
+                for (owner_id, path), state in self._documents.items()
+                if owner_id == provider_id
+            }
+
+        for notification in notifications:
+            params = notification.get("params")
+            if not isinstance(params, dict):
+                continue
+            uri = params.get("uri")
+            version = params.get("version")
+            diagnostics = params.get("diagnostics")
+            if not isinstance(uri, str) or not uri:
+                continue
+            if not isinstance(version, int) or isinstance(version, bool) or version < 1:
+                # Wave 2 promotes only explicitly version-bound diagnostics to current truth.
+                continue
+            if not isinstance(diagnostics, list) or not all(isinstance(item, dict) for item in diagnostics):
+                continue
+            target = by_uri.get(uri)
+            if target is None:
+                continue
+            key, document = target
+            if version != document.version:
+                continue
+            try:
+                current_raw = document.path.read_bytes()
+            except OSError:
+                continue
+            current_digest = hashlib.sha256(current_raw).hexdigest()
+            current_revision = self._revision()
+            if current_digest != document.source_digest or current_revision != document.revision:
+                continue
+            snapshot = provider.diagnostic_snapshot(
+                diagnostics,
+                revision=document.revision,
+                source_digest=document.source_digest,
+                document_version=document.version,
+            )
+            with self._lock:
+                if self._documents.get(key) == document:
+                    self._diagnostics[key] = snapshot
 
     def _assert_fresh(self, provider_id: str, snapshot: _DocumentState) -> None:
         current_raw = snapshot.path.read_bytes()
