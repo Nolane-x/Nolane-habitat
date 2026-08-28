@@ -332,6 +332,16 @@ def compile_file(root: Path, path: Path, *, semantic_registry: SemanticAdmission
                 stable_id("diag", rel, str(exc.lineno), str(exc.offset), msg), file_id, rel,
                 "error", msg, exc.lineno, exc.offset, "python-ast", "exact"
             ))
+            if semantic_registry is not None:
+                for candidate in semantic_registry.providers_for("error-tolerant-parse", language="python"):
+                    parsed = candidate.parse(root, path, text, file_id)
+                    if not parsed.available:
+                        continue
+                    symbols = list(parsed.symbols)
+                    unresolved = list(parsed.unresolved_relations)
+                    diagnostics.extend(parsed.diagnostics)
+                    provider = parsed.provider
+                    break
     elif language in {"javascript", "typescript"} and parse_complete:
         candidates = (
             semantic_registry.providers_for("parse", language=language)
@@ -351,12 +361,25 @@ def compile_file(root: Path, path: Path, *, semantic_registry: SemanticAdmission
             symbols, unresolved = _fallback_js_ts(rel, file_id, language, text)
             provider = "regex-fallback"
     elif language == "java" and parse_complete:
-        for regex, kind in [(JAVA_CLASS, "class"), (JAVA_METHOD, "method")]:
-            for m in regex.finditer(text):
-                name = m.group(1); line = _line_of(text, m.start())
-                symbols.append(SymbolRecord(stable_id("sym", rel, kind, name), file_id, rel, name, name, kind,
-                                            language, line, line, m.group(0).strip(), None, "heuristic"))
-        provider = "java-regex-fallback"
+        result = None
+        if semantic_registry is not None:
+            for candidate in semantic_registry.providers_for("parse", language="java"):
+                parsed = candidate.parse(root, path, text, file_id)
+                if parsed.available:
+                    result = parsed
+                    break
+        if result is not None:
+            symbols = list(result.symbols)
+            unresolved = list(result.unresolved_relations)
+            diagnostics = list(result.diagnostics)
+            provider = result.provider
+        else:
+            for regex, kind in [(JAVA_CLASS, "class"), (JAVA_METHOD, "method")]:
+                for m in regex.finditer(text):
+                    name = m.group(1); line = _line_of(text, m.start())
+                    symbols.append(SymbolRecord(stable_id("sym", rel, kind, name), file_id, rel, name, name, kind,
+                                                language, line, line, m.group(0).strip(), None, "heuristic"))
+            provider = "java-regex-fallback"
     elif language == "html" and parse_complete:
         parser = _HTMLSemanticParser(rel, file_id)
         try:
