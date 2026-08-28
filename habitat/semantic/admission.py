@@ -100,6 +100,7 @@ class SemanticAdmissionRegistry:
                 "capabilities": sorted(descriptor.capabilities),
                 "lifecycle": descriptor.lifecycle,
                 "incremental": bool(descriptor.incremental),
+                "provider_fingerprint": provider.provider_fingerprint(),
                 "probe_reason": probe.reason if probe is not None else "",
                 "admission_evidence": list(admission.evidence),
             })
