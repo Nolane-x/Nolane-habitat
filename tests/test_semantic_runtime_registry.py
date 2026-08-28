@@ -49,6 +49,25 @@ class SemanticRuntimeRegistryTests(unittest.TestCase):
 
         self.assertEqual((), registry.providers_for("parse", language="typescript"))
 
+    def test_default_runtime_admits_real_tree_sitter_for_broad_syntax_when_extra_is_installed(self):
+        api = self.runtime_api()
+        registry = api.build_default_semantic_registry()
+
+        java_parsers = registry.providers_for("parse", language="java")
+        self.assertIn("tree-sitter", tuple(provider.id for provider in java_parsers))
+        tree_sitter = next(provider for provider in java_parsers if provider.id == "tree-sitter")
+        self.assertTrue(tree_sitter.provider_fingerprint())
+
+    def test_typescript_provider_precedes_tree_sitter_when_both_are_admitted(self):
+        api = self.runtime_api()
+        registry = api.build_default_semantic_registry()
+        providers = registry.providers_for("parse", language="typescript")
+        ids = tuple(provider.id for provider in providers)
+
+        self.assertIn("tree-sitter", ids)
+        if "typescript-compiler-api" in ids:
+            self.assertLess(ids.index("typescript-compiler-api"), ids.index("tree-sitter"))
+
 
 if __name__ == "__main__":
     unittest.main()
