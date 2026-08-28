@@ -57,7 +57,7 @@ class TruthMutationAuthorityTests(unittest.TestCase):
             ws, symbol = self.make_workspace(temp)
 
             with patch(
-                "habitat.workspace.operation_allows_evidence",
+                "habitat.services.transaction.operation_allows_evidence",
                 return_value=False,
                 create=True,
             ) as allows:
@@ -73,7 +73,7 @@ class TruthMutationAuthorityTests(unittest.TestCase):
             semantic = self.set_symbol_trust(ws, symbol, "semantic")
 
             with patch(
-                "habitat.workspace.operation_allows_evidence",
+                "habitat.services.transaction.operation_allows_evidence",
                 return_value=True,
                 create=True,
             ) as allows:

@@ -5,7 +5,6 @@ from contextvars import ContextVar
 from pathlib import Path
 
 from . import _workspace_core as _core
-from .mutation import TransactionConflict
 from .semantic.admission import SemanticAdmissionRegistry
 from .semantic.comparison import SemanticComparisonStaleError, compare_parse_providers
 from .semantic.fabric import semantic_fabric_report
@@ -13,6 +12,7 @@ from .semantic.lsp_runtime import LspRuntimeManager
 from .semantic.lsp_transport import LspServerSpec
 from .semantic.runtime import build_default_semantic_registry
 from .semantic.scip_runtime import ScipIndexerSpec, ScipRuntimeManager
+from .services import IndexService, QueryService, RuntimeService, TransactionService
 from .truth import (
     claim_from_diagnostic_record,
     claim_from_evidence_row,
@@ -21,8 +21,6 @@ from .truth import (
     claim_from_relation_record,
     claim_from_semantic_claim,
     claim_from_symbol_record,
-    legacy_authority,
-    operation_allows_evidence,
     project_truth,
 )
 from .util import sha256_file
@@ -66,6 +64,11 @@ class HabitatWorkspace(_core.HabitatWorkspace):
         # ordinary workspace create/open/index/refresh never discovers or admits external semantics.
         self._lsp_runtime_manager: LspRuntimeManager | None = None
         self._scip_runtime_manager: ScipRuntimeManager | None = None
+        # Core-decomposition services are ownership seams only. Their constructors perform no work.
+        self._index_service: IndexService | None = None
+        self._query_service: QueryService | None = None
+        self._transaction_service: TransactionService | None = None
+        self._runtime_service: RuntimeService | None = None
         # Disagreement comparison is explicitly requested and never persisted in this wave. Keep
         # only one bounded summary for diagnostic Fabric projection; claims remain call-local.
         self._semantic_disagreement_state: dict | None = None
@@ -79,21 +82,108 @@ class HabitatWorkspace(_core.HabitatWorkspace):
         finally:
             _active_semantic_registry.reset(token)
 
+    def _indexing(self) -> IndexService:
+        service = self._index_service
+        if service is None:
+            service = IndexService(self)
+            self._index_service = service
+        return service
+
+    def _queries(self) -> QueryService:
+        service = self._query_service
+        if service is None:
+            service = QueryService(self)
+            self._query_service = service
+        return service
+
+    def _transactions(self) -> TransactionService:
+        service = self._transaction_service
+        if service is None:
+            service = TransactionService(self)
+            self._transaction_service = service
+        return service
+
+    def _runtime_operations(self) -> RuntimeService:
+        service = self._runtime_service
+        if service is None:
+            service = RuntimeService(self)
+            self._runtime_service = service
+        return service
+
     def _compiler_state_fingerprint(self) -> str:
         with self._semantic_scope():
             return super()._compiler_state_fingerprint()
 
     def refresh(self, reason: str = "refresh") -> dict:
         with self._semantic_scope():
-            return super().refresh(reason)
+            return self._indexing().refresh(reason)
 
     def refresh_paths(self, paths: list[str], reason: str = "targeted-refresh") -> dict:
         with self._semantic_scope():
-            return super().refresh_paths(paths, reason)
+            return self._indexing().refresh_paths(paths, reason)
 
     def reconcile(self) -> dict:
         with self._semantic_scope():
-            return super().reconcile()
+            return self._indexing().reconcile()
+
+    def query(self, query: str, limit: int = 20) -> list[dict]:
+        return self._queries().query(query, limit)
+
+    def inspect_snapshot(self, object_id: str, include_source: str = "none") -> dict:
+        return self._queries().inspect_snapshot(object_id, include_source)
+
+    def inspect_many(
+        self,
+        object_ids: list[str],
+        include_source: str = "none",
+        max_objects: int = 50,
+    ) -> dict:
+        return self._queries().inspect_many(object_ids, include_source, max_objects)
+
+    def references_snapshot(self, object_id: str, limit: int = 200) -> dict:
+        return self._queries().references_snapshot(object_id, limit)
+
+    def read_source(self, path: str, start_line: int = 1, max_lines: int = 200) -> dict:
+        return self._queries().read_source(path, start_line, max_lines)
+
+    def runtime_ingest(
+        self,
+        signal: str,
+        records: list[dict],
+        *,
+        agent_id: str | None = None,
+        episode_id: str | None = None,
+    ) -> dict:
+        return self._runtime_operations().runtime_ingest(
+            signal,
+            records,
+            agent_id=agent_id,
+            episode_id=episode_id,
+        )
+
+    def runtime_timeline(
+        self,
+        *,
+        trace_id: str | None = None,
+        agent_id: str | None = None,
+        limit: int = 200,
+    ) -> dict:
+        return self._runtime_operations().runtime_timeline(
+            trace_id=trace_id,
+            agent_id=agent_id,
+            limit=limit,
+        )
+
+    def runtime_topology(
+        self,
+        *,
+        agent_id: str | None = None,
+        limit: int = 500,
+    ) -> dict:
+        return self._runtime_operations().runtime_topology(
+            agent_id=agent_id,
+            limit=limit,
+        )
 
     def counterfactual_evaluate(self, world_id: str) -> dict:
         with self._semantic_scope():
@@ -334,6 +424,9 @@ class HabitatWorkspace(_core.HabitatWorkspace):
             lsp_manager.close()
         super().close()
 
+    def change_plan(self, operations: list[dict]) -> dict:
+        return self._transactions().change_plan(operations)
+
     def stage_change(
         self,
         operations: list[dict],
@@ -342,24 +435,47 @@ class HabitatWorkspace(_core.HabitatWorkspace):
         lease_ttl_s: float = 120.0,
         approval_id: str | None = None,
     ) -> dict:
-        # Trust labels describe evidence provenance. Action authority is declared separately and
-        # evaluated categorically: no confidence value, plurality, or remembered origin can promote
-        # a weaker anchor into source mutation authority.
-        for operation in operations if isinstance(operations, list) else ():
-            if not isinstance(operation, dict) or operation.get("op") != "replace_symbol_source":
-                continue
-            symbol_id = operation.get("symbol_id")
-            if not isinstance(symbol_id, str) or not symbol_id:
-                continue
-            symbol = self.store.symbol_by_id(symbol_id)
-            if symbol is not None:
-                authority = legacy_authority(symbol["trust"])
-                if not operation_allows_evidence("replace_symbol_source", authority):
-                    raise TransactionConflict(
-                        "source mutation requires an exact source-authorized anchor; "
-                        f"{symbol['trust']} evidence is read-only and non-authoritative"
-                    )
-        return super().stage_change(operations, episode_id, agent_id, lease_ttl_s, approval_id)
+        return self._transactions().stage_change(
+            operations,
+            episode_id,
+            agent_id,
+            lease_ttl_s,
+            approval_id,
+        )
+
+    def stage_symbol_change(
+        self,
+        symbol_id: str,
+        new_source: str,
+        episode_id: str | None = None,
+        agent_id: str | None = None,
+    ) -> dict:
+        return self._transactions().stage_symbol_change(
+            symbol_id,
+            new_source,
+            episode_id,
+            agent_id,
+        )
+
+    def stage_symbol_rename(
+        self,
+        symbol_id: str,
+        new_name: str,
+        episode_id: str | None = None,
+        agent_id: str | None = None,
+    ) -> dict:
+        return self._transactions().stage_symbol_rename(
+            symbol_id,
+            new_name,
+            episode_id,
+            agent_id,
+        )
+
+    def commit_change(self, txid: str, agent_id: str | None = None) -> dict:
+        return self._transactions().commit_change(txid, agent_id)
+
+    def rollback_change(self, txid: str, agent_id: str | None = None) -> dict:
+        return self._transactions().rollback_change(txid, agent_id)
 
     def semantic_fabric(self) -> dict:
         scip_manager = self._scip_runtime_manager
