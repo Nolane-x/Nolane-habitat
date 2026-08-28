@@ -77,6 +77,24 @@ class SemanticWorkspaceAdmissionTests(unittest.TestCase):
             path_result = next(item for item in result["paths"] if item["path"] == "app.ts")
             self.assertEqual("workspace-semantic-test-provider", path_result["provider"])
 
+    def test_semantic_fabric_report_uses_workspace_admission_truth(self):
+        with WorkspaceTemporaryDirectory() as td:
+            root = Path(td) / "project"
+            root.mkdir()
+            (root / "app.ts").write_text("export const value = 1;\n", encoding="utf-8")
+            ws = HabitatWorkspace.create(root, Path(td) / "state")
+            ws.semantic_registry = _admitted_registry()
+
+            report = ws.semantic_fabric()
+            provider = next(
+                (item for item in report["providers"] if item["id"] == "workspace-semantic-test-provider"),
+                None,
+            )
+            self.assertIsNotNone(provider)
+            self.assertTrue(provider["detected"])
+            self.assertTrue(provider["admitted"])
+            self.assertGreaterEqual(report["admitted_count"], 1)
+
 
 if __name__ == "__main__":
     unittest.main()
