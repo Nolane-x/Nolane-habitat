@@ -44,9 +44,9 @@ class ScipSemanticFabricTests(unittest.TestCase):
 
             evidence = set(provider["admission_evidence"])
             self.assertIn(f"scip.index.sha256={activated['index_digest']}", evidence)
-            self.assertIn("scip.tool.name=fixture-indexer", evidence)
-            self.assertIn("scip.tool.version=1.2.3", evidence)
-            self.assertIn("scip.project_root=file:///repo", evidence)
+            self.assertIn(f"scip.tool.name={activated['tool']['name']}", evidence)
+            self.assertIn(f"scip.tool.version={activated['tool']['version']}", evidence)
+            self.assertIn(f"scip.project_root={activated['project_root']}", evidence)
             self.assertIn(f"scip.activation_revision={ws.revision}", evidence)
             self.assertTrue(any(item.startswith("scip.documents.sha256=") for item in evidence))
             self.assertIn(
