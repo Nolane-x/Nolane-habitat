@@ -107,13 +107,13 @@ class Alpha1SemanticTests(unittest.TestCase):
             self.assertTrue(page["stale"])
             self.assertEqual(page["objects"],[])
 
-    def test_semantic_mutation_refuses_heuristic_java_anchor(self):
+    def test_semantic_mutation_refuses_non_authoritative_java_parser_anchor(self):
         with tempfile.TemporaryDirectory() as td:
             root=Path(td); src=root/"project"; src.mkdir()
             (src/"A.java").write_text('public class A { public void run() { } }',encoding="utf-8")
             ws=HabitatWorkspace.create(src,root/"hab")
             sym=next(iter(ws.store.all_symbols()))
-            self.assertEqual(sym["trust"],"heuristic")
+            self.assertEqual(sym["trust"],"parser")
             with self.assertRaises(Exception):
                 ws.stage_symbol_change(sym["id"],'public class A { }')
 

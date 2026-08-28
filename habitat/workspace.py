@@ -5,6 +5,7 @@ from contextvars import ContextVar
 from pathlib import Path
 
 from . import _workspace_core as _core
+from .mutation import TransactionConflict
 from .semantic.admission import SemanticAdmissionRegistry
 from .semantic.fabric import semantic_fabric_report
 from .semantic.runtime import build_default_semantic_registry
@@ -73,6 +74,32 @@ class HabitatWorkspace(_core.HabitatWorkspace):
     def counterfactual_evaluate(self, world_id: str) -> dict:
         with self._semantic_scope():
             return super().counterfactual_evaluate(world_id)
+
+    def stage_change(
+        self,
+        operations: list[dict],
+        episode_id: str | None = None,
+        agent_id: str | None = None,
+        lease_ttl_s: float = 120.0,
+        approval_id: str | None = None,
+    ) -> dict:
+        # Trust grade describes evidence quality, not authority. Parser/heuristic/derived symbols are
+        # useful for navigation and recovery but cannot authorize source replacement. Exact and
+        # semantic anchors preserve the alpha.19 mutation path while admitted syntax providers stay
+        # non-authoritative by construction.
+        for operation in operations if isinstance(operations, list) else ():
+            if not isinstance(operation, dict) or operation.get("op") != "replace_symbol_source":
+                continue
+            symbol_id = operation.get("symbol_id")
+            if not isinstance(symbol_id, str) or not symbol_id:
+                continue
+            symbol = self.store.symbol_by_id(symbol_id)
+            if symbol is not None and symbol["trust"] not in {"exact", "semantic"}:
+                raise TransactionConflict(
+                    "semantic mutation requires an exact or semantic source anchor; "
+                    f"{symbol['trust']} evidence is non-authoritative"
+                )
+        return super().stage_change(operations, episode_id, agent_id, lease_ttl_s, approval_id)
 
     def semantic_fabric(self) -> dict:
         return semantic_fabric_report(self.source_root, semantic_registry=self.semantic_registry)

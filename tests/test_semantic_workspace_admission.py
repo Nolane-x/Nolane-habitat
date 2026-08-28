@@ -5,6 +5,7 @@ from pathlib import Path
 
 from habitat.semantic.admission import SemanticAdmissionRegistry
 from habitat.semantic.base import SemanticParseResult, SemanticProvider
+from habitat.semantic.tree_sitter_provider import TreeSitterProvider
 from habitat.workspace import HabitatWorkspace
 from tests.support import WorkspaceTemporaryDirectory
 
@@ -94,6 +95,37 @@ class SemanticWorkspaceAdmissionTests(unittest.TestCase):
             self.assertTrue(provider["detected"])
             self.assertTrue(provider["admitted"])
             self.assertGreaterEqual(report["admitted_count"], 1)
+
+    def test_real_tree_sitter_compilation_and_fabric_share_admission_truth(self):
+        available, reason = TreeSitterProvider().available()
+        if not available:
+            self.skipTest(f"Tree-sitter runtime unavailable: {reason}")
+
+        with WorkspaceTemporaryDirectory() as td:
+            root = Path(td) / "project"
+            root.mkdir()
+            (root / "Greeter.java").write_text(
+                "public class Greeter { public String hello() { return \"hi\"; } }\n",
+                encoding="utf-8",
+            )
+            ws = HabitatWorkspace.create(root, Path(td) / "state")
+
+            report = ws.semantic_fabric()
+            provider = next((item for item in report["providers"] if item["id"] == "tree-sitter"), None)
+            self.assertIsNotNone(provider)
+            self.assertTrue(provider["detected"])
+            self.assertTrue(provider["admitted"])
+            self.assertIn("java", provider["languages"])
+            self.assertEqual("parser", provider["trust_ceiling"])
+            self.assertEqual(2, report["contract_version"])
+
+            greeter = next(symbol for symbol in ws.store.all_symbols() if symbol["name"] == "Greeter")
+            self.assertEqual("java", greeter["language"])
+            self.assertEqual("parser", greeter["trust"])
+
+            refresh = ws.refresh(reason="test-tree-sitter-admission-truth-stable")
+            self.assertEqual(0, refresh["compiled_files"])
+            self.assertEqual(1, refresh["providers"].get("tree-sitter"))
 
 
 if __name__ == "__main__":
