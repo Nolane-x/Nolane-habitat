@@ -7,6 +7,7 @@ from pathlib import Path
 from . import _workspace_core as _core
 from .mutation import TransactionConflict
 from .semantic.admission import SemanticAdmissionRegistry
+from .semantic.comparison import compare_parse_providers
 from .semantic.fabric import semantic_fabric_report
 from .semantic.lsp_runtime import LspRuntimeManager
 from .semantic.lsp_transport import LspServerSpec
@@ -52,6 +53,9 @@ class HabitatWorkspace(_core.HabitatWorkspace):
         # ordinary workspace create/open/index/refresh never discovers or admits external semantics.
         self._lsp_runtime_manager: LspRuntimeManager | None = None
         self._scip_runtime_manager: ScipRuntimeManager | None = None
+        # Disagreement comparison is explicitly requested and never persisted in this wave. Keep
+        # only one bounded summary for diagnostic Fabric projection; claims remain call-local.
+        self._semantic_disagreement_state: dict | None = None
         super().__init__(habitat_dir)
 
     @contextmanager
@@ -156,9 +160,36 @@ class HabitatWorkspace(_core.HabitatWorkspace):
         """Return one fresh source-bound SCIP document projection."""
         return self._scip_manager().document(provider_id, path)
 
+    def semantic_disagreements(self, path: Path) -> dict:
+        """Explicitly compare admitted parse providers against one current source snapshot."""
+        # Reconcile only source-integrity drift. With unchanged source this does not compile or run
+        # semantic providers, so the comparison below remains the sole explicit comparison action.
+        self.reconcile()
+        revision = self.revision
+        report = compare_parse_providers(
+            self.source_root,
+            path,
+            self.semantic_registry,
+            revision,
+            revision_getter=lambda: self.revision,
+        )
+        self._semantic_disagreement_state = {
+            "path": report["path"],
+            "revision": report["revision"],
+            "source_digest": report["source_digest"],
+            "provider_count": len(report["provider_ids"]),
+            "claim_count": report["claim_count"],
+            "disagreement_count": report["disagreement_count"],
+            "comparison_complete": report["comparison_complete"],
+            "truncated": report["truncated"],
+        }
+        return report
+
     def close(self) -> None:
         # Semantic runtimes may still need source materialization and the admission registry while
         # closing/revoking. Close them before the core closes backend/store authority.
+        self._semantic_disagreement_state = None
+
         scip_manager = self._scip_runtime_manager
         self._scip_runtime_manager = None
         if scip_manager is not None:
@@ -245,6 +276,12 @@ class HabitatWorkspace(_core.HabitatWorkspace):
             report["available_count"] = detected_count
             report["detected_count"] = detected_count
             report["admitted_count"] = admitted_count
+
+        if self._semantic_disagreement_state is not None:
+            state = dict(self._semantic_disagreement_state)
+            state["current_revision"] = self.revision
+            state["stale"] = state["revision"] != self.revision
+            report["semantic_disagreement_state"] = state
 
         return report
 
