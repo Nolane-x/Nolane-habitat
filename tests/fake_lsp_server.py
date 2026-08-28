@@ -4,6 +4,7 @@ import argparse
 import json
 import os
 import sys
+import threading
 import time
 from pathlib import Path
 
@@ -91,6 +92,19 @@ def publish_diagnostics(uri: str, version: object, *, enabled: bool, version_off
     })
 
 
+def crash_when_triggered(trigger: str | None, crashed_marker: str | None) -> None:
+    if not trigger:
+        return
+    trigger_path = Path(trigger)
+    while not trigger_path.exists():
+        time.sleep(0.01)
+    if crashed_marker:
+        marker = Path(crashed_marker)
+        marker.parent.mkdir(parents=True, exist_ok=True)
+        marker.write_text("crashing", encoding="utf-8")
+    os._exit(24)
+
+
 def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument(
@@ -114,6 +128,8 @@ def main() -> int:
     parser.add_argument("--publish-diagnostics", action="store_true")
     parser.add_argument("--diagnostic-version-offset", type=int, default=0)
     parser.add_argument("--stale-diagnostics-on-change", action="store_true")
+    parser.add_argument("--crash-trigger")
+    parser.add_argument("--crashed-marker")
     args = parser.parse_args()
     documents: dict[str, dict] = {}
     cancellations: list[int] = []
@@ -122,6 +138,13 @@ def main() -> int:
         startup = Path(args.startup_marker)
         startup.parent.mkdir(parents=True, exist_ok=True)
         startup.write_text(str(os.getpid()), encoding="utf-8")
+
+    if args.crash_trigger:
+        threading.Thread(
+            target=crash_when_triggered,
+            args=(args.crash_trigger, args.crashed_marker),
+            daemon=True,
+        ).start()
 
     if args.mode == "stderr-spam":
         sys.stderr.write("x" * (96 * 1024))
