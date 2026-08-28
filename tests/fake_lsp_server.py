@@ -113,6 +113,7 @@ def main() -> int:
     parser.add_argument("--startup-marker")
     parser.add_argument("--publish-diagnostics", action="store_true")
     parser.add_argument("--diagnostic-version-offset", type=int, default=0)
+    parser.add_argument("--stale-diagnostics-on-change", action="store_true")
     args = parser.parse_args()
     documents: dict[str, dict] = {}
     cancellations: list[int] = []
@@ -195,11 +196,12 @@ def main() -> int:
             changes = params.get("contentChanges") or []
             text = changes[-1].get("text", "") if changes and isinstance(changes[-1], dict) else ""
             documents[uri] = {"version": version, "text": text}
+            change_offset = -1 if args.stale_diagnostics_on_change else args.diagnostic_version_offset
             publish_diagnostics(
                 uri,
                 version,
                 enabled=args.publish_diagnostics,
-                version_offset=args.diagnostic_version_offset,
+                version_offset=change_offset,
             )
             continue
 
@@ -230,7 +232,7 @@ def main() -> int:
         elif method == "textDocument/references":
             send({"jsonrpc": "2.0", "id": request_id, "result": []})
         elif method == "textDocument/hover":
-            send({"jsonrpc": "2.0", "id": request_id, "result": {"contents": {"kind": "plaintext", "value": "fake hover"}}})
+            send({"jsonrpc": "2.0", "id": request_id, "result": {"contents": {"kind": "plaintext", "value": "fake hover"}})
         elif method == "textDocument/documentSymbol":
             send({"jsonrpc": "2.0", "id": request_id, "result": []})
         elif method == "fake/state":
