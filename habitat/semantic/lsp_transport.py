@@ -298,9 +298,30 @@ class LspProcessSession:
             raise TypeError("LSP notification params must be an object or None")
         self._send({"jsonrpc": "2.0", "method": method, "params": params or {}})
 
+    def drain_notifications(self, method: str | None = None) -> list[dict]:
+        """Atomically drain bounded server notifications, optionally filtering by method."""
+        if method is not None and (not isinstance(method, str) or not method):
+            raise ValueError("notification method filter must be a non-empty string or None")
+        with self._pending_lock:
+            if method is None:
+                drained = list(self._notifications)
+                self._notifications.clear()
+                return drained
+            drained: list[dict] = []
+            retained: deque[dict] = deque(maxlen=self._notifications.maxlen)
+            while self._notifications:
+                message = self._notifications.popleft()
+                if message.get("method") == method:
+                    drained.append(message)
+                else:
+                    retained.append(message)
+            self._notifications = retained
+            return drained
+
     def status(self) -> dict[str, Any]:
         with self._pending_lock:
             pending_count = len(self._pending)
+            notification_count = len(self._notifications)
         with self._stderr_lock:
             stderr_tail = bytes(self._stderr_tail).decode("utf-8", errors="replace")
         process = self._process
@@ -310,6 +331,7 @@ class LspProcessSession:
             "state": self._state,
             "failure_reason": self._failure_reason,
             "pending_requests": pending_count,
+            "queued_notifications": notification_count,
             "consecutive_timeouts": self._consecutive_timeouts,
             "stderr_tail": stderr_tail,
             "pid": process.pid if process is not None else None,
@@ -339,6 +361,7 @@ class LspProcessSession:
         self._close_pipes()
         with self._pending_lock:
             self._pending.clear()
+            self._notifications.clear()
         self._state = "CLOSED"
 
     def _validate_required_capabilities(self, capabilities: dict[str, Any]) -> None:
@@ -418,7 +441,8 @@ class LspProcessSession:
                     pass
             return
         if "method" in message:
-            self._notifications.append(message)
+            with self._pending_lock:
+                self._notifications.append(message)
 
     def _fail(self, reason: str) -> None:
         if self._state in {"CLOSED", "FAILED"}:
