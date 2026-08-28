@@ -129,21 +129,15 @@ class WorkspaceLspRuntimeTests(unittest.TestCase):
 
             crash_trigger.write_text("go", encoding="utf-8")
             wait_for_path(crashed)
-            # Give the transport reader a bounded opportunity to observe stdout closure. The crash
-            # marker is written immediately before os._exit, so this loop is not a timing oracle for
-            # process termination itself; it only waits for Habitat's reader state transition.
-            deadline = time.monotonic() + 2.0
-            while time.monotonic() < deadline:
-                manager = ws._lsp_runtime_manager
-                if manager is not None:
-                    provider_status = manager.status()["providers"]
-                    if provider_status and provider_status[0]["state"] == "FAILED":
-                        break
-                time.sleep(0.01)
 
-            # Fabric is queried before the public lsp_status facade. It must reconcile runtime truth
-            # itself instead of preserving admission from a process that has already failed.
+            # Poll only through Fabric: this deliberately gives no status/query call a chance to
+            # repair registry state first. Fabric itself must reconcile the external runtime truth.
+            deadline = time.monotonic() + 2.0
             report = ws.semantic_fabric()
+            while time.monotonic() < deadline and ws.semantic_registry.is_admitted("lsp.fake"):
+                time.sleep(0.01)
+                report = ws.semantic_fabric()
+
             self.assertFalse(ws.semantic_registry.is_admitted("lsp.fake"))
             self.assertFalse(
                 any(provider["id"] == "lsp.fake" and provider["admitted"] for provider in report["providers"])
