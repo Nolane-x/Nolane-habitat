@@ -146,6 +146,45 @@ class HabitatWorkspace(_core.HabitatWorkspace):
     def read_source(self, path: str, start_line: int = 1, max_lines: int = 200) -> dict:
         return self._queries().read_source(path, start_line, max_lines)
 
+    def runtime_ingest(
+        self,
+        signal: str,
+        records: list[dict],
+        *,
+        agent_id: str | None = None,
+        episode_id: str | None = None,
+    ) -> dict:
+        return self._runtime_operations().runtime_ingest(
+            signal,
+            records,
+            agent_id=agent_id,
+            episode_id=episode_id,
+        )
+
+    def runtime_timeline(
+        self,
+        *,
+        trace_id: str | None = None,
+        agent_id: str | None = None,
+        limit: int = 200,
+    ) -> dict:
+        return self._runtime_operations().runtime_timeline(
+            trace_id=trace_id,
+            agent_id=agent_id,
+            limit=limit,
+        )
+
+    def runtime_topology(
+        self,
+        *,
+        agent_id: str | None = None,
+        limit: int = 500,
+    ) -> dict:
+        return self._runtime_operations().runtime_topology(
+            agent_id=agent_id,
+            limit=limit,
+        )
+
     def counterfactual_evaluate(self, world_id: str) -> dict:
         with self._semantic_scope():
             return super().counterfactual_evaluate(world_id)
