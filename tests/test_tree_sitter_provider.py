@@ -19,7 +19,7 @@ class TreeSitterProviderContractTests(unittest.TestCase):
         pyproject = (ROOT / "pyproject.toml").read_text(encoding="utf-8")
         dependency_line = next(line for line in pyproject.splitlines() if line.startswith("dependencies ="))
         self.assertNotIn("tree-sitter", dependency_line)
-        self.assertIn('tree-sitter = ["tree-sitter>=0.25,<0.26", "tree-sitter-language-pack>=1.12.3,<2"]', pyproject)
+        self.assertIn('tree-sitter = ["tree-sitter>=0.26,<0.27", "tree-sitter-language-pack>=1.12.3,<2"]', pyproject)
 
     def test_ci_exercises_real_tree_sitter_extra_on_every_matrix_lane(self):
         workflow = (ROOT / ".github" / "workflows" / "ci.yml").read_text(encoding="utf-8")
