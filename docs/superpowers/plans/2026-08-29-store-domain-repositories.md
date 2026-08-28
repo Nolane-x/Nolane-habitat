@@ -22,6 +22,7 @@
 - Existing `_TransactionAwareConnection.commit()` suppression inside `Store.atomic()` remains unchanged and is not copied into repositories.
 - No `_workspace_core.py`, workspace service, protocol/MCP, semantic admission, source-authority, compiler-selection, workflow, or GitHub Actions changes in this slice.
 - Shared Store utilities such as `delete_search`, `index_search`, and `get_meta` remain on `Store` when moving them would broaden the domain boundary or duplicate behavior.
+- Symbol-term tokenization belongs to the symbol persistence domain: move module-level `_index_terms` from `storage.py` to `habitat/repositories/symbols.py`, import it one-way into `storage.py` for `_ensure_symbol_terms_index`, and never import `Store` at repository-module runtime.
 - Every production migration task follows RED test-only evidence before GREEN implementation.
 
 ---
@@ -31,7 +32,7 @@
 Create:
 
 - `habitat/repositories/__init__.py` — internal exports for the six repository classes.
-- `habitat/repositories/symbols.py` — symbol and symbol-term persistence only.
+- `habitat/repositories/symbols.py` — symbol and symbol-term persistence plus `_index_terms`.
 - `habitat/repositories/relations.py` — semantic relation-edge persistence only.
 - `habitat/repositories/runtime.py` — `runtime_events` persistence only.
 - `habitat/repositories/evidence.py` — evidence persistence and activation state only.
@@ -41,7 +42,7 @@ Create:
 
 Modify:
 
-- `habitat/storage.py` — lazy repository accessors plus compatibility delegates for the explicitly migrated methods.
+- `habitat/storage.py` — repository imports/accessors, `_index_terms` import, and compatibility delegates for explicitly migrated methods.
 
 Must not modify:
 
@@ -83,33 +84,28 @@ class SymbolsRepository:
         self.owner = owner
 ```
 
-Use `TYPE_CHECKING` for the `Store` import so repository modules do not create a runtime import cycle.
+Every repository module uses:
+
+```python
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from ..storage import Store
+```
+
+There is no runtime import from a repository back to `storage.py`; dependency direction remains `Store -> repository`.
 
 ## Commit-Parity Rule
 
-Migration must preserve the current behavior method-by-method:
-
-**No implicit commit in migrated method:**
+The following migrated writes currently **do not commit** and must remain non-committing:
 
 - `replace_symbols_for_file`
-- `symbols_matching_terms` (read only)
-- `symbol_by_id` (read only)
-- `symbols_named` (read only)
-- `symbols_for_file` (read only)
-- `all_symbols` (read only)
 - `replace_relations`
 - `sync_relations`
-- `relations_for` (read only)
-- `incoming_relations` (read only)
 - `append_evidence`
-- `evidence_by_id` (read only)
-- `active_evidence` (read only)
-- `active_evidence_ids` (read only)
 - `resolve_evidence`
-- `evidence_by_ids` (read only)
-- context/learning reads and any currently non-committing helper listed below.
 
-**Explicit commit preserved in migrated method:**
+The following migrated writes currently **commit** and must preserve `self.owner.conn.commit()` at the same operation boundary:
 
 - `append_runtime_event`
 - `create_hypothesis`
@@ -123,7 +119,9 @@ Migration must preserve the current behavior method-by-method:
 - `create_project_memory`
 - `update_project_memory`
 
-Inside an enclosing `Store.atomic()`, these calls still rely on `_TransactionAwareConnection.commit()` suppression exactly as today. Repositories must call `self.owner.conn.commit()` where the legacy method did; they must not bypass Store transaction awareness with raw `sqlite3.Connection.commit` or `commit_atomic()`.
+All migrated read methods are observational and perform no commit.
+
+Inside an enclosing `Store.atomic()`, the explicitly committing methods still rely on `_TransactionAwareConnection.commit()` suppression exactly as today. Repositories call `self.owner.conn.commit()` where the legacy method did; they never call `commit_atomic()` and never bypass the Store-owned connection.
 
 ---
 
@@ -143,10 +141,11 @@ Inside an enclosing `Store.atomic()`, these calls still rely on `_TransactionAwa
 **Interfaces:**
 - Produces the six Store accessors named in the Repository Ownership Contract.
 - Each repository exposes `.owner` and performs no work in `__init__`.
+- Produces `habitat.repositories.symbols._index_terms(value: str) -> list[str]`; `storage.py` imports it for `_ensure_symbol_terms_index`.
 
 - [ ] **Step 1: Write RED ownership tests**
 
-Add tests that create a temporary `Store`, patch each repository constructor with a counting wrapper, and assert each accessor is lazy and stable:
+Create a temporary `Store`. Capture `PRAGMA user_version`, `store.conn.in_transaction`, `store.conn.total_changes`, and row counts for `meta`, `symbols`, `relations`, `runtime_events`, `evidence`, `hypotheses`, `experiments`, `context_feedback`, `epistemic_items`, and `project_memories`. Then assert each accessor is lazy and stable:
 
 ```python
 self.assertIs(store._symbols_repository(), store._symbols_repository())
@@ -157,7 +156,9 @@ self.assertIs(store._experimentation_repository(), store._experimentation_reposi
 self.assertIs(store._learning_repository(), store._learning_repository())
 ```
 
-Record `PRAGMA user_version`, `store.conn.in_transaction`, and a table-count snapshot before and after accessor construction; assert they are unchanged. Patch `store.conn.commit` with a spy while only constructing/accessing repositories and assert zero calls.
+After accessor construction, assert the captured user version, transaction state, total changes, and row counts are unchanged. This proves constructor/accessor side-effect freedom without monkey-patching C-extension connection methods.
+
+Add an `_index_terms` characterization test using mixed camelCase, snake_case, hyphenated, numeric, and one-character inputs; the output must match the current storage helper exactly before it is moved.
 
 - [ ] **Step 2: Run RED**
 
@@ -167,11 +168,11 @@ Run:
 python -m unittest tests.test_store_repositories -v
 ```
 
-Expected: failure because `habitat.repositories` and Store repository accessors do not exist. No unrelated test should fail.
+Expected: failure because `habitat.repositories` and Store repository accessors do not exist. The `_index_terms` characterization initially imports the existing storage helper so it remains green until the helper is moved; repository ownership assertions provide the RED signal.
 
-- [ ] **Step 3: Implement minimal repository classes and lazy accessors**
+- [ ] **Step 3: Implement minimal repository classes, helper move, and lazy accessors**
 
-Each new repository module contains only its class constructor. Add `habitat/repositories/__init__.py` exports. In `storage.py`, import the six classes and add six lazy accessors using `getattr`; do not touch `Store.__init__`, `_init_schema`, `_complete_schema_initialization`, `_ensure_symbol_terms_index`, `atomic`, `close`, or `doctor`.
+Move the exact `_index_terms` implementation into `habitat/repositories/symbols.py`. Import `_index_terms` and the six repository classes from repository modules into `storage.py`. Add six lazy accessors using `getattr`; do not touch `Store.__init__`, `_init_schema`, `_complete_schema_initialization`, `_ensure_symbol_terms_index` logic other than its helper import, `atomic`, `close`, or `doctor`.
 
 - [ ] **Step 4: Verify GREEN and lifecycle boundary**
 
@@ -182,7 +183,7 @@ python -m unittest tests.test_store_repositories -v
 python -m unittest discover -s tests -v
 ```
 
-Expected: repository ownership tests pass; full regression has no behavior changes.
+Expected: repository ownership/helper tests pass; full regression has no behavior changes.
 
 - [ ] **Step 5: Commit**
 
@@ -211,29 +212,32 @@ symbols_for_file(file_id: str)
 all_symbols()
 ```
 
-**Boundary:** `upsert_file`, diagnostics, occurrences, generic FTS/search helpers, compile cache, and `_ensure_symbol_terms_index` remain on `Store` in this slice. `SymbolsRepository.replace_for_file()` may call `owner.delete_search()` and `owner.index_search()` because those are established shared Store utilities. It may delete relation rows for removed symbols exactly as the current method does; ownership of general relation synchronization remains `RelationsRepository`.
+**Boundary:** `upsert_file`, diagnostics, occurrences, generic FTS/search helpers, compile cache, and `_ensure_symbol_terms_index` remain on `Store` in this slice. `SymbolsRepository.replace_for_file()` calls `owner.delete_search()` and `owner.index_search()` because those are established shared Store utilities. It deletes relation rows for removed symbols exactly as the legacy method does; ownership of general relation synchronization remains `RelationsRepository`.
 
 - [ ] **Step 1: Write RED routing and direct-equivalence tests**
 
-Patch `SymbolsRepository` methods with sentinels and assert every listed `Store` compatibility method routes exactly once with exact arguments. Add a fixture with two files and symbols; compare rows returned by repository reads against the compatibility Store methods after seeding.
+Patch `SymbolsRepository` methods with sentinels and assert every listed `Store` compatibility method routes exactly once with exact arguments. Add a fixture with two files and symbols; compare row tuples returned by repository reads against the compatibility Store methods after seeding.
 
-Add a commit-parity test:
+Add a no-commit/rollback test:
 
 ```python
-with store.atomic():
-    store.replace_symbols_for_file(file_id, replacement)
-    raise RollbackProbe()
+try:
+    with store.atomic():
+        store.replace_symbols_for_file(file_id, replacement)
+        raise RollbackProbe()
+except RollbackProbe:
+    pass
 ```
 
-After catching `RollbackProbe`, assert original symbol rows and symbol terms remain intact. This proves extraction added no commit.
+Afterward assert original symbol rows, symbol terms, relation cleanup state, and search rows are restored. This proves extraction added no commit.
 
 - [ ] **Step 2: Run RED**
 
-Expected: public Store methods still execute their inline SQL and therefore bypass patched repository methods.
+Expected: public Store methods still execute inline SQL and bypass patched repository methods.
 
 - [ ] **Step 3: Move symbol SQL into SymbolsRepository**
 
-Use methods with domain-oriented names:
+Repository methods:
 
 ```python
 replace_for_file(file_id, symbols)
@@ -244,11 +248,11 @@ for_file(file_id)
 all()
 ```
 
-Copy SQL and row ordering verbatim. `Store.replace_symbols_for_file` delegates to `.replace_for_file`; the other legacy methods delegate likewise. Preserve the current no-commit behavior.
+Copy SQL, `_index_terms` use, search utility calls, relation cleanup, bounds, and row ordering verbatim. `Store.replace_symbols_for_file` delegates to `.replace_for_file`; the other legacy methods delegate likewise. Preserve no-commit behavior.
 
 - [ ] **Step 4: Verify GREEN**
 
-Run the focused repository tests, symbol/search tests, source-mutation/recovery characterization, and full suite. Verify `PRAGMA user_version` is unchanged.
+Run focused repository tests, symbol/search tests, source-mutation/recovery characterization, and full suite. Verify `PRAGMA user_version` is unchanged.
 
 - [ ] **Step 5: Commit**
 
@@ -391,7 +395,7 @@ evidence_by_ids(ids: list[str])
 
 Cover selectors independently and combined: `kind`, `paths`, `object_ids`, `source`. Verify empty ID input returns `[]`. Verify `resolve_evidence` returns exact affected-row count and does not commit implicitly by rolling it back inside `Store.atomic()`.
 
-For `append_evidence`, verify the evidence row and search document are both created before explicit Store commit in the same connection, and both roll back together when enclosed by `Store.atomic()` and a sentinel exception.
+For `append_evidence`, verify the evidence row and search document are both created in the same Store connection, and both roll back together when enclosed by `Store.atomic()` plus a sentinel exception.
 
 - [ ] **Step 2: Run RED**
 
@@ -410,7 +414,7 @@ resolve(*, kind=None, paths=None, object_ids=None, source=None)
 by_ids(ids)
 ```
 
-Copy selector construction, ordering, JSON encoding, default trust/source/severity, and no-commit semantics verbatim.
+Copy selector construction, ordering, JSON encoding, default trust/source/severity, search calls, and no-commit semantics verbatim.
 
 - [ ] **Step 4: Verify GREEN**
 
@@ -521,7 +525,7 @@ Characterize `record_context_feedback`:
 
 Characterize epistemic/project-memory defaults, filters, `agent_id IS NULL` visibility rules, JSON serialization, and missing-ID `KeyError` behavior.
 
-Use a second SQLite connection to prove the currently committing write methods still commit outside `Store.atomic()`. Use sentinel rollback inside `Store.atomic()` to prove those same commits remain suppressed by `_TransactionAwareConnection` and rollback atomically.
+Use a second SQLite connection to prove the currently committing write methods still commit outside `Store.atomic()`. Use sentinel rollback inside `Store.atomic()` to prove those same commits remain suppressed by `_TransactionAwareConnection` and roll back atomically.
 
 - [ ] **Step 2: Run RED**
 
@@ -568,11 +572,11 @@ PRAGMA user_version;
 SELECT type,name,tbl_name,sql FROM sqlite_master ORDER BY type,name;
 ```
 
-Compare behavior against pre-Slice-B expectations used by existing schema/recovery tests. Slice B must not add/drop/alter a table, index, column, pragma policy, or migration version.
+Compare behavior against the existing schema/recovery tests and the pre-Slice-B `main` baseline. Slice B must not add/drop/alter a table, index, column, pragma policy, or migration version.
 
-- [ ] **Step 3: Run full local/CI-equivalent regression**
+- [ ] **Step 3: Run full regression**
 
-Run full `unittest` discovery. Pay special attention to database recovery, source-mutation recovery, protocol conformance, fault injection, persisted-workspace reopening, and nested atomic rollback tests.
+Run full `unittest` discovery. Require database recovery, source-mutation recovery, protocol conformance, fault injection, persisted-workspace reopening, and nested atomic rollback tests to remain green.
 
 - [ ] **Step 4: Audit changed filenames**
 
@@ -608,14 +612,14 @@ Require on the same final SHA:
 
 Require:
 - zero unresolved review threads;
-- no unexpected submitted review requesting changes;
+- no submitted review requesting changes;
 - PR head unchanged from certified SHA;
-- `main` unchanged from the expected Slice A merge base, or explicitly re-audit/rebase if drift occurred;
+- `main` unchanged from the expected Slice A merge base, or explicitly re-audit if drift occurred;
 - mergeable true.
 
 - [ ] **Step 7: Merge with expected-head guard and verify main**
 
-Merge only the certified SHA. Verify `main` points to the resulting merge commit and that the merge has the Slice A merge commit in ancestry.
+Merge only the certified SHA. Verify `main` points to the resulting merge commit and that merge commit has the Slice A merge commit in ancestry.
 
 - [ ] **Step 8: Begin Slice C only from verified new main**
 
@@ -627,13 +631,14 @@ Create the Operation Registry branch only after Slice B is merged and main is re
 
 ### Spec coverage
 
-- Six required repositories are present as six explicit tasks.
+- Six required repositories are present as six explicit migration tasks.
 - Store retains connection/schema/migration/recovery/atomic/doctor ownership.
-- Legacy Store APIs remain as compatibility delegates.
+- Legacy Store APIs remain compatibility delegates.
 - No repository creates/closes a connection or changes PRAGMAs/schema.
 - Commit semantics are characterized both outside and inside `Store.atomic()`.
 - Existing persisted workspace compatibility and recovery are final certification gates.
 - No protocol, MCP, source-authority, semantic-admission, compiler-selection, or Wave 4 work is included.
+- `_index_terms` moves in the allowed dependency direction so symbol extraction creates no storage/repository import cycle.
 
 ### Deliberate bounded exclusions
 
@@ -649,8 +654,8 @@ The following remain on `Store` because they are not one of the six approved dom
 - effect/dataflow/counterfactual persistence;
 - revisions and generic JSON tables.
 
-These exclusions are not deferred implementation promises; they are explicit scope boundaries for this structural slice.
+These exclusions are explicit scope boundaries for this structural slice, not promises to move those methods later.
 
-### Placeholder scan
+### Placeholder and consistency scan
 
-This plan contains no TODO/TBD/"similar to" implementation gaps. Every migrated Store method is named, every repository boundary is explicit, and every task includes RED, GREEN, verification, and commit steps.
+This plan contains no TODO/TBD/"similar to" implementation gaps. Every migrated Store method is named, every repository boundary is explicit, `_index_terms` ownership is resolved without a cycle, and every task includes RED, GREEN, verification, and commit steps.
