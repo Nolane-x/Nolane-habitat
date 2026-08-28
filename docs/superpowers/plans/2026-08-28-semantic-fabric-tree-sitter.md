@@ -37,9 +37,9 @@
 - Produces: `TreeSitterProvider.available() -> tuple[bool, str]`
 - Produces: `TreeSitterProvider.parse(root, path, text, file_id) -> SemanticParseResult`
 
-- [ ] **Step 1: Write RED tests** requiring the provider module, parser-level descriptor, fail-honest missing-runtime behavior, and CI installation of the optional extra.
-- [ ] **Step 2: Run RED on PR CI** and verify failures are caused by the missing provider/extra rather than import or fixture errors.
-- [ ] **Step 3: Add optional dependency group** `tree-sitter` with `tree-sitter>=0.25,<0.26` and `tree-sitter-language-pack>=1.12.3,<2`; include it in CI installation without adding it to core dependencies.
+- [x] **Step 1: Write RED tests** requiring the provider module, parser-level descriptor, fail-honest missing-runtime behavior, and CI installation of the optional extra.
+- [x] **Step 2: Run RED on PR CI** and verify failures are caused by the missing provider/extra rather than import or fixture errors.
+- [ ] **Step 3: Add optional dependency group** `tree-sitter` with `tree-sitter>=0.26,<0.27` and `tree-sitter-language-pack>=1.12.3,<2`; include it in CI installation without adding it to core dependencies.
 - [ ] **Step 4: Implement minimal provider probing** using `tree_sitter_language_pack.has_language/get_parser`; advertise only grammars that can actually be obtained.
 - [ ] **Step 5: Run GREEN targeted/full tests** and keep provider unavailable when runtime/grammars cannot be proved.
 
@@ -114,5 +114,5 @@
 - [ ] **Step 1: Add/extend RED workspace assertion** that compilation and `semantic_fabric()` agree about Tree-sitter admission.
 - [ ] **Step 2: Implement only the minimum report adaptation if existing generic runtime-report merging is insufficient.
 - [ ] **Step 3: Run the exact final candidate through the full Habitat CI matrix and CodeQL.**
-- [ ] **Step 4: Confirm Ubuntu/Windows × Python 3.10/3.14 pass release identity,  full regression, baseline, isolated matrix, compatibility, protocol, DB/source recovery, fault injection, reproducible builds, distribution verification, Semgrep, truth-core, and artifact upload.
+- [ ] **Step 4: Confirm Ubuntu/Windows × Python 3.10/3.14 pass release identity, full regression, baseline, isolated matrix, compatibility, protocol, DB/source recovery, fault injection, reproducible builds, distribution verification, Semgrep, truth-core, and artifact upload.
 - [ ] **Step 5: Review PR diff for authority regressions, host-dependent false claims, provider precedence, and cache invalidation before merge.**
