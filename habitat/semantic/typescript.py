@@ -117,8 +117,6 @@ def _probe() -> tuple[bool, str, str | None]:
     return False, "TypeScript compiler module not resolvable by Node", None
 
 
-
-
 @lru_cache(maxsize=1)
 def provider_version() -> str | None:
     ok, _, module_path = _probe()
@@ -147,6 +145,10 @@ class TypeScriptCompilerProvider(SemanticProvider):
         ok, reason, _ = _probe()
         return ok, reason
 
+    def provider_fingerprint(self) -> str | None:
+        version = provider_version()
+        return f"typescript:{version}" if version else None
+
     def parse(self, root: Path, path: Path, text: str, file_id: str) -> SemanticParseResult:
         ok, reason, module_path = _probe()
         rel = path.relative_to(root).as_posix()
@@ -154,8 +156,6 @@ class TypeScriptCompilerProvider(SemanticProvider):
             return SemanticParseResult(self.id, False, reason=reason)
         env = None
         if module_path:
-            # Normal require() already works on the probed host. Keep the path available for runtimes
-            # that need an explicit override without changing project dependencies.
             import os
             env = os.environ.copy()
             env.setdefault("NOLANE_TYPESCRIPT_PATH", module_path)
