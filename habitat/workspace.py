@@ -119,15 +119,15 @@ class HabitatWorkspace(_core.HabitatWorkspace):
 
     def refresh(self, reason: str = "refresh") -> dict:
         with self._semantic_scope():
-            return super().refresh(reason)
+            return self._indexing().refresh(reason)
 
     def refresh_paths(self, paths: list[str], reason: str = "targeted-refresh") -> dict:
         with self._semantic_scope():
-            return super().refresh_paths(paths, reason)
+            return self._indexing().refresh_paths(paths, reason)
 
     def reconcile(self) -> dict:
         with self._semantic_scope():
-            return super().reconcile()
+            return self._indexing().reconcile()
 
     def counterfactual_evaluate(self, world_id: str) -> dict:
         with self._semantic_scope():
