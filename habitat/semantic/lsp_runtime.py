@@ -104,6 +104,26 @@ class LspRuntimeManager:
             session.close()
             raise
 
+    def reconcile_admissions(self) -> tuple[str, ...]:
+        """Revoke admission for runtimes that are no longer READY without hiding failure state."""
+        with self._lock:
+            sessions = tuple(sorted(self._sessions.items()))
+        revoked: list[str] = []
+        for provider_id, session in sessions:
+            if session.state == "READY":
+                continue
+            if self.semantic_registry.is_admitted(provider_id):
+                self.semantic_registry.revoke(provider_id, f"LSP session is {session.state}")
+                revoked.append(provider_id)
+            # Any diagnostics produced by a dead/failed runtime stop being current evidence even if
+            # their document version still matches bytes on disk. Keep documents/session metadata
+            # for failure reporting and deterministic close/reactivation, but clear current truth.
+            with self._lock:
+                stale = [key for key in self._diagnostics if key[0] == provider_id]
+                for key in stale:
+                    self._diagnostics.pop(key, None)
+        return tuple(revoked)
+
     def query(
         self,
         provider_id: str,
@@ -207,6 +227,7 @@ class LspRuntimeManager:
             self.close_provider(provider_id)
 
     def status(self) -> dict[str, Any]:
+        self.reconcile_admissions()
         with self._lock:
             provider_ids = sorted(self._sessions)
             providers: list[dict[str, Any]] = []
@@ -241,14 +262,13 @@ class LspRuntimeManager:
         return {"root": str(self.root), "providers": providers}
 
     def _ready_provider(self, provider_id: str) -> tuple[LspProcessSession, LspSemanticProvider]:
+        self.reconcile_admissions()
         with self._lock:
             session = self._sessions.get(provider_id)
             provider = self._providers.get(provider_id)
         if session is None or provider is None:
             raise ValueError(f"LSP provider is not active: {provider_id}")
         if session.state != "READY":
-            if self.semantic_registry.is_admitted(provider_id):
-                self.semantic_registry.revoke(provider_id, f"LSP session is {session.state}")
             raise RuntimeError(f"LSP provider is not ready: {provider_id}: {session.state}")
         if not self.semantic_registry.is_admitted(provider_id):
             raise RuntimeError(f"LSP provider is not admitted: {provider_id}")
