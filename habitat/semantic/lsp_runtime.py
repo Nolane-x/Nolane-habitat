@@ -73,7 +73,10 @@ class LspRuntimeManager:
         try:
             session.start()
             provider = LspSemanticProvider(session)
-            descriptor = self.semantic_registry.register(provider)
+            if self.semantic_registry.is_registered(provider_id):
+                descriptor = self.semantic_registry.rebind(provider)
+            else:
+                descriptor = self.semantic_registry.register(provider)
             probe = self.semantic_registry.probe(provider_id)
             if not probe.detected:
                 raise RuntimeError(f"LSP provider probe failed: {provider_id}: {probe.reason}")
