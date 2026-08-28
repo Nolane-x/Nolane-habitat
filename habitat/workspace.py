@@ -6,6 +6,7 @@ from pathlib import Path
 
 from . import _workspace_core as _core
 from .semantic.admission import SemanticAdmissionRegistry
+from .semantic.fabric import semantic_fabric_report
 from .semantic.runtime import build_default_semantic_registry
 
 
@@ -72,6 +73,9 @@ class HabitatWorkspace(_core.HabitatWorkspace):
     def counterfactual_evaluate(self, world_id: str) -> dict:
         with self._semantic_scope():
             return super().counterfactual_evaluate(world_id)
+
+    def semantic_fabric(self) -> dict:
+        return semantic_fabric_report(self.source_root, semantic_registry=self.semantic_registry)
 
 
 # The preserved core has one self-reference for disposable child-workspace verification. Point it
