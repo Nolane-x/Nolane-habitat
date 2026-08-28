@@ -115,6 +115,10 @@ class HabitatWorkspace(_core.HabitatWorkspace):
             position=position,
         )
 
+    def lsp_diagnostics(self, provider_id: str, path: Path) -> dict | None:
+        """Return latest fresh passive diagnostics; None means no current version-bound snapshot."""
+        return self._lsp_manager().diagnostics(provider_id, path)
+
     def close(self) -> None:
         # Language servers may still need the source materialization and admission registry while
         # sending didClose/shutdown. Close them before the core closes backend/store authority.
