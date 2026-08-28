@@ -190,12 +190,64 @@ class LspSemanticProvider(SemanticProvider):
             raise RuntimeError(f"LSP capability was not negotiated: {capability}")
         self._validate_provenance(revision, source_digest, document_version)
         result = self._session.request(method, params)
+        self._validate_result_shape(capability, result)
         return self._envelope(
             method,
             result,
             revision=revision,
             source_digest=source_digest,
             document_version=document_version,
+        )
+
+    @classmethod
+    def _validate_result_shape(cls, capability: str, result: Any) -> None:
+        """Reject malformed read-only LSP results before assigning semantic trust.
+
+        Validation is deliberately structural rather than exhaustive: Habitat accepts the standard
+        LSP 3.18 top-level unions while refusing scalars or container shapes that cannot represent
+        the negotiated method's response. Deep semantic interpretation remains Habitat-owned.
+        """
+        if result is None:
+            return
+        if capability == "definition":
+            if cls._is_location_or_link(result):
+                return
+            if isinstance(result, list) and all(cls._is_location_or_link(item) for item in result):
+                return
+            raise ValueError("invalid LSP definition result shape")
+        if capability == "references":
+            if isinstance(result, list) and all(cls._is_location(item) for item in result):
+                return
+            raise ValueError("invalid LSP references result shape")
+        if capability == "hover":
+            if isinstance(result, dict) and "contents" in result:
+                return
+            raise ValueError("invalid LSP hover result shape")
+        if capability == "document-symbols":
+            if isinstance(result, list) and all(isinstance(item, dict) for item in result):
+                return
+            raise ValueError("invalid LSP document symbols result shape")
+        raise ValueError(f"no LSP result-shape contract for capability: {capability}")
+
+    @staticmethod
+    def _is_location(value: Any) -> bool:
+        return (
+            isinstance(value, dict)
+            and isinstance(value.get("uri"), str)
+            and bool(value.get("uri"))
+            and isinstance(value.get("range"), dict)
+        )
+
+    @classmethod
+    def _is_location_or_link(cls, value: Any) -> bool:
+        if cls._is_location(value):
+            return True
+        return (
+            isinstance(value, dict)
+            and isinstance(value.get("targetUri"), str)
+            and bool(value.get("targetUri"))
+            and isinstance(value.get("targetRange"), dict)
+            and isinstance(value.get("targetSelectionRange"), dict)
         )
 
     def _envelope(
