@@ -232,7 +232,7 @@ def main() -> int:
         elif method == "textDocument/references":
             send({"jsonrpc": "2.0", "id": request_id, "result": []})
         elif method == "textDocument/hover":
-            send({"jsonrpc": "2.0", "id": request_id, "result": {"contents": {"kind": "plaintext", "value": "fake hover"}})
+            send({"jsonrpc": "2.0", "id": request_id, "result": {"contents": {"kind": "plaintext", "value": "fake hover"}}})
         elif method == "textDocument/documentSymbol":
             send({"jsonrpc": "2.0", "id": request_id, "result": []})
         elif method == "fake/state":
