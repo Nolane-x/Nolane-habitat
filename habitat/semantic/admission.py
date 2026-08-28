@@ -72,6 +72,20 @@ class SemanticAdmissionRegistry:
         self._admissions[provider_id] = result
         return result
 
+    def revoke(self, provider_id: str, reason: str = "") -> SemanticProviderAdmission:
+        """Revoke active admission without erasing provider identity or probe history."""
+        self._provider(provider_id)
+        previous = self._admissions.pop(provider_id, None)
+        evidence = list(previous.evidence if previous is not None else ())
+        normalized_reason = str(reason or "").strip()
+        if normalized_reason:
+            evidence.append(f"revoked: {normalized_reason}")
+        return SemanticProviderAdmission(provider_id, False, tuple(evidence))
+
+    def is_admitted(self, provider_id: str) -> bool:
+        admission = self._admissions.get(provider_id)
+        return bool(admission is not None and admission.admitted)
+
     def providers_for(self, capability: str, *, language: str | None = None) -> tuple[SemanticProvider, ...]:
         selected: list[SemanticProvider] = []
         for provider_id, provider in self._providers.items():
