@@ -11,6 +11,7 @@ from typing import Any
 
 
 DEFAULT_MAX_BODY_BYTES = 8 * 1024 * 1024
+DEFAULT_MAX_HEADER_BYTES = 16 * 1024
 DEFAULT_MAX_PENDING_REQUESTS = 128
 DEFAULT_STDERR_TAIL_BYTES = 64 * 1024
 
@@ -31,12 +32,19 @@ def encode_lsp_message(message: dict) -> bytes:
 
 
 class LspFrameDecoder:
-    """Incrementally decode stdio LSP frames with a bounded JSON body."""
+    """Incrementally decode stdio LSP frames with bounded headers and JSON bodies."""
 
-    def __init__(self, max_body_bytes: int = DEFAULT_MAX_BODY_BYTES):
+    def __init__(
+        self,
+        max_body_bytes: int = DEFAULT_MAX_BODY_BYTES,
+        max_header_bytes: int = DEFAULT_MAX_HEADER_BYTES,
+    ):
         if not isinstance(max_body_bytes, int) or isinstance(max_body_bytes, bool) or max_body_bytes < 0:
             raise ValueError("max_body_bytes must be a non-negative integer")
+        if not isinstance(max_header_bytes, int) or isinstance(max_header_bytes, bool) or max_header_bytes < 0:
+            raise ValueError("max_header_bytes must be a non-negative integer")
         self.max_body_bytes = max_body_bytes
+        self.max_header_bytes = max_header_bytes
         self._buffer = bytearray()
 
     def feed(self, data: bytes) -> list[dict]:
@@ -48,7 +56,11 @@ class LspFrameDecoder:
         while True:
             header_end = self._buffer.find(b"\r\n\r\n")
             if header_end < 0:
+                if len(self._buffer) > self.max_header_bytes:
+                    raise LspProtocolError("LSP header exceeds configured limit")
                 return messages
+            if header_end > self.max_header_bytes:
+                raise LspProtocolError("LSP header exceeds configured limit")
 
             try:
                 raw_headers = bytes(self._buffer[:header_end]).decode("ascii", errors="strict")
