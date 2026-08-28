@@ -4,7 +4,6 @@ import argparse
 import json
 import os
 import sys
-import time
 
 
 def read_message() -> dict | None:
@@ -129,8 +128,9 @@ def main() -> int:
         if request_id is None:
             continue
 
+        # Intentionally accept the request but never answer it. Unlike sleeping, the fake server
+        # keeps reading stdin so tests can observe Habitat's subsequent $/cancelRequest message.
         if args.mode == "hang-request" and method != "fake/state":
-            time.sleep(60)
             continue
 
         if args.mode == "malformed-frame" and method != "fake/state":
