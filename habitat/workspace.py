@@ -106,7 +106,7 @@ class HabitatWorkspace(_core.HabitatWorkspace):
             self._transaction_service = service
         return service
 
-    def _runtime(self) -> RuntimeService:
+    def _runtime_operations(self) -> RuntimeService:
         service = self._runtime_service
         if service is None:
             service = RuntimeService(self)
