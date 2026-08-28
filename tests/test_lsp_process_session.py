@@ -66,6 +66,40 @@ class LspProcessSessionTests(unittest.TestCase):
         self.assertEqual(session.status()["state"], "FAILED")
         session.close()
 
+    def test_initialize_timeout_fails_closed_and_terminates_process(self):
+        from habitat.semantic.lsp_transport import LspProcessSession, LspRequestTimeout
+
+        session = LspProcessSession(
+            fake_spec("hang-initialize"),
+            self.root,
+            initialize_timeout_s=0.05,
+            terminate_grace_s=0.1,
+        )
+        with self.assertRaises(LspRequestTimeout):
+            session.start()
+        status = session.status()
+        self.assertEqual(status["state"], "FAILED")
+        self.assertIsNotNone(status["returncode"])
+        session.close()
+
+    def test_process_exit_during_initialize_fails_without_admitting_ready_state(self):
+        from habitat.semantic.lsp_transport import LspProcessSession
+
+        session = LspProcessSession(
+            fake_spec("exit-during-initialize"),
+            self.root,
+            initialize_timeout_s=1.0,
+            terminate_grace_s=0.1,
+        )
+        with self.assertRaises(RuntimeError):
+            session.start()
+        status = session.status()
+        self.assertEqual(status["state"], "FAILED")
+        self.assertNotEqual(status["state"], "READY")
+        self.assertTrue(status["failure_reason"])
+        self.assertIsNotNone(status["returncode"])
+        session.close()
+
     def test_required_capability_mismatch_fails_start(self):
         from habitat.semantic.lsp_transport import LspProcessSession
 
@@ -83,6 +117,23 @@ class LspProcessSessionTests(unittest.TestCase):
         session.close()
         session.close()
         self.assertEqual(session.status()["state"], "CLOSED")
+
+    def test_close_forces_process_termination_when_shutdown_and_exit_are_ignored(self):
+        from habitat.semantic.lsp_transport import LspProcessSession
+
+        session = LspProcessSession(
+            fake_spec("ignore-shutdown"),
+            self.root,
+            shutdown_timeout_s=0.05,
+            terminate_grace_s=0.1,
+        )
+        session.start()
+        self.assertIsNone(session.status()["returncode"])
+        session.close()
+        status = session.status()
+        self.assertEqual(status["state"], "CLOSED")
+        self.assertIsNotNone(status["returncode"])
+        self.assertNotEqual(status["returncode"], 0)
 
     def test_timeout_sends_cancel_request_and_session_remains_ready(self):
         from habitat.semantic.lsp_transport import LspProcessSession, LspRequestTimeout
@@ -110,6 +161,24 @@ class LspProcessSessionTests(unittest.TestCase):
                     session.request("textDocument/hover", {"textDocument": {"uri": "file:///fake.py"}})
             self.assertEqual(session.status()["state"], "FAILED")
             self.assertIn("three consecutive", session.status()["failure_reason"])
+        finally:
+            session.close()
+
+    def test_malformed_server_frame_fails_session_and_pending_request(self):
+        from habitat.semantic.lsp_transport import LspProcessSession
+
+        session = LspProcessSession(fake_spec("malformed-frame"), self.root)
+        try:
+            session.start()
+            with self.assertRaises(RuntimeError):
+                session.request(
+                    "textDocument/hover",
+                    {"textDocument": {"uri": "file:///fake.py"}, "position": {"line": 0, "character": 0}},
+                )
+            status = session.status()
+            self.assertEqual(status["state"], "FAILED")
+            self.assertIn("protocol error", status["failure_reason"].lower())
+            self.assertEqual(status["pending_requests"], 0)
         finally:
             session.close()
 
