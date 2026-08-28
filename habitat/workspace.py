@@ -11,6 +11,7 @@ from .semantic.fabric import semantic_fabric_report
 from .semantic.lsp_runtime import LspRuntimeManager
 from .semantic.lsp_transport import LspServerSpec
 from .semantic.runtime import build_default_semantic_registry
+from .semantic.scip_runtime import ScipIndexerSpec, ScipRuntimeManager
 
 
 _active_semantic_registry: ContextVar[SemanticAdmissionRegistry | None] = ContextVar(
@@ -47,9 +48,10 @@ class HabitatWorkspace(_core.HabitatWorkspace):
     def __init__(self, habitat_dir: Path):
         # Recovery may refresh during the core constructor, so admission authority must exist first.
         self.semantic_registry = build_default_semantic_registry()
-        # A manager object is cheap and process-free, but keep even that lazy so ordinary workspaces
-        # retain their previous lifecycle until an explicit LSP facade operation is requested.
+        # Runtime managers are process-free/state-free until explicitly used. Keep them lazy so
+        # ordinary workspace create/open/index/refresh never discovers or admits external semantics.
         self._lsp_runtime_manager: LspRuntimeManager | None = None
+        self._scip_runtime_manager: ScipRuntimeManager | None = None
         super().__init__(habitat_dir)
 
     @contextmanager
@@ -91,6 +93,17 @@ class HabitatWorkspace(_core.HabitatWorkspace):
             self._lsp_runtime_manager = manager
         return manager
 
+    def _scip_manager(self) -> ScipRuntimeManager:
+        manager = self._scip_runtime_manager
+        if manager is None:
+            manager = ScipRuntimeManager(
+                self.source_root,
+                semantic_registry=self.semantic_registry,
+                revision_getter=lambda: self.revision,
+            )
+            self._scip_runtime_manager = manager
+        return manager
+
     def lsp_activate(self, spec: LspServerSpec) -> dict:
         """Explicitly activate one workspace-scoped read-only LSP provider."""
         return self._lsp_manager().activate(spec)
@@ -119,13 +132,42 @@ class HabitatWorkspace(_core.HabitatWorkspace):
         """Return latest fresh passive diagnostics; None means no current version-bound snapshot."""
         return self._lsp_manager().diagnostics(provider_id, path)
 
+    def scip_activate(self, index_path: Path, provider_id: str | None = None) -> dict:
+        """Explicitly activate one bounded read-only SCIP index provider."""
+        return self._scip_manager().activate(index_path, provider_id=provider_id)
+
+    def scip_generate(self, spec: ScipIndexerSpec) -> dict:
+        """Explicitly generate and activate one bounded read-only SCIP index."""
+        return self._scip_manager().generate(spec)
+
+    def scip_status(self) -> dict:
+        """Report SCIP runtime state without discovering or parsing any index automatically."""
+        return self._scip_manager().status()
+
+    def scip_definitions(self, provider_id: str, symbol: str) -> dict:
+        """Return fresh read-only SCIP definition evidence for one symbol."""
+        return self._scip_manager().definitions(provider_id, symbol)
+
+    def scip_references(self, provider_id: str, symbol: str) -> dict:
+        """Return fresh read-only SCIP reference evidence for one symbol."""
+        return self._scip_manager().references(provider_id, symbol)
+
+    def scip_document(self, provider_id: str, path: Path) -> dict:
+        """Return one fresh source-bound SCIP document projection."""
+        return self._scip_manager().document(provider_id, path)
+
     def close(self) -> None:
-        # Language servers may still need the source materialization and admission registry while
-        # sending didClose/shutdown. Close them before the core closes backend/store authority.
-        manager = self._lsp_runtime_manager
+        # Semantic runtimes may still need source materialization and the admission registry while
+        # closing/revoking. Close them before the core closes backend/store authority.
+        scip_manager = self._scip_runtime_manager
+        self._scip_runtime_manager = None
+        if scip_manager is not None:
+            scip_manager.close()
+
+        lsp_manager = self._lsp_runtime_manager
         self._lsp_runtime_manager = None
-        if manager is not None:
-            manager.close()
+        if lsp_manager is not None:
+            lsp_manager.close()
         super().close()
 
     def stage_change(
@@ -155,10 +197,56 @@ class HabitatWorkspace(_core.HabitatWorkspace):
         return super().stage_change(operations, episode_id, agent_id, lease_ttl_s, approval_id)
 
     def semantic_fabric(self) -> dict:
-        manager = self._lsp_runtime_manager
-        if manager is not None:
-            manager.reconcile_admissions()
-        return semantic_fabric_report(self.source_root, semantic_registry=self.semantic_registry)
+        scip_manager = self._scip_runtime_manager
+        if scip_manager is not None:
+            scip_manager.reconcile_admissions()
+        lsp_manager = self._lsp_runtime_manager
+        if lsp_manager is not None:
+            lsp_manager.reconcile_admissions()
+
+        report = semantic_fabric_report(self.source_root, semantic_registry=self.semantic_registry)
+
+        # Registry cache identities intentionally contain admitted providers only. Preserve an
+        # explicitly activated-but-revoked SCIP runtime in the diagnostic Fabric without restoring
+        # admission: runtime status owns lifecycle truth, while the registry remains the sole source
+        # of selectable/admitted truth.
+        if scip_manager is not None:
+            provider_ids = {provider["id"] for provider in report["providers"]}
+            for status in scip_manager.status()["providers"]:
+                if status["provider_id"] in provider_ids:
+                    continue
+                report["providers"].append(
+                    {
+                        "id": status["provider_id"],
+                        "layer": "compiler-index",
+                        "available": True,
+                        "detected": True,
+                        "precision": "semantic",
+                        "capabilities": tuple(status["capabilities"]),
+                        "reason": status["stale_reason"] or "SCIP runtime is not admitted",
+                        "command": None,
+                        "version": status["tool"]["version"] or None,
+                        "admitted": False,
+                        "trust_ceiling": "semantic",
+                        "lifecycle": "workspace-scoped",
+                        "languages": tuple(status["languages"]),
+                        "incremental": False,
+                        "index_digest": status["index_digest"],
+                        "provider_fingerprint": status["provider_fingerprint"],
+                        "tool": status["tool"],
+                        "activation_revision": status["activation_revision"],
+                        "stale": status["stale"],
+                    }
+                )
+                provider_ids.add(status["provider_id"])
+
+            detected_count = sum(1 for provider in report["providers"] if provider["detected"])
+            admitted_count = sum(1 for provider in report["providers"] if provider["admitted"])
+            report["available_count"] = detected_count
+            report["detected_count"] = detected_count
+            report["admitted_count"] = admitted_count
+
+        return report
 
 
 # The preserved core has one self-reference for disposable child-workspace verification. Point it
