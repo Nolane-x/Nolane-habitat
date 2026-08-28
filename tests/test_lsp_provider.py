@@ -10,13 +10,13 @@ from pathlib import Path
 FAKE_SERVER = Path(__file__).with_name("fake_lsp_server.py")
 
 
-def make_session(root: Path):
+def make_session(root: Path, mode: str = "normal"):
     from habitat.semantic.lsp_transport import LspProcessSession, LspServerSpec
 
     spec = LspServerSpec(
         provider_id="lsp.fake",
         languages=frozenset({"python"}),
-        argv=(sys.executable, str(FAKE_SERVER), "--mode", "normal"),
+        argv=(sys.executable, str(FAKE_SERVER), "--mode", mode),
         required_capabilities=frozenset({"definition"}),
     )
     session = LspProcessSession(spec, root)
@@ -88,6 +88,73 @@ class LspSemanticProviderTests(unittest.TestCase):
         observed = datetime.fromisoformat(value["observed_at"])
         self.assertIsNotNone(observed.tzinfo)
         self.assertIsNotNone(observed.utcoffset())
+
+    def test_definition_rejects_invalid_result_shape(self):
+        from habitat.semantic.lsp_provider import LspSemanticProvider
+
+        invalid = make_session(self.root, "invalid-result-shape")
+        try:
+            provider = LspSemanticProvider(invalid)
+            with self.assertRaises(ValueError):
+                provider.definition(
+                    (self.root / "sample.py").resolve().as_uri(),
+                    {"line": 0, "character": 0},
+                    revision="rev-1",
+                    source_digest="a" * 64,
+                    document_version=1,
+                )
+        finally:
+            invalid.close()
+
+    def test_references_reject_invalid_result_shape(self):
+        from habitat.semantic.lsp_provider import LspSemanticProvider
+
+        invalid = make_session(self.root, "invalid-result-shape")
+        try:
+            provider = LspSemanticProvider(invalid)
+            with self.assertRaises(ValueError):
+                provider.references(
+                    (self.root / "sample.py").resolve().as_uri(),
+                    {"line": 0, "character": 0},
+                    revision="rev-1",
+                    source_digest="b" * 64,
+                    document_version=1,
+                )
+        finally:
+            invalid.close()
+
+    def test_hover_rejects_invalid_result_shape(self):
+        from habitat.semantic.lsp_provider import LspSemanticProvider
+
+        invalid = make_session(self.root, "invalid-result-shape")
+        try:
+            provider = LspSemanticProvider(invalid)
+            with self.assertRaises(ValueError):
+                provider.hover(
+                    (self.root / "sample.py").resolve().as_uri(),
+                    {"line": 0, "character": 0},
+                    revision="rev-1",
+                    source_digest="c" * 64,
+                    document_version=1,
+                )
+        finally:
+            invalid.close()
+
+    def test_document_symbols_reject_invalid_result_shape(self):
+        from habitat.semantic.lsp_provider import LspSemanticProvider
+
+        invalid = make_session(self.root, "invalid-result-shape")
+        try:
+            provider = LspSemanticProvider(invalid)
+            with self.assertRaises(ValueError):
+                provider.document_symbols(
+                    (self.root / "sample.py").resolve().as_uri(),
+                    revision="rev-1",
+                    source_digest="d" * 64,
+                    document_version=1,
+                )
+        finally:
+            invalid.close()
 
     def test_query_methods_are_fixed_allowlist_not_arbitrary_passthrough(self):
         from habitat.semantic.lsp_provider import LspSemanticProvider
