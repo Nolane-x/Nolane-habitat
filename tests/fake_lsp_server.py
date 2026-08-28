@@ -4,6 +4,8 @@ import argparse
 import json
 import os
 import sys
+import time
+from pathlib import Path
 
 
 def read_message() -> dict | None:
@@ -36,6 +38,31 @@ def send(message: dict) -> None:
     sys.stdout.buffer.flush()
 
 
+def append_event(path: str | None, method: str, params: dict) -> None:
+    if not path:
+        return
+    target = Path(path)
+    target.parent.mkdir(parents=True, exist_ok=True)
+    with target.open("a", encoding="utf-8") as handle:
+        handle.write(json.dumps({"method": method, "params": params}, sort_keys=True) + "\n")
+        handle.flush()
+
+
+def wait_for_release(marker: str | None, release: str | None) -> None:
+    if marker:
+        target = Path(marker)
+        target.parent.mkdir(parents=True, exist_ok=True)
+        target.write_text("ready", encoding="utf-8")
+    if not release:
+        return
+    deadline = time.monotonic() + 5.0
+    release_path = Path(release)
+    while not release_path.exists():
+        if time.monotonic() >= deadline:
+            return
+        time.sleep(0.01)
+
+
 def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument(
@@ -49,8 +76,12 @@ def main() -> int:
             "malformed-frame",
             "unsupported-capability",
             "stderr-spam",
+            "controlled-delay",
         ),
     )
+    parser.add_argument("--event-log")
+    parser.add_argument("--delay-marker")
+    parser.add_argument("--release-marker")
     args = parser.parse_args()
     documents: dict[str, dict] = {}
     cancellations: list[int] = []
@@ -107,12 +138,14 @@ def main() -> int:
             continue
 
         if method == "textDocument/didOpen":
+            append_event(args.event_log, method, params)
             doc = params.get("textDocument") or {}
             uri = str(doc.get("uri") or "")
             documents[uri] = {"version": doc.get("version"), "text": doc.get("text", "")}
             continue
 
         if method == "textDocument/didChange":
+            append_event(args.event_log, method, params)
             doc = params.get("textDocument") or {}
             uri = str(doc.get("uri") or "")
             changes = params.get("contentChanges") or []
@@ -121,6 +154,7 @@ def main() -> int:
             continue
 
         if method == "textDocument/didClose":
+            append_event(args.event_log, method, params)
             doc = params.get("textDocument") or {}
             documents.pop(str(doc.get("uri") or ""), None)
             continue
@@ -139,6 +173,8 @@ def main() -> int:
             continue
 
         if method == "textDocument/definition":
+            if args.mode == "controlled-delay":
+                wait_for_release(args.delay_marker, args.release_marker)
             uri = str((params.get("textDocument") or {}).get("uri") or "")
             send({"jsonrpc": "2.0", "id": request_id, "result": {"uri": uri, "range": {"start": {"line": 0, "character": 0}, "end": {"line": 0, "character": 3}}}})
         elif method == "textDocument/references":
