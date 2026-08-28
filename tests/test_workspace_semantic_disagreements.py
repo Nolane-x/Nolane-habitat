@@ -106,6 +106,19 @@ class WorkspaceSemanticDisagreementTests(unittest.TestCase):
             ws.semantic_disagreements(outside)
         self.assertEqual((first.calls, second.calls), (0, 0))
 
+    def test_external_source_drift_fails_closed_before_provider_execution(self):
+        from habitat.semantic.comparison import SemanticComparisonStaleError
+
+        ws, _source, target = self._workspace()
+        first = _WorkspaceProvider("provider.a", "function")
+        second = _WorkspaceProvider("provider.b", "method")
+        ws.semantic_registry = _fixture_registry(first, second)
+        target.write_text("export function foo(): number { return 1 }\n", encoding="utf-8")
+
+        with self.assertRaises(SemanticComparisonStaleError):
+            ws.semantic_disagreements(Path("a.ts"))
+        self.assertEqual((first.calls, second.calls), (0, 0))
+
     def test_semantic_fabric_does_not_run_comparison_automatically(self):
         ws, _source, _target = self._workspace()
         first = _WorkspaceProvider("provider.a", "function")
