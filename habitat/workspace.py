@@ -5,7 +5,6 @@ from contextvars import ContextVar
 from pathlib import Path
 
 from . import _workspace_core as _core
-from .mutation import TransactionConflict
 from .semantic.admission import SemanticAdmissionRegistry
 from .semantic.comparison import SemanticComparisonStaleError, compare_parse_providers
 from .semantic.fabric import semantic_fabric_report
@@ -22,8 +21,6 @@ from .truth import (
     claim_from_relation_record,
     claim_from_semantic_claim,
     claim_from_symbol_record,
-    legacy_authority,
-    operation_allows_evidence,
     project_truth,
 )
 from .util import sha256_file
@@ -388,6 +385,9 @@ class HabitatWorkspace(_core.HabitatWorkspace):
             lsp_manager.close()
         super().close()
 
+    def change_plan(self, operations: list[dict]) -> dict:
+        return self._transactions().change_plan(operations)
+
     def stage_change(
         self,
         operations: list[dict],
@@ -396,24 +396,47 @@ class HabitatWorkspace(_core.HabitatWorkspace):
         lease_ttl_s: float = 120.0,
         approval_id: str | None = None,
     ) -> dict:
-        # Trust labels describe evidence provenance. Action authority is declared separately and
-        # evaluated categorically: no confidence value, plurality, or remembered origin can promote
-        # a weaker anchor into source mutation authority.
-        for operation in operations if isinstance(operations, list) else ():
-            if not isinstance(operation, dict) or operation.get("op") != "replace_symbol_source":
-                continue
-            symbol_id = operation.get("symbol_id")
-            if not isinstance(symbol_id, str) or not symbol_id:
-                continue
-            symbol = self.store.symbol_by_id(symbol_id)
-            if symbol is not None:
-                authority = legacy_authority(symbol["trust"])
-                if not operation_allows_evidence("replace_symbol_source", authority):
-                    raise TransactionConflict(
-                        "source mutation requires an exact source-authorized anchor; "
-                        f"{symbol['trust']} evidence is read-only and non-authoritative"
-                    )
-        return super().stage_change(operations, episode_id, agent_id, lease_ttl_s, approval_id)
+        return self._transactions().stage_change(
+            operations,
+            episode_id,
+            agent_id,
+            lease_ttl_s,
+            approval_id,
+        )
+
+    def stage_symbol_change(
+        self,
+        symbol_id: str,
+        new_source: str,
+        episode_id: str | None = None,
+        agent_id: str | None = None,
+    ) -> dict:
+        return self._transactions().stage_symbol_change(
+            symbol_id,
+            new_source,
+            episode_id,
+            agent_id,
+        )
+
+    def stage_symbol_rename(
+        self,
+        symbol_id: str,
+        new_name: str,
+        episode_id: str | None = None,
+        agent_id: str | None = None,
+    ) -> dict:
+        return self._transactions().stage_symbol_rename(
+            symbol_id,
+            new_name,
+            episode_id,
+            agent_id,
+        )
+
+    def commit_change(self, txid: str, agent_id: str | None = None) -> dict:
+        return self._transactions().commit_change(txid, agent_id)
+
+    def rollback_change(self, txid: str, agent_id: str | None = None) -> dict:
+        return self._transactions().rollback_change(txid, agent_id)
 
     def semantic_fabric(self) -> dict:
         scip_manager = self._scip_runtime_manager
