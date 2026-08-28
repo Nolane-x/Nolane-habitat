@@ -82,13 +82,15 @@ A read-only facade in `habitat/workspace.py`. It reconciles source state first, 
 
 ### Symbols
 
-Subject key: `symbol:<path>:<qualified_name>:<kind>`.
+Subject key: `symbol:<path>:<qualified_name>`.
 
-Canonical value includes name, qualified name, kind, language, start/end lines, and signature. Range-only changes are classified as `location-conflict`; other unequal fields are `attribute-conflict`.
+The semantic kind deliberately lives in the canonical value rather than the subject identity. This allows two providers that identify the same qualified symbol but disagree on class/function/method kind to produce one `attribute-conflict` instead of two unrelated presence conflicts.
+
+Canonical value includes name, qualified name, kind, language, start/end lines, and signature. Range-only changes are classified as `location-conflict`; other unequal fields, including semantic kind, are `attribute-conflict`.
 
 ### Relations
 
-Subject key is derived from source identity, relation kind, and normalized target identity. Unequal targets/kinds for otherwise matching relation slots become `relation-conflict`.
+Subject key is derived from source identity and relation slot, while relation kind/target remain canonical value fields when they are the disputed attributes. Unequal targets/kinds for otherwise matching relation slots become `relation-conflict`.
 
 ### Diagnostics
 
@@ -112,7 +114,7 @@ Provider execution follows registry precedence but output claims/disagreements a
 - invalid path or path escape: fail closed before provider execution;
 - binary/oversized source: return bounded incomplete report, never parse unbounded bytes;
 - provider exception: capture exception class and bounded message; continue other providers;
-- claim/disagreement limit exceeded: stop producing additional objects, set `truncated=True`;
+- claim/disagreement limit exceeded: stop producing additional objects, set `truncated=True`; any claim truncation makes the comparison incomplete so truncated negative space cannot create false presence conflicts;
 - source digest/revision are captured once before provider execution and verified again after collection; drift invalidates the report with a stale error rather than emitting mixed-revision evidence.
 
 ## Testing
