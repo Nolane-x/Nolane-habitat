@@ -3,6 +3,7 @@ from __future__ import annotations
 import hashlib
 import json
 import shutil
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
@@ -35,9 +36,14 @@ class LspSemanticProvider(SemanticProvider):
         self.id = session.spec.provider_id
         self.languages = frozenset(session.spec.languages)
         negotiated = session.capabilities
-        self.capabilities = frozenset(
+        capabilities = {
             name for name, field in _CAPABILITY_FIELDS.items() if bool(negotiated.get(field))
-        )
+        }
+        # publishDiagnostics is a server notification rather than a request capability flag.
+        # Once the session is initialized Habitat can admit that passive, read-only evidence lane;
+        # individual notifications are still version/revision/digest checked by the runtime manager.
+        capabilities.add("diagnostics")
+        self.capabilities = frozenset(capabilities)
 
     def available(self) -> tuple[bool, str]:
         ready = self._session.state == "READY"
@@ -151,6 +157,25 @@ class LspSemanticProvider(SemanticProvider):
             document_version=document_version,
         )
 
+    def diagnostic_snapshot(
+        self,
+        diagnostics: list[dict],
+        *,
+        revision: str,
+        source_digest: str,
+        document_version: int,
+    ) -> dict[str, Any]:
+        """Normalize one already-received publishDiagnostics notification as Habitat evidence."""
+        if not isinstance(diagnostics, list) or not all(isinstance(item, dict) for item in diagnostics):
+            raise TypeError("diagnostics must be a list of objects")
+        return self._envelope(
+            "textDocument/publishDiagnostics",
+            diagnostics,
+            revision=revision,
+            source_digest=source_digest,
+            document_version=document_version,
+        )
+
     def _query(
         self,
         capability: str,
@@ -163,13 +188,26 @@ class LspSemanticProvider(SemanticProvider):
     ) -> dict[str, Any]:
         if capability not in self.capabilities:
             raise RuntimeError(f"LSP capability was not negotiated: {capability}")
-        if not isinstance(revision, str) or not revision:
-            raise ValueError("revision must be a non-empty string")
-        if not isinstance(source_digest, str) or not source_digest:
-            raise ValueError("source_digest must be a non-empty string")
-        if not isinstance(document_version, int) or isinstance(document_version, bool) or document_version < 1:
-            raise ValueError("document_version must be a positive integer")
+        self._validate_provenance(revision, source_digest, document_version)
         result = self._session.request(method, params)
+        return self._envelope(
+            method,
+            result,
+            revision=revision,
+            source_digest=source_digest,
+            document_version=document_version,
+        )
+
+    def _envelope(
+        self,
+        method: str,
+        result: Any,
+        *,
+        revision: str,
+        source_digest: str,
+        document_version: int,
+    ) -> dict[str, Any]:
+        self._validate_provenance(revision, source_digest, document_version)
         return {
             "provider_id": self.id,
             "method": method,
@@ -178,5 +216,15 @@ class LspSemanticProvider(SemanticProvider):
             "source_digest": source_digest,
             "document_version": document_version,
             "provider_fingerprint": self.provider_fingerprint(),
+            "observed_at": datetime.now(timezone.utc).isoformat(),
             "result": result,
         }
+
+    @staticmethod
+    def _validate_provenance(revision: str, source_digest: str, document_version: int) -> None:
+        if not isinstance(revision, str) or not revision:
+            raise ValueError("revision must be a non-empty string")
+        if not isinstance(source_digest, str) or not source_digest:
+            raise ValueError("source_digest must be a non-empty string")
+        if not isinstance(document_version, int) or isinstance(document_version, bool) or document_version < 1:
+            raise ValueError("document_version must be a positive integer")
