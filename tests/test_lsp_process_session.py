@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import sys
 import tempfile
+import time
 import unittest
 from pathlib import Path
 
@@ -82,6 +83,61 @@ class LspProcessSessionTests(unittest.TestCase):
         session.close()
         session.close()
         self.assertEqual(session.status()["state"], "CLOSED")
+
+    def test_timeout_sends_cancel_request_and_session_remains_ready(self):
+        from habitat.semantic.lsp_transport import LspProcessSession, LspRequestTimeout
+
+        session = LspProcessSession(fake_spec("hang-request"), self.root, request_timeout_s=0.05)
+        try:
+            session.start()
+            with self.assertRaises(LspRequestTimeout):
+                session.request("textDocument/hover", {"textDocument": {"uri": "file:///fake.py"}})
+            state = session.request("fake/state", {}, timeout_s=1.0)
+            self.assertTrue(state["cancellations"])
+            self.assertEqual(session.status()["state"], "READY")
+            self.assertEqual(session.status()["consecutive_timeouts"], 0)
+        finally:
+            session.close()
+
+    def test_three_consecutive_timeouts_fail_session(self):
+        from habitat.semantic.lsp_transport import LspProcessSession, LspRequestTimeout
+
+        session = LspProcessSession(fake_spec("hang-request"), self.root, request_timeout_s=0.03)
+        try:
+            session.start()
+            for _ in range(3):
+                with self.assertRaises(LspRequestTimeout):
+                    session.request("textDocument/hover", {"textDocument": {"uri": "file:///fake.py"}})
+            self.assertEqual(session.status()["state"], "FAILED")
+            self.assertIn("three consecutive", session.status()["failure_reason"])
+        finally:
+            session.close()
+
+    def test_crash_after_initialize_is_observed_as_failed(self):
+        from habitat.semantic.lsp_transport import LspProcessSession
+
+        session = LspProcessSession(fake_spec("crash-after-init"), self.root)
+        try:
+            session.start()
+            deadline = time.monotonic() + 1.0
+            while time.monotonic() < deadline and session.status()["state"] == "READY":
+                time.sleep(0.01)
+            self.assertEqual(session.status()["state"], "FAILED")
+        finally:
+            session.close()
+
+    def test_stderr_tail_is_bounded(self):
+        from habitat.semantic.lsp_transport import LspProcessSession
+
+        session = LspProcessSession(fake_spec("stderr-spam"), self.root, stderr_tail_bytes=64 * 1024)
+        try:
+            session.start()
+            deadline = time.monotonic() + 1.0
+            while time.monotonic() < deadline and len(session.status()["stderr_tail"].encode("utf-8")) < 64 * 1024:
+                time.sleep(0.01)
+            self.assertEqual(len(session.status()["stderr_tail"].encode("utf-8")), 64 * 1024)
+        finally:
+            session.close()
 
 
 if __name__ == "__main__":
