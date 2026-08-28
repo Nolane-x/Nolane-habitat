@@ -8,6 +8,24 @@ from habitat.semantic.disagreement import SemanticClaim
 
 
 class TruthAdapterTests(unittest.TestCase):
+    def test_public_truth_package_exports_all_adapter_interfaces(self):
+        import habitat.truth as truth
+
+        expected = {
+            "claim_from_file_record",
+            "claim_from_symbol_record",
+            "claim_from_relation_record",
+            "claim_from_diagnostic_record",
+            "claim_from_occurrence_record",
+            "claim_from_evidence_row",
+            "claim_from_semantic_claim",
+            "claim_from_epistemic_item",
+            "claim_from_memory",
+        }
+        self.assertTrue(expected.issubset(set(truth.__all__)))
+        for name in expected:
+            self.assertTrue(callable(getattr(truth, name)))
+
     def test_file_record_is_exact_source_snapshot(self):
         from habitat.truth.adapters import claim_from_file_record
         from habitat.truth.authority import AuthorityClass
