@@ -19,6 +19,10 @@ class LspProtocolError(ValueError):
     """Raised when an inbound LSP/JSON-RPC frame violates the transport contract."""
 
 
+class LspRequestTimeout(TimeoutError):
+    """Raised when one LSP request exceeds its bounded response deadline."""
+
+
 def encode_lsp_message(message: dict) -> bytes:
     if not isinstance(message, dict):
         raise TypeError("LSP JSON-RPC message must be an object")
@@ -265,12 +269,21 @@ class LspProcessSession:
             except queue.Empty as exc:
                 with self._pending_lock:
                     self._pending.pop(request_id, None)
-                raise TimeoutError(f"LSP request timed out: {method}") from exc
+                self._consecutive_timeouts += 1
+                try:
+                    self.notify("$/cancelRequest", {"id": request_id})
+                except Exception:
+                    pass
+                if self._consecutive_timeouts >= 3:
+                    self._fail("three consecutive LSP request timeouts")
+                    self._terminate_process()
+                raise LspRequestTimeout(f"LSP request timed out: {method}") from exc
         except Exception:
             with self._pending_lock:
                 self._pending.pop(request_id, None)
             raise
 
+        self._consecutive_timeouts = 0
         error = response.get("error")
         if error is not None:
             raise RuntimeError(f"LSP request failed: {method}: {error}")
