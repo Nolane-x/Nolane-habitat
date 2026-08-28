@@ -199,7 +199,50 @@ class HabitatWorkspace(_core.HabitatWorkspace):
         lsp_manager = self._lsp_runtime_manager
         if lsp_manager is not None:
             lsp_manager.reconcile_admissions()
-        return semantic_fabric_report(self.source_root, semantic_registry=self.semantic_registry)
+
+        report = semantic_fabric_report(self.source_root, semantic_registry=self.semantic_registry)
+
+        # Registry cache identities intentionally contain admitted providers only. Preserve an
+        # explicitly activated-but-revoked SCIP runtime in the diagnostic Fabric without restoring
+        # admission: runtime status owns lifecycle truth, while the registry remains the sole source
+        # of selectable/admitted truth.
+        if scip_manager is not None:
+            provider_ids = {provider["id"] for provider in report["providers"]}
+            for status in scip_manager.status()["providers"]:
+                if status["provider_id"] in provider_ids:
+                    continue
+                report["providers"].append(
+                    {
+                        "id": status["provider_id"],
+                        "layer": "compiler-index",
+                        "available": True,
+                        "detected": True,
+                        "precision": "semantic",
+                        "capabilities": tuple(status["capabilities"]),
+                        "reason": status["stale_reason"] or "SCIP runtime is not admitted",
+                        "command": None,
+                        "version": status["tool"]["version"] or None,
+                        "admitted": False,
+                        "trust_ceiling": "semantic",
+                        "lifecycle": "workspace-scoped",
+                        "languages": tuple(status["languages"]),
+                        "incremental": False,
+                        "index_digest": status["index_digest"],
+                        "provider_fingerprint": status["provider_fingerprint"],
+                        "tool": status["tool"],
+                        "activation_revision": status["activation_revision"],
+                        "stale": status["stale"],
+                    }
+                )
+                provider_ids.add(status["provider_id"])
+
+            detected_count = sum(1 for provider in report["providers"] if provider["detected"])
+            admitted_count = sum(1 for provider in report["providers"] if provider["admitted"])
+            report["available_count"] = detected_count
+            report["detected_count"] = detected_count
+            report["admitted_count"] = admitted_count
+
+        return report
 
 
 # The preserved core has one self-reference for disposable child-workspace verification. Point it
