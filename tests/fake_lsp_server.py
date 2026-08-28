@@ -63,6 +63,34 @@ def wait_for_release(marker: str | None, release: str | None) -> None:
         time.sleep(0.01)
 
 
+def publish_diagnostics(uri: str, version: object, *, enabled: bool, version_offset: int) -> None:
+    if not enabled:
+        return
+    observed_version = version
+    if isinstance(version, int) and not isinstance(version, bool):
+        observed_version = version + version_offset
+    send({
+        "jsonrpc": "2.0",
+        "method": "textDocument/publishDiagnostics",
+        "params": {
+            "uri": uri,
+            "version": observed_version,
+            "diagnostics": [
+                {
+                    "range": {
+                        "start": {"line": 0, "character": 0},
+                        "end": {"line": 0, "character": 5},
+                    },
+                    "severity": 2,
+                    "code": "fake-diagnostic",
+                    "source": "habitat-fake-lsp",
+                    "message": "fake diagnostic",
+                }
+            ],
+        },
+    })
+
+
 def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument(
@@ -83,6 +111,8 @@ def main() -> int:
     parser.add_argument("--delay-marker")
     parser.add_argument("--release-marker")
     parser.add_argument("--startup-marker")
+    parser.add_argument("--publish-diagnostics", action="store_true")
+    parser.add_argument("--diagnostic-version-offset", type=int, default=0)
     args = parser.parse_args()
     documents: dict[str, dict] = {}
     cancellations: list[int] = []
@@ -147,16 +177,30 @@ def main() -> int:
             append_event(args.event_log, method, params)
             doc = params.get("textDocument") or {}
             uri = str(doc.get("uri") or "")
-            documents[uri] = {"version": doc.get("version"), "text": doc.get("text", "")}
+            version = doc.get("version")
+            documents[uri] = {"version": version, "text": doc.get("text", "")}
+            publish_diagnostics(
+                uri,
+                version,
+                enabled=args.publish_diagnostics,
+                version_offset=args.diagnostic_version_offset,
+            )
             continue
 
         if method == "textDocument/didChange":
             append_event(args.event_log, method, params)
             doc = params.get("textDocument") or {}
             uri = str(doc.get("uri") or "")
+            version = doc.get("version")
             changes = params.get("contentChanges") or []
             text = changes[-1].get("text", "") if changes and isinstance(changes[-1], dict) else ""
-            documents[uri] = {"version": doc.get("version"), "text": text}
+            documents[uri] = {"version": version, "text": text}
+            publish_diagnostics(
+                uri,
+                version,
+                enabled=args.publish_diagnostics,
+                version_offset=args.diagnostic_version_offset,
+            )
             continue
 
         if method == "textDocument/didClose":
