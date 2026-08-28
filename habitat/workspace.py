@@ -13,6 +13,7 @@ from .semantic.lsp_runtime import LspRuntimeManager
 from .semantic.lsp_transport import LspServerSpec
 from .semantic.runtime import build_default_semantic_registry
 from .semantic.scip_runtime import ScipIndexerSpec, ScipRuntimeManager
+from .services import IndexService, QueryService, RuntimeService, TransactionService
 from .truth import (
     claim_from_diagnostic_record,
     claim_from_evidence_row,
@@ -66,6 +67,11 @@ class HabitatWorkspace(_core.HabitatWorkspace):
         # ordinary workspace create/open/index/refresh never discovers or admits external semantics.
         self._lsp_runtime_manager: LspRuntimeManager | None = None
         self._scip_runtime_manager: ScipRuntimeManager | None = None
+        # Core-decomposition services are ownership seams only. Their constructors perform no work.
+        self._index_service: IndexService | None = None
+        self._query_service: QueryService | None = None
+        self._transaction_service: TransactionService | None = None
+        self._runtime_service: RuntimeService | None = None
         # Disagreement comparison is explicitly requested and never persisted in this wave. Keep
         # only one bounded summary for diagnostic Fabric projection; claims remain call-local.
         self._semantic_disagreement_state: dict | None = None
@@ -78,6 +84,34 @@ class HabitatWorkspace(_core.HabitatWorkspace):
             yield
         finally:
             _active_semantic_registry.reset(token)
+
+    def _indexing(self) -> IndexService:
+        service = self._index_service
+        if service is None:
+            service = IndexService(self)
+            self._index_service = service
+        return service
+
+    def _queries(self) -> QueryService:
+        service = self._query_service
+        if service is None:
+            service = QueryService(self)
+            self._query_service = service
+        return service
+
+    def _transactions(self) -> TransactionService:
+        service = self._transaction_service
+        if service is None:
+            service = TransactionService(self)
+            self._transaction_service = service
+        return service
+
+    def _runtime(self) -> RuntimeService:
+        service = self._runtime_service
+        if service is None:
+            service = RuntimeService(self)
+            self._runtime_service = service
+        return service
 
     def _compiler_state_fingerprint(self) -> str:
         with self._semantic_scope():
