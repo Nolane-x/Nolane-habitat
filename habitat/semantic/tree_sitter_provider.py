@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from importlib import metadata
 from pathlib import Path
 
 from .base import SemanticParseResult, SemanticProvider
@@ -56,6 +57,13 @@ def _relative_path(root: Path, path: Path) -> str:
         return path.resolve().relative_to(root.resolve()).as_posix()
     except (OSError, ValueError):
         return path.as_posix()
+
+
+def _package_version(name: str) -> str:
+    try:
+        return metadata.version(name)
+    except metadata.PackageNotFoundError:
+        return "missing"
 
 
 class TreeSitterProvider(SemanticProvider):
@@ -125,6 +133,16 @@ class TreeSitterProvider(SemanticProvider):
         detail = ",".join(sorted(loaded))
         self._probe_reason = f"Tree-sitter parsers smoke-tested for: {detail}"
         return True, self._probe_reason
+
+    def provider_fingerprint(self) -> str | None:
+        if not self.languages:
+            return None
+        languages = ",".join(sorted(self.languages))
+        return (
+            f"tree-sitter:{_package_version('tree-sitter')};"
+            f"language-pack:{_package_version('tree-sitter-language-pack')};"
+            f"languages:{languages}"
+        )
 
     def parse(self, root: Path, path: Path, text: str, file_id: str) -> SemanticParseResult:
         language = detect_language(path)
