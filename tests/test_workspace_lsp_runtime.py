@@ -10,7 +10,13 @@ from habitat.workspace import HabitatWorkspace
 from tests.support import WorkspaceTemporaryDirectory
 
 
-def fake_spec(startup_marker: Path, *, event_log: Path | None = None) -> LspServerSpec:
+def fake_spec(
+    startup_marker: Path,
+    *,
+    event_log: Path | None = None,
+    publish_diagnostics: bool = False,
+    stale_diagnostics_on_change: bool = False,
+) -> LspServerSpec:
     argv = [
         sys.executable,
         str(Path(__file__).with_name("fake_lsp_server.py")),
@@ -21,6 +27,10 @@ def fake_spec(startup_marker: Path, *, event_log: Path | None = None) -> LspServ
     ]
     if event_log is not None:
         argv.extend(("--event-log", str(event_log)))
+    if publish_diagnostics:
+        argv.append("--publish-diagnostics")
+    if stale_diagnostics_on_change:
+        argv.append("--stale-diagnostics-on-change")
     return LspServerSpec(
         provider_id="lsp.fake",
         languages=frozenset({"python"}),
@@ -85,6 +95,46 @@ class WorkspaceLspRuntimeTests(unittest.TestCase):
             )
             self.assertNotIn("rename", provider["capabilities"])
             self.assertNotIn("code-action", provider["capabilities"])
+
+    def test_passive_diagnostics_are_version_bound_and_stale_notifications_are_dropped(self):
+        with WorkspaceTemporaryDirectory() as temp:
+            ws, target = self.make_workspace(temp)
+            marker = Path(temp) / "server-started"
+            ws.lsp_activate(
+                fake_spec(
+                    marker,
+                    publish_diagnostics=True,
+                    stale_diagnostics_on_change=True,
+                )
+            )
+
+            ws.lsp_query(
+                "lsp.fake",
+                "definition",
+                target,
+                position={"line": 0, "character": 1},
+            )
+            first = ws.lsp_diagnostics("lsp.fake", target)
+            self.assertIsNotNone(first)
+            self.assertEqual(first["method"], "textDocument/publishDiagnostics")
+            self.assertEqual(first["trust"], "semantic")
+            self.assertEqual(first["revision"], ws.revision)
+            self.assertEqual(first["document_version"], 1)
+            self.assertEqual(first["result"][0]["code"], "fake-diagnostic")
+
+            target.write_text("value = 2\n", encoding="utf-8")
+            ws.refresh("diagnostic-source-change")
+            ws.lsp_query(
+                "lsp.fake",
+                "definition",
+                target,
+                position={"line": 0, "character": 1},
+            )
+
+            # The fake server deliberately publishes the previous LSP document version after the
+            # change. Habitat must invalidate the old current diagnostic and refuse to promote the
+            # stale notification as current semantic truth.
+            self.assertIsNone(ws.lsp_diagnostics("lsp.fake", target))
 
     def test_workspace_close_closes_lsp_documents_before_core_storage(self):
         with WorkspaceTemporaryDirectory() as temp:
