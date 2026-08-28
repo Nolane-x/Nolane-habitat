@@ -32,7 +32,7 @@ class WorkspaceServiceOwnershipTests(unittest.TestCase):
                 index = ws._indexing()
                 query = ws._queries()
                 transaction = ws._transactions()
-                runtime = ws._runtime()
+                runtime = ws._runtime_operations()
 
                 self.assertIsInstance(index, IndexService)
                 self.assertIsInstance(query, QueryService)
@@ -41,9 +41,13 @@ class WorkspaceServiceOwnershipTests(unittest.TestCase):
                 self.assertIs(index, ws._indexing())
                 self.assertIs(query, ws._queries())
                 self.assertIs(transaction, ws._transactions())
-                self.assertIs(runtime, ws._runtime())
+                self.assertIs(runtime, ws._runtime_operations())
             finally:
                 ws.close()
+
+    def test_runtime_service_does_not_shadow_existing_browser_runtime_accessor(self):
+        self.assertNotIn("_runtime", HabitatWorkspace.__dict__)
+        self.assertIn("_runtime", HabitatWorkspace.__mro__[1].__dict__)
 
     def test_service_construction_performs_no_workspace_operation(self):
         with WorkspaceTemporaryDirectory() as temp:
@@ -61,7 +65,7 @@ class WorkspaceServiceOwnershipTests(unittest.TestCase):
                     ws._indexing()
                     ws._queries()
                     ws._transactions()
-                    ws._runtime()
+                    ws._runtime_operations()
 
                 self.assertIsNone(getattr(ws, "_lsp_runtime_manager", None))
                 self.assertIsNone(getattr(ws, "_scip_runtime_manager", None))
