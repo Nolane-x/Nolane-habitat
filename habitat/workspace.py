@@ -155,6 +155,9 @@ class HabitatWorkspace(_core.HabitatWorkspace):
         return super().stage_change(operations, episode_id, agent_id, lease_ttl_s, approval_id)
 
     def semantic_fabric(self) -> dict:
+        manager = self._lsp_runtime_manager
+        if manager is not None:
+            manager.reconcile_admissions()
         return semantic_fabric_report(self.source_root, semantic_registry=self.semantic_registry)
 
 
