@@ -75,5 +75,13 @@ class SemanticProvider:
     def available(self) -> tuple[bool, str]:
         raise NotImplementedError
 
+    def provider_fingerprint(self) -> str | None:
+        """Return deterministic runtime identity that can invalidate semantic cache artifacts.
+
+        Providers without an external/runtime identity may return ``None``. The fingerprint is
+        diagnostic/cache provenance only; it never grants admission or authority.
+        """
+        return None
+
     def parse(self, root: Path, path: Path, text: str, file_id: str) -> SemanticParseResult:
         raise NotImplementedError
