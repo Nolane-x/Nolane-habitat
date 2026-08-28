@@ -8,6 +8,8 @@ from . import _workspace_core as _core
 from .mutation import TransactionConflict
 from .semantic.admission import SemanticAdmissionRegistry
 from .semantic.fabric import semantic_fabric_report
+from .semantic.lsp_runtime import LspRuntimeManager
+from .semantic.lsp_transport import LspServerSpec
 from .semantic.runtime import build_default_semantic_registry
 
 
@@ -45,6 +47,9 @@ class HabitatWorkspace(_core.HabitatWorkspace):
     def __init__(self, habitat_dir: Path):
         # Recovery may refresh during the core constructor, so admission authority must exist first.
         self.semantic_registry = build_default_semantic_registry()
+        # A manager object is cheap and process-free, but keep even that lazy so ordinary workspaces
+        # retain their previous lifecycle until an explicit LSP facade operation is requested.
+        self._lsp_runtime_manager: LspRuntimeManager | None = None
         super().__init__(habitat_dir)
 
     @contextmanager
@@ -74,6 +79,50 @@ class HabitatWorkspace(_core.HabitatWorkspace):
     def counterfactual_evaluate(self, world_id: str) -> dict:
         with self._semantic_scope():
             return super().counterfactual_evaluate(world_id)
+
+    def _lsp_manager(self) -> LspRuntimeManager:
+        manager = self._lsp_runtime_manager
+        if manager is None:
+            manager = LspRuntimeManager(
+                self.source_root,
+                semantic_registry=self.semantic_registry,
+                revision_getter=lambda: self.revision,
+            )
+            self._lsp_runtime_manager = manager
+        return manager
+
+    def lsp_activate(self, spec: LspServerSpec) -> dict:
+        """Explicitly activate one workspace-scoped read-only LSP provider."""
+        return self._lsp_manager().activate(spec)
+
+    def lsp_status(self) -> dict:
+        """Report workspace LSP runtime state without spawning a language server."""
+        return self._lsp_manager().status()
+
+    def lsp_query(
+        self,
+        provider_id: str,
+        capability: str,
+        path: Path,
+        *,
+        position: dict | None = None,
+    ) -> object:
+        """Query one admitted read-only LSP capability against current source truth."""
+        return self._lsp_manager().query(
+            provider_id,
+            capability,
+            path,
+            position=position,
+        )
+
+    def close(self) -> None:
+        # Language servers may still need the source materialization and admission registry while
+        # sending didClose/shutdown. Close them before the core closes backend/store authority.
+        manager = self._lsp_runtime_manager
+        self._lsp_runtime_manager = None
+        if manager is not None:
+            manager.close()
+        super().close()
 
     def stage_change(
         self,
