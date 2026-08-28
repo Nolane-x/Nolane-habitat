@@ -23,10 +23,11 @@ class SemanticProviderAdmission:
 class SemanticAdmissionRegistry:
     """Gate semantic providers from host detection to Habitat admission.
 
-    Registration establishes provider identity and descriptor validity. Probing records whether the
-    provider is actually available on the current host. Admission is a separate, explicit decision
-    that requires both a successful probe and concrete evidence. Capability selection only exposes
-    providers that have crossed all three gates.
+    Registration establishes stable provider identity and descriptor validity. Probing records
+    whether the provider is actually available on the current host and refreshes dynamic capability
+    metadata such as grammars discovered by a runtime probe. Admission is a separate, explicit
+    decision that requires both a successful probe and concrete evidence. Capability selection only
+    exposes providers that have crossed all three gates.
     """
 
     def __init__(self) -> None:
@@ -47,6 +48,12 @@ class SemanticAdmissionRegistry:
         provider = self._provider(provider_id)
         self._admissions.pop(provider_id, None)
         detected, reason = provider.available()
+        refreshed = provider.descriptor()
+        if refreshed.id != provider_id:
+            raise ValueError(
+                f"semantic provider identity changed during probe: {provider_id} -> {refreshed.id}"
+            )
+        self._descriptors[provider_id] = refreshed
         result = SemanticProviderProbe(provider_id, bool(detected), str(reason or ""))
         self._probes[provider_id] = result
         return result
