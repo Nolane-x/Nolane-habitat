@@ -109,6 +109,7 @@ class LspRuntimeManagerTests(unittest.TestCase):
             self.assertEqual(first["document_version"], 1)
 
             self.source.write_text("value = 2\n", encoding="utf-8")
+            actual_source_text = self.source.read_bytes().decode("utf-8")
             self.revision[0] = "r2"
             second = manager.query(
                 "lsp.fake",
@@ -126,7 +127,7 @@ class LspRuntimeManagerTests(unittest.TestCase):
             self.assertEqual(opens[0]["params"]["textDocument"]["languageId"], "python")
             self.assertEqual(len(changes), 1)
             self.assertEqual(changes[0]["params"]["textDocument"]["version"], 2)
-            self.assertEqual(changes[0]["params"]["contentChanges"], [{"text": "value = 2\n"}])
+            self.assertEqual(changes[0]["params"]["contentChanges"], [{"text": actual_source_text}])
         finally:
             manager.close()
 
