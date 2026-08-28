@@ -16,8 +16,14 @@ class _AvailableProvider(SemanticProvider):
     capabilities = frozenset({"parse", "diagnostics"})
     lifecycle = "stateless"
 
+    def __init__(self) -> None:
+        self.fingerprint = "provider-v1"
+
     def available(self) -> tuple[bool, str]:
         return True, "probe succeeded"
+
+    def provider_fingerprint(self) -> str | None:
+        return self.fingerprint
 
     def parse(self, root: Path, path: Path, text: str, file_id: str) -> SemanticParseResult:
         return SemanticParseResult(self.id, True, reason="available")
@@ -122,6 +128,22 @@ class SemanticAdmissionRegistryTests(unittest.TestCase):
             ("available-provider",),
             tuple(p.id for p in registry.providers_for("parse", language="python")),
         )
+
+    def test_cache_identity_tracks_provider_runtime_fingerprint(self):
+        api = self.admission_api()
+        registry = api.SemanticAdmissionRegistry()
+        provider = _AvailableProvider()
+        registry.register(provider)
+        registry.probe(provider.id)
+        registry.admit(provider.id, evidence=("probe:test",))
+
+        first = registry.cache_identity("parse", language="python")
+        self.assertEqual("provider-v1", first[0]["provider_fingerprint"])
+
+        provider.fingerprint = "provider-v2"
+        second = registry.cache_identity("parse", language="python")
+        self.assertEqual("provider-v2", second[0]["provider_fingerprint"])
+        self.assertNotEqual(first, second)
 
 
 if __name__ == "__main__":
