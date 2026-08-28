@@ -56,6 +56,20 @@ class LspTransportTests(unittest.TestCase):
         with self.assertRaises(LspProtocolError):
             LspFrameDecoder(max_body_bytes=32).feed(b"Content-Length: 100\r\n\r\n")
 
+    def test_decoder_rejects_unterminated_header_beyond_bound(self):
+        from habitat.semantic.lsp_transport import LspFrameDecoder, LspProtocolError
+
+        decoder = LspFrameDecoder(max_header_bytes=32)
+        with self.assertRaises(LspProtocolError):
+            decoder.feed(b"X-Habitat: " + b"a" * 40)
+
+    def test_decoder_rejects_terminated_header_beyond_bound(self):
+        from habitat.semantic.lsp_transport import LspFrameDecoder, LspProtocolError
+
+        decoder = LspFrameDecoder(max_header_bytes=32)
+        with self.assertRaises(LspProtocolError):
+            decoder.feed(b"X-Habitat: " + b"a" * 40 + b"\r\nContent-Length: 2\r\n\r\n{}")
+
     def test_decoder_rejects_invalid_utf8(self):
         from habitat.semantic.lsp_transport import LspFrameDecoder, LspProtocolError
 
