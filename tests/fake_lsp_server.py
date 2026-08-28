@@ -113,9 +113,12 @@ def main() -> int:
         choices=(
             "normal",
             "initialize-error",
+            "hang-initialize",
+            "exit-during-initialize",
             "crash-after-init",
             "hang-request",
             "malformed-frame",
+            "ignore-shutdown",
             "unsupported-capability",
             "stderr-spam",
             "controlled-delay",
@@ -162,6 +165,10 @@ def main() -> int:
             if args.mode == "initialize-error":
                 send({"jsonrpc": "2.0", "id": request_id, "error": {"code": -32002, "message": "fake initialize failure"}})
                 continue
+            if args.mode == "hang-initialize":
+                continue
+            if args.mode == "exit-during-initialize":
+                return 25
             capabilities = {
                 "definitionProvider": args.mode != "unsupported-capability",
                 "referencesProvider": True,
@@ -185,10 +192,14 @@ def main() -> int:
             continue
 
         if method == "shutdown" and request_id is not None:
+            if args.mode == "ignore-shutdown":
+                continue
             send({"jsonrpc": "2.0", "id": request_id, "result": None})
             continue
 
         if method == "exit":
+            if args.mode == "ignore-shutdown":
+                continue
             return 0
 
         if method == "$/cancelRequest":
