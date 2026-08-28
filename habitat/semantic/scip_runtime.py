@@ -2,6 +2,8 @@ from __future__ import annotations
 
 import hashlib
 import json
+import os
+import subprocess
 from dataclasses import dataclass
 from pathlib import Path, PurePosixPath
 from typing import Any, Callable
@@ -11,8 +13,58 @@ from .scip_index import ScipIndexSnapshot, parse_scip_index
 from .scip_provider import ScipSemanticProvider
 
 
+DEFAULT_SCIP_INDEXER_TIMEOUT_S = 120.0
+SCIP_CAPTURE_RETAIN_BYTES = 64 * 1024
+SCIP_TERMINATE_GRACE_S = 2.0
+
+
 class ScipStaleIndexError(RuntimeError):
     """Raised when an activated SCIP snapshot no longer matches current source truth."""
+
+
+class ScipGenerationError(RuntimeError):
+    """Raised when an explicit SCIP indexer command fails before activation."""
+
+    def __init__(self, status: dict[str, Any]):
+        self.status = dict(status)
+        message = str(self.status.get("error") or "SCIP index generation failed")
+        super().__init__(message)
+
+
+@dataclass(frozen=True)
+class ScipIndexerSpec:
+    provider_id: str
+    argv: tuple[str, ...]
+    output_path: Path
+    timeout_s: float = DEFAULT_SCIP_INDEXER_TIMEOUT_S
+    env: tuple[tuple[str, str], ...] = ()
+
+    def __post_init__(self) -> None:
+        if not isinstance(self.provider_id, str) or not self.provider_id.strip():
+            raise ValueError("SCIP indexer provider_id must be a non-empty string")
+        if not isinstance(self.argv, tuple) or not self.argv:
+            raise ValueError("SCIP indexer argv must be a non-empty tuple")
+        if any(not isinstance(item, str) or not item or "\x00" in item for item in self.argv):
+            raise ValueError("SCIP indexer argv entries must be non-empty NUL-free strings")
+        if not isinstance(self.output_path, Path):
+            raise TypeError("SCIP indexer output_path must be a pathlib.Path")
+        if isinstance(self.timeout_s, bool) or not isinstance(self.timeout_s, (int, float)) or self.timeout_s <= 0:
+            raise ValueError("SCIP indexer timeout_s must be a positive number")
+        if not isinstance(self.env, tuple):
+            raise TypeError("SCIP indexer env must be a tuple of key/value pairs")
+        for item in self.env:
+            if not isinstance(item, tuple) or len(item) != 2:
+                raise ValueError("SCIP indexer env entries must be (key, value) tuples")
+            key, value = item
+            if (
+                not isinstance(key, str)
+                or not key
+                or "=" in key
+                or "\x00" in key
+                or not isinstance(value, str)
+                or "\x00" in value
+            ):
+                raise ValueError("SCIP indexer env entries must contain valid NUL-free strings")
 
 
 @dataclass
@@ -101,6 +153,77 @@ class ScipRuntimeManager:
         )
         self._providers[normalized_provider_id] = state
         return self._status_entry(state)
+
+    def generate(self, spec: ScipIndexerSpec) -> dict[str, Any]:
+        """Run one explicit shell-free indexer command, validate its output, then activate it."""
+        if not isinstance(spec, ScipIndexerSpec):
+            raise TypeError("SCIP generation requires ScipIndexerSpec")
+        output_path = self._generation_output_path(spec.output_path)
+        environment = os.environ.copy()
+        for key, value in spec.env:
+            environment[key] = value
+
+        status: dict[str, Any] = {
+            "provider_id": spec.provider_id,
+            "argv": list(spec.argv),
+            "cwd": str(self.root),
+            "output_path": str(output_path),
+            "exit_code": None,
+            "timed_out": False,
+            "stdout": "",
+            "stderr": "",
+            "stdout_total_bytes": 0,
+            "stderr_total_bytes": 0,
+            "stdout_truncated": False,
+            "stderr_truncated": False,
+            "error": "",
+        }
+
+        try:
+            process = subprocess.Popen(
+                list(spec.argv),
+                cwd=self.root,
+                shell=False,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                env=environment,
+            )
+        except OSError as exc:
+            status["error"] = f"failed to start SCIP indexer: {exc}"
+            raise ScipGenerationError(status) from exc
+
+        stdout = b""
+        stderr = b""
+        try:
+            stdout, stderr = process.communicate(timeout=float(spec.timeout_s))
+        except subprocess.TimeoutExpired:
+            status["timed_out"] = True
+            process.terminate()
+            try:
+                stdout, stderr = process.communicate(timeout=SCIP_TERMINATE_GRACE_S)
+            except subprocess.TimeoutExpired:
+                process.kill()
+                stdout, stderr = process.communicate()
+
+        stdout = stdout or b""
+        stderr = stderr or b""
+        status["exit_code"] = process.returncode
+        self._retain_generation_stream(status, "stdout", stdout)
+        self._retain_generation_stream(status, "stderr", stderr)
+
+        if status["timed_out"]:
+            status["error"] = f"SCIP indexer timed out after {float(spec.timeout_s):g}s"
+            raise ScipGenerationError(status)
+        if process.returncode != 0:
+            status["error"] = f"SCIP indexer exited with status {process.returncode}"
+            raise ScipGenerationError(status)
+        if not output_path.is_file():
+            status["error"] = "SCIP indexer completed successfully but output file was not produced"
+            raise ScipGenerationError(status)
+
+        activated = self.activate(output_path, provider_id=spec.provider_id)
+        activated["generation"] = status
+        return activated
 
     def definitions(self, provider_id: str, symbol: str) -> dict[str, Any]:
         state = self._require_fresh(provider_id)
@@ -222,6 +345,17 @@ class ScipRuntimeManager:
             raise ValueError("SCIP document query requires a file below the source root")
         return value
 
+    def _generation_output_path(self, path: Path) -> Path:
+        raw = Path(path)
+        candidate = raw.resolve() if raw.is_absolute() else (self.root / raw).resolve()
+        try:
+            candidate.relative_to(self.root)
+        except ValueError as exc:
+            raise ValueError(f"SCIP generation output escapes workspace root: {path}") from exc
+        if candidate.suffix != ".scip":
+            raise ValueError("SCIP generation output must be a .scip artifact")
+        return candidate
+
     def _provider_id(self, snapshot: ScipIndexSnapshot, provider_id: str | None) -> str:
         if provider_id is None:
             tool = "".join(ch if ch.isalnum() or ch in {"-", "_"} else "-" for ch in snapshot.tool.name)
@@ -236,6 +370,14 @@ class ScipRuntimeManager:
         if not isinstance(value, str) or not value:
             raise ValueError("SCIP runtime requires a non-empty Habitat revision")
         return value
+
+    @staticmethod
+    def _retain_generation_stream(status: dict[str, Any], name: str, payload: bytes) -> None:
+        total = len(payload)
+        retained = payload[-SCIP_CAPTURE_RETAIN_BYTES:]
+        status[f"{name}_total_bytes"] = total
+        status[f"{name}_truncated"] = total > len(retained)
+        status[name] = retained.decode("utf-8", errors="replace")
 
     @staticmethod
     def _sha256_file(path: Path) -> str:
@@ -300,4 +442,9 @@ class ScipRuntimeManager:
         }
 
 
-__all__ = ["ScipRuntimeManager", "ScipStaleIndexError"]
+__all__ = [
+    "ScipGenerationError",
+    "ScipIndexerSpec",
+    "ScipRuntimeManager",
+    "ScipStaleIndexError",
+]
