@@ -7,11 +7,13 @@ from pathlib import Path
 from . import _workspace_core as _core
 from .mutation import TransactionConflict
 from .semantic.admission import SemanticAdmissionRegistry
+from .semantic.comparison import SemanticComparisonStaleError, compare_parse_providers
 from .semantic.fabric import semantic_fabric_report
 from .semantic.lsp_runtime import LspRuntimeManager
 from .semantic.lsp_transport import LspServerSpec
 from .semantic.runtime import build_default_semantic_registry
 from .semantic.scip_runtime import ScipIndexerSpec, ScipRuntimeManager
+from .util import sha256_file
 
 
 _active_semantic_registry: ContextVar[SemanticAdmissionRegistry | None] = ContextVar(
@@ -52,6 +54,9 @@ class HabitatWorkspace(_core.HabitatWorkspace):
         # ordinary workspace create/open/index/refresh never discovers or admits external semantics.
         self._lsp_runtime_manager: LspRuntimeManager | None = None
         self._scip_runtime_manager: ScipRuntimeManager | None = None
+        # Disagreement comparison is explicitly requested and never persisted in this wave. Keep
+        # only one bounded summary for diagnostic Fabric projection; claims remain call-local.
+        self._semantic_disagreement_state: dict | None = None
         super().__init__(habitat_dir)
 
     @contextmanager
@@ -156,9 +161,62 @@ class HabitatWorkspace(_core.HabitatWorkspace):
         """Return one fresh source-bound SCIP document projection."""
         return self._scip_manager().document(provider_id, path)
 
+    def _semantic_comparison_source(self, path: Path) -> tuple[Path, str]:
+        """Resolve one comparison path without performing refresh or semantic work."""
+        root = self.source_root.resolve()
+        raw = Path(path)
+        resolved = raw.resolve() if raw.is_absolute() else (root / raw).resolve()
+        try:
+            relative = resolved.relative_to(root).as_posix()
+        except ValueError as exc:
+            raise ValueError(f"semantic comparison path escapes source root: {path}") from exc
+        if not relative or relative == "." or not resolved.is_file():
+            raise ValueError(f"semantic comparison requires a source file below root: {path}")
+        return resolved, relative
+
+    def semantic_disagreements(self, path: Path) -> dict:
+        """Explicitly compare admitted parse providers against one indexed source snapshot."""
+        # Read-only semantic queries must never refresh source implicitly: refresh/compile can execute
+        # an admitted primary provider before this explicit comparison. Resolve containment first,
+        # then fail closed if canonical source no longer matches the workspace's indexed digest.
+        source, relative = self._semantic_comparison_source(path)
+        indexed = self.store.file_by_path(relative)
+        if indexed is None:
+            raise SemanticComparisonStaleError(
+                f"workspace has no indexed source snapshot for {relative}; explicit reconcile required"
+            )
+        indexed_digest = str(indexed["digest"])
+        current_digest = sha256_file(source)
+        if current_digest != indexed_digest:
+            raise SemanticComparisonStaleError(
+                f"source digest changed since workspace revision for {relative}; explicit reconcile required"
+            )
+
+        revision = self.revision
+        report = compare_parse_providers(
+            self.source_root,
+            source,
+            self.semantic_registry,
+            revision,
+            revision_getter=lambda: self.revision,
+        )
+        self._semantic_disagreement_state = {
+            "path": report["path"],
+            "revision": report["revision"],
+            "source_digest": report["source_digest"],
+            "provider_count": len(report["provider_ids"]),
+            "claim_count": report["claim_count"],
+            "disagreement_count": report["disagreement_count"],
+            "comparison_complete": report["comparison_complete"],
+            "truncated": report["truncated"],
+        }
+        return report
+
     def close(self) -> None:
         # Semantic runtimes may still need source materialization and the admission registry while
         # closing/revoking. Close them before the core closes backend/store authority.
+        self._semantic_disagreement_state = None
+
         scip_manager = self._scip_runtime_manager
         self._scip_runtime_manager = None
         if scip_manager is not None:
@@ -245,6 +303,12 @@ class HabitatWorkspace(_core.HabitatWorkspace):
             report["available_count"] = detected_count
             report["detected_count"] = detected_count
             report["admitted_count"] = admitted_count
+
+        if self._semantic_disagreement_state is not None:
+            state = dict(self._semantic_disagreement_state)
+            state["current_revision"] = self.revision
+            state["stale"] = state["revision"] != self.revision
+            report["semantic_disagreement_state"] = state
 
         return report
 
