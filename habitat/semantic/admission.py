@@ -44,6 +44,29 @@ class SemanticAdmissionRegistry:
         self._descriptors[descriptor.id] = descriptor
         return descriptor
 
+    def is_registered(self, provider_id: str) -> bool:
+        return provider_id in self._providers
+
+    def rebind(self, provider: SemanticProvider) -> SemanticProviderDescriptor:
+        """Replace a revoked provider runtime while preserving its stable provider identity.
+
+        Rebinding is intentionally narrower than registration: the identity must already exist and
+        must not currently be admitted. Any old probe is discarded because a new runtime process,
+        negotiated capability set, or fingerprint requires a fresh probe and fresh admission
+        evidence before the provider becomes selectable again.
+        """
+        descriptor = provider.descriptor()
+        provider_id = descriptor.id
+        if provider_id not in self._providers:
+            raise ValueError(f"semantic provider is not registered: {provider_id}")
+        if self.is_admitted(provider_id):
+            raise ValueError(f"semantic provider must be revoked before rebind: {provider_id}")
+        self._providers[provider_id] = provider
+        self._descriptors[provider_id] = descriptor
+        self._probes.pop(provider_id, None)
+        self._admissions.pop(provider_id, None)
+        return descriptor
+
     def probe(self, provider_id: str) -> SemanticProviderProbe:
         provider = self._provider(provider_id)
         self._admissions.pop(provider_id, None)
@@ -71,6 +94,20 @@ class SemanticAdmissionRegistry:
         result = SemanticProviderAdmission(provider_id, True, normalized)
         self._admissions[provider_id] = result
         return result
+
+    def revoke(self, provider_id: str, reason: str = "") -> SemanticProviderAdmission:
+        """Revoke active admission without erasing provider identity or probe history."""
+        self._provider(provider_id)
+        previous = self._admissions.pop(provider_id, None)
+        evidence = list(previous.evidence if previous is not None else ())
+        normalized_reason = str(reason or "").strip()
+        if normalized_reason:
+            evidence.append(f"revoked: {normalized_reason}")
+        return SemanticProviderAdmission(provider_id, False, tuple(evidence))
+
+    def is_admitted(self, provider_id: str) -> bool:
+        admission = self._admissions.get(provider_id)
+        return bool(admission is not None and admission.admitted)
 
     def providers_for(self, capability: str, *, language: str | None = None) -> tuple[SemanticProvider, ...]:
         selected: list[SemanticProvider] = []

@@ -49,6 +49,28 @@ def _find_first(commands: Iterable[str]) -> str | None:
     return None
 
 
+def _admitted_runtime_identities(registry: SemanticAdmissionRegistry) -> list[dict]:
+    """Return one deterministic identity per admitted semantic provider.
+
+    Registry selection is capability-scoped by design, so the diagnostic fabric queries the
+    fixed read-only semantic lanes it knows how to describe and de-duplicates by provider id.
+    Host detection is intentionally absent from this path: a binary on PATH can never create an
+    admitted identity.
+    """
+    by_id: dict[str, dict] = {}
+    for capability in (
+        "parse",
+        "definition",
+        "references",
+        "hover",
+        "document-symbols",
+        "diagnostics",
+    ):
+        for identity in registry.cache_identity(capability):
+            by_id[identity["provider_id"]] = identity
+    return [by_id[provider_id] for provider_id in sorted(by_id)]
+
+
 def semantic_fabric_report(
     root: Path,
     *,
@@ -110,7 +132,7 @@ def semantic_fabric_report(
 
     if semantic_registry is not None:
         provider_by_id = {provider["id"]: provider for provider in providers}
-        for identity in semantic_registry.cache_identity("parse"):
+        for identity in _admitted_runtime_identities(semantic_registry):
             runtime_provider = {
                 "id": identity["provider_id"],
                 "layer": identity["layer"],

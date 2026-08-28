@@ -8,6 +8,8 @@ from . import _workspace_core as _core
 from .mutation import TransactionConflict
 from .semantic.admission import SemanticAdmissionRegistry
 from .semantic.fabric import semantic_fabric_report
+from .semantic.lsp_runtime import LspRuntimeManager
+from .semantic.lsp_transport import LspServerSpec
 from .semantic.runtime import build_default_semantic_registry
 
 
@@ -45,6 +47,9 @@ class HabitatWorkspace(_core.HabitatWorkspace):
     def __init__(self, habitat_dir: Path):
         # Recovery may refresh during the core constructor, so admission authority must exist first.
         self.semantic_registry = build_default_semantic_registry()
+        # A manager object is cheap and process-free, but keep even that lazy so ordinary workspaces
+        # retain their previous lifecycle until an explicit LSP facade operation is requested.
+        self._lsp_runtime_manager: LspRuntimeManager | None = None
         super().__init__(habitat_dir)
 
     @contextmanager
@@ -75,6 +80,54 @@ class HabitatWorkspace(_core.HabitatWorkspace):
         with self._semantic_scope():
             return super().counterfactual_evaluate(world_id)
 
+    def _lsp_manager(self) -> LspRuntimeManager:
+        manager = self._lsp_runtime_manager
+        if manager is None:
+            manager = LspRuntimeManager(
+                self.source_root,
+                semantic_registry=self.semantic_registry,
+                revision_getter=lambda: self.revision,
+            )
+            self._lsp_runtime_manager = manager
+        return manager
+
+    def lsp_activate(self, spec: LspServerSpec) -> dict:
+        """Explicitly activate one workspace-scoped read-only LSP provider."""
+        return self._lsp_manager().activate(spec)
+
+    def lsp_status(self) -> dict:
+        """Report workspace LSP runtime state without spawning a language server."""
+        return self._lsp_manager().status()
+
+    def lsp_query(
+        self,
+        provider_id: str,
+        capability: str,
+        path: Path,
+        *,
+        position: dict | None = None,
+    ) -> object:
+        """Query one admitted read-only LSP capability against current source truth."""
+        return self._lsp_manager().query(
+            provider_id,
+            capability,
+            path,
+            position=position,
+        )
+
+    def lsp_diagnostics(self, provider_id: str, path: Path) -> dict | None:
+        """Return latest fresh passive diagnostics; None means no current version-bound snapshot."""
+        return self._lsp_manager().diagnostics(provider_id, path)
+
+    def close(self) -> None:
+        # Language servers may still need the source materialization and admission registry while
+        # sending didClose/shutdown. Close them before the core closes backend/store authority.
+        manager = self._lsp_runtime_manager
+        self._lsp_runtime_manager = None
+        if manager is not None:
+            manager.close()
+        super().close()
+
     def stage_change(
         self,
         operations: list[dict],
@@ -83,10 +136,10 @@ class HabitatWorkspace(_core.HabitatWorkspace):
         lease_ttl_s: float = 120.0,
         approval_id: str | None = None,
     ) -> dict:
-        # Trust grade describes evidence quality, not authority. Parser/heuristic/derived symbols are
-        # useful for navigation and recovery but cannot authorize source replacement. Exact and
-        # semantic anchors preserve the alpha.19 mutation path while admitted syntax providers stay
-        # non-authoritative by construction.
+        # Trust grade describes evidence quality, not action authority. Until the explicit Authority
+        # Kernel lands, replace_symbol_source is intentionally conservative: only an exact source
+        # anchor may authorize source replacement. Semantic/LSP/parser/derived evidence remains
+        # read-only input to cognition, navigation, impact analysis, and verification.
         for operation in operations if isinstance(operations, list) else ():
             if not isinstance(operation, dict) or operation.get("op") != "replace_symbol_source":
                 continue
@@ -94,14 +147,17 @@ class HabitatWorkspace(_core.HabitatWorkspace):
             if not isinstance(symbol_id, str) or not symbol_id:
                 continue
             symbol = self.store.symbol_by_id(symbol_id)
-            if symbol is not None and symbol["trust"] not in {"exact", "semantic"}:
+            if symbol is not None and symbol["trust"] != "exact":
                 raise TransactionConflict(
-                    "semantic mutation requires an exact or semantic source anchor; "
-                    f"{symbol['trust']} evidence is non-authoritative"
+                    "source mutation requires an exact source-authorized anchor; "
+                    f"{symbol['trust']} evidence is read-only and non-authoritative"
                 )
         return super().stage_change(operations, episode_id, agent_id, lease_ttl_s, approval_id)
 
     def semantic_fabric(self) -> dict:
+        manager = self._lsp_runtime_manager
+        if manager is not None:
+            manager.reconcile_admissions()
         return semantic_fabric_report(self.source_root, semantic_registry=self.semantic_registry)
 
 
