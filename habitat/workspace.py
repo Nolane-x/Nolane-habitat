@@ -11,7 +11,7 @@ from .semantic.fabric import semantic_fabric_report
 from .semantic.lsp_runtime import LspRuntimeManager
 from .semantic.lsp_transport import LspServerSpec
 from .semantic.runtime import build_default_semantic_registry
-from .semantic.scip_runtime import ScipRuntimeManager
+from .semantic.scip_runtime import ScipIndexerSpec, ScipRuntimeManager
 
 
 _active_semantic_registry: ContextVar[SemanticAdmissionRegistry | None] = ContextVar(
@@ -135,6 +135,10 @@ class HabitatWorkspace(_core.HabitatWorkspace):
     def scip_activate(self, index_path: Path, provider_id: str | None = None) -> dict:
         """Explicitly activate one bounded read-only SCIP index provider."""
         return self._scip_manager().activate(index_path, provider_id=provider_id)
+
+    def scip_generate(self, spec: ScipIndexerSpec) -> dict:
+        """Explicitly generate and activate one bounded read-only SCIP index."""
+        return self._scip_manager().generate(spec)
 
     def scip_status(self) -> dict:
         """Report SCIP runtime state without discovering or parsing any index automatically."""
