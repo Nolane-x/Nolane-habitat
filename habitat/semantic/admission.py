@@ -79,6 +79,33 @@ class SemanticAdmissionRegistry:
             selected.append(provider)
         return tuple(selected)
 
+    def cache_identity(self, capability: str, *, language: str | None = None) -> list[dict]:
+        """Return deterministic identity for admitted providers visible to one capability lane."""
+        identities = []
+        for provider_id, provider in self._providers.items():
+            admission = self._admissions.get(provider_id)
+            if admission is None or not admission.admitted:
+                continue
+            descriptor = self._descriptors[provider_id]
+            if capability not in descriptor.capabilities:
+                continue
+            if language is not None and language not in descriptor.languages:
+                continue
+            probe = self._probes.get(provider_id)
+            identities.append({
+                "provider_id": descriptor.id,
+                "languages": sorted(descriptor.languages),
+                "layer": descriptor.layer,
+                "trust_ceiling": descriptor.trust_ceiling,
+                "capabilities": sorted(descriptor.capabilities),
+                "lifecycle": descriptor.lifecycle,
+                "incremental": bool(descriptor.incremental),
+                "probe_reason": probe.reason if probe is not None else "",
+                "admission_evidence": list(admission.evidence),
+            })
+        identities.sort(key=lambda item: item["provider_id"])
+        return identities
+
     def _provider(self, provider_id: str) -> SemanticProvider:
         provider = self._providers.get(provider_id)
         if provider is None:
