@@ -3,7 +3,59 @@ from __future__ import annotations
 from pathlib import Path
 
 from .base import SemanticParseResult, SemanticProvider
-from ..util import detect_language
+from ..model import DiagnosticRecord, SymbolRecord
+from ..util import detect_language, stable_id
+
+
+_DECLARATIONS: dict[str, dict[str, str]] = {
+    "python": {
+        "class_definition": "class",
+        "function_definition": "function",
+    },
+    "javascript": {
+        "class_declaration": "class",
+        "function_declaration": "function",
+        "generator_function_declaration": "function",
+        "method_definition": "method",
+    },
+    "typescript": {
+        "class_declaration": "class",
+        "function_declaration": "function",
+        "generator_function_declaration": "function",
+        "method_definition": "method",
+        "interface_declaration": "interface",
+        "type_alias_declaration": "type",
+        "enum_declaration": "enum",
+        "method_signature": "method",
+        "abstract_method_signature": "method",
+    },
+    "java": {
+        "class_declaration": "class",
+        "interface_declaration": "interface",
+        "enum_declaration": "enum",
+        "method_declaration": "method",
+        "constructor_declaration": "constructor",
+    },
+}
+
+_SCOPE_KINDS = {"class", "interface", "enum", "function", "method", "constructor"}
+
+
+def _row(point: object) -> int:
+    value = getattr(point, "row", None)
+    if isinstance(value, int):
+        return value
+    try:
+        return int(point[0])  # type: ignore[index]
+    except Exception:
+        return 0
+
+
+def _relative_path(root: Path, path: Path) -> str:
+    try:
+        return path.resolve().relative_to(root.resolve()).as_posix()
+    except (OSError, ValueError):
+        return path.as_posix()
 
 
 class TreeSitterProvider(SemanticProvider):
@@ -81,11 +133,98 @@ class TreeSitterProvider(SemanticProvider):
             if not detected or language not in self._parsers:
                 return SemanticParseResult(self.id, False, reason=reason)
         parser = self._parsers[language]
+        source = text.encode("utf-8", errors="replace")
         try:
-            tree = parser.parse(text.encode("utf-8", errors="replace"))
+            tree = parser.parse(source)
             root_node = getattr(tree, "root_node", None)
             if root_node is None:
                 return SemanticParseResult(self.id, False, reason="Tree-sitter returned no root node")
         except Exception as exc:
             return SemanticParseResult(self.id, False, reason=f"Tree-sitter parse failed: {exc}")
-        return SemanticParseResult(self.id, True, reason=self._probe_reason)
+
+        rel_path = _relative_path(root, path)
+        declaration_map = _DECLARATIONS.get(language, {})
+        symbols: list[SymbolRecord] = []
+
+        def walk(node: object, scope: tuple[str, ...]) -> None:
+            node_type = str(getattr(node, "type", ""))
+            symbol_scope = scope
+            kind = declaration_map.get(node_type)
+            if kind is not None:
+                try:
+                    name_node = node.child_by_field_name("name")  # type: ignore[attr-defined]
+                except Exception:
+                    name_node = None
+                if name_node is not None:
+                    try:
+                        raw_name = source[int(name_node.start_byte):int(name_node.end_byte)]
+                        name = raw_name.decode("utf-8", errors="replace").strip()
+                    except Exception:
+                        name = ""
+                    if name:
+                        qualified_name = ".".join((*scope, name)) if scope else name
+                        start_line = _row(getattr(node, "start_point", (0, 0))) + 1
+                        end_line = _row(getattr(node, "end_point", (start_line - 1, 0))) + 1
+                        try:
+                            node_bytes = source[int(node.start_byte):int(node.end_byte)]  # type: ignore[attr-defined]
+                            signature = node_bytes.splitlines()[0].decode("utf-8", errors="replace").strip()[:240]
+                        except Exception:
+                            signature = None
+                        symbols.append(SymbolRecord(
+                            id=stable_id("symbol", file_id, self.id, node_type, qualified_name, str(start_line)),
+                            file_id=file_id,
+                            path=rel_path,
+                            name=name,
+                            qualified_name=qualified_name,
+                            kind=kind,
+                            language=language,
+                            start_line=start_line,
+                            end_line=max(start_line, end_line),
+                            signature=signature or None,
+                            trust="parser",
+                        ))
+                        if kind in _SCOPE_KINDS:
+                            symbol_scope = (*scope, name)
+            try:
+                children = tuple(node.children)  # type: ignore[attr-defined]
+            except Exception:
+                children = ()
+            for child in children:
+                walk(child, symbol_scope)
+
+        walk(root_node, ())
+
+        diagnostics: list[DiagnosticRecord] = []
+        if bool(getattr(root_node, "has_error", False)):
+            error_node = None
+            stack = [root_node]
+            while stack:
+                candidate = stack.pop()
+                if str(getattr(candidate, "type", "")) == "ERROR" or bool(getattr(candidate, "is_missing", False)):
+                    error_node = candidate
+                    break
+                try:
+                    stack.extend(reversed(tuple(candidate.children)))  # type: ignore[attr-defined]
+                except Exception:
+                    pass
+            diagnostic_node = error_node or root_node
+            line = _row(getattr(diagnostic_node, "start_point", (0, 0))) + 1
+            diagnostics.append(DiagnosticRecord(
+                id=stable_id("diag", file_id, self.id, "syntax-error", str(line)),
+                file_id=file_id,
+                path=rel_path,
+                severity="error",
+                message="Tree-sitter recovered a syntax tree containing parse errors",
+                line=line,
+                column=None,
+                source=self.id,
+                trust="parser",
+            ))
+
+        return SemanticParseResult(
+            self.id,
+            True,
+            symbols=tuple(symbols),
+            diagnostics=tuple(diagnostics),
+            reason=self._probe_reason,
+        )
