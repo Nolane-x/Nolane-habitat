@@ -4,7 +4,7 @@ import unittest
 from pathlib import Path
 from unittest.mock import patch
 
-from habitat import _workspace_core as _core
+import habitat.services.index as index_service_module
 from habitat.services import IndexService, QueryService, RuntimeService, TransactionService
 from habitat.workspace import HabitatWorkspace
 from tests.support import WorkspaceTemporaryDirectory
@@ -124,13 +124,13 @@ class IndexServiceRoutingTests(unittest.TestCase):
             finally:
                 ws.close()
 
-    def test_index_service_calls_core_explicitly_without_public_recursion(self):
+    def test_index_service_calls_preserved_core_explicitly_without_public_recursion(self):
         with WorkspaceTemporaryDirectory() as temp:
             ws = self.make_workspace(temp)
             service = ws._indexing()
             try:
                 with patch.object(
-                    _core.HabitatWorkspace,
+                    index_service_module._CoreHabitatWorkspace,
                     "refresh",
                     return_value={"sentinel": "core-refresh"},
                 ) as core_refresh:
