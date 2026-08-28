@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 import sys
+import time
 import unittest
 from pathlib import Path
 
@@ -16,6 +17,8 @@ def fake_spec(
     event_log: Path | None = None,
     publish_diagnostics: bool = False,
     stale_diagnostics_on_change: bool = False,
+    crash_trigger: Path | None = None,
+    crashed_marker: Path | None = None,
 ) -> LspServerSpec:
     argv = [
         sys.executable,
@@ -31,6 +34,10 @@ def fake_spec(
         argv.append("--publish-diagnostics")
     if stale_diagnostics_on_change:
         argv.append("--stale-diagnostics-on-change")
+    if crash_trigger is not None:
+        argv.extend(("--crash-trigger", str(crash_trigger)))
+    if crashed_marker is not None:
+        argv.extend(("--crashed-marker", str(crashed_marker)))
     return LspServerSpec(
         provider_id="lsp.fake",
         languages=frozenset({"python"}),
@@ -43,6 +50,14 @@ def events(path: Path) -> list[dict]:
     if not path.exists():
         return []
     return [json.loads(line) for line in path.read_text(encoding="utf-8").splitlines() if line.strip()]
+
+
+def wait_for_path(path: Path, timeout_s: float = 2.0) -> None:
+    deadline = time.monotonic() + timeout_s
+    while not path.exists():
+        if time.monotonic() >= deadline:
+            raise AssertionError(f"timed out waiting for marker: {path}")
+        time.sleep(0.01)
 
 
 class WorkspaceLspRuntimeTests(unittest.TestCase):
@@ -95,6 +110,48 @@ class WorkspaceLspRuntimeTests(unittest.TestCase):
             )
             self.assertNotIn("rename", provider["capabilities"])
             self.assertNotIn("code-action", provider["capabilities"])
+
+    def test_crashed_runtime_is_revoked_before_fabric_or_status_reports_admission(self):
+        with WorkspaceTemporaryDirectory() as temp:
+            ws, _ = self.make_workspace(temp)
+            root = Path(temp)
+            startup = root / "server-started"
+            crash_trigger = root / "crash-now"
+            crashed = root / "server-crashed"
+            ws.lsp_activate(
+                fake_spec(
+                    startup,
+                    crash_trigger=crash_trigger,
+                    crashed_marker=crashed,
+                )
+            )
+            self.assertTrue(ws.semantic_registry.is_admitted("lsp.fake"))
+
+            crash_trigger.write_text("go", encoding="utf-8")
+            wait_for_path(crashed)
+            # Give the transport reader a bounded opportunity to observe stdout closure. The crash
+            # marker is written immediately before os._exit, so this loop is not a timing oracle for
+            # process termination itself; it only waits for Habitat's reader state transition.
+            deadline = time.monotonic() + 2.0
+            while time.monotonic() < deadline:
+                manager = ws._lsp_runtime_manager
+                if manager is not None:
+                    provider_status = manager.status()["providers"]
+                    if provider_status and provider_status[0]["state"] == "FAILED":
+                        break
+                time.sleep(0.01)
+
+            # Fabric is queried before the public lsp_status facade. It must reconcile runtime truth
+            # itself instead of preserving admission from a process that has already failed.
+            report = ws.semantic_fabric()
+            self.assertFalse(ws.semantic_registry.is_admitted("lsp.fake"))
+            self.assertFalse(
+                any(provider["id"] == "lsp.fake" and provider["admitted"] for provider in report["providers"])
+            )
+            status = ws.lsp_status()["providers"]
+            self.assertEqual(len(status), 1)
+            self.assertEqual(status[0]["state"], "FAILED")
+            self.assertFalse(status[0]["admitted"])
 
     def test_passive_diagnostics_are_version_bound_and_stale_notifications_are_dropped(self):
         with WorkspaceTemporaryDirectory() as temp:
