@@ -193,6 +193,25 @@ class LspRuntimeManagerTests(unittest.TestCase):
         finally:
             manager.close()
 
+    def test_closed_provider_can_be_explicitly_reactivated_with_same_identity(self):
+        manager = self.manager()
+        try:
+            first = manager.activate(fake_spec())
+            first_fingerprint = first["provider_fingerprint"]
+            manager.close_provider("lsp.fake")
+            self.assertFalse(self.registry.is_admitted("lsp.fake"))
+
+            second = manager.activate(fake_spec())
+            self.assertEqual(second["provider_id"], "lsp.fake")
+            self.assertEqual(second["state"], "READY")
+            self.assertTrue(second["admitted"])
+            self.assertTrue(self.registry.is_admitted("lsp.fake"))
+            self.assertEqual(second["provider_fingerprint"], first_fingerprint)
+            selected = self.registry.providers_for("definition", language="python")
+            self.assertEqual([provider.descriptor().id for provider in selected], ["lsp.fake"])
+        finally:
+            manager.close()
+
 
 if __name__ == "__main__":
     unittest.main()
