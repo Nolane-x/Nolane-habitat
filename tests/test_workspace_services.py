@@ -5,6 +5,7 @@ from pathlib import Path
 from unittest.mock import patch
 
 import habitat.services.index as index_service_module
+import habitat.services.query as query_service_module
 from habitat.services import IndexService, QueryService, RuntimeService, TransactionService
 from habitat.workspace import HabitatWorkspace
 from tests.support import WorkspaceTemporaryDirectory
@@ -140,6 +141,106 @@ class IndexServiceRoutingTests(unittest.TestCase):
                     )
 
                 core_refresh.assert_called_once_with(ws, "direct-core")
+            finally:
+                ws.close()
+
+
+class QueryServiceRoutingTests(unittest.TestCase):
+    def make_workspace(self, temp: WorkspaceTemporaryDirectory) -> HabitatWorkspace:
+        root = Path(temp)
+        source = root / "source"
+        source.mkdir()
+        (source / "sample.py").write_text("def target():\n    return 1\n", encoding="utf-8")
+        return HabitatWorkspace.create(source, root / "habitat")
+
+    def test_public_query_methods_route_once_through_query_service(self):
+        with WorkspaceTemporaryDirectory() as temp:
+            ws = self.make_workspace(temp)
+            calls: list[tuple] = []
+            try:
+                def fake_query(service, query, limit=20):
+                    calls.append(("query", service, query, limit))
+                    return [{"sentinel": "query"}]
+
+                def fake_inspect_snapshot(service, object_id, include_source="none"):
+                    calls.append(("inspect_snapshot", service, object_id, include_source))
+                    return {"sentinel": "inspect_snapshot"}
+
+                def fake_inspect_many(service, object_ids, include_source="none", max_objects=50):
+                    calls.append(("inspect_many", service, tuple(object_ids), include_source, max_objects))
+                    return {"sentinel": "inspect_many"}
+
+                def fake_references_snapshot(service, object_id, limit=200):
+                    calls.append(("references_snapshot", service, object_id, limit))
+                    return {"sentinel": "references_snapshot"}
+
+                def fake_read_source(service, path, start_line=1, max_lines=200):
+                    calls.append(("read_source", service, path, start_line, max_lines))
+                    return {"sentinel": "read_source"}
+
+                with (
+                    patch.object(QueryService, "query", new=fake_query, create=True),
+                    patch.object(QueryService, "inspect_snapshot", new=fake_inspect_snapshot, create=True),
+                    patch.object(QueryService, "inspect_many", new=fake_inspect_many, create=True),
+                    patch.object(QueryService, "references_snapshot", new=fake_references_snapshot, create=True),
+                    patch.object(QueryService, "read_source", new=fake_read_source, create=True),
+                ):
+                    self.assertEqual(ws.query("target", 7), [{"sentinel": "query"}])
+                    self.assertEqual(
+                        ws.inspect_snapshot("symbol:target", "body"),
+                        {"sentinel": "inspect_snapshot"},
+                    )
+                    self.assertEqual(
+                        ws.inspect_many(["symbol:target"], "body", 9),
+                        {"sentinel": "inspect_many"},
+                    )
+                    self.assertEqual(
+                        ws.references_snapshot("symbol:target", 11),
+                        {"sentinel": "references_snapshot"},
+                    )
+                    self.assertEqual(
+                        ws.read_source("sample.py", 2, 13),
+                        {"sentinel": "read_source"},
+                    )
+
+                service = ws._queries()
+                self.assertEqual(
+                    calls,
+                    [
+                        ("query", service, "target", 7),
+                        ("inspect_snapshot", service, "symbol:target", "body"),
+                        ("inspect_many", service, ("symbol:target",), "body", 9),
+                        ("references_snapshot", service, "symbol:target", 11),
+                        ("read_source", service, "sample.py", 2, 13),
+                    ],
+                )
+            finally:
+                ws.close()
+
+    def test_query_service_calls_preserved_core_methods_without_public_recursion(self):
+        with WorkspaceTemporaryDirectory() as temp:
+            ws = self.make_workspace(temp)
+            service = ws._queries()
+            try:
+                core = query_service_module._CoreHabitatWorkspace
+                with (
+                    patch.object(core, "query", return_value=[{"sentinel": "core-query"}]) as core_query,
+                    patch.object(core, "inspect_snapshot", return_value={"sentinel": "core-inspect"}) as core_inspect,
+                    patch.object(core, "inspect_many", return_value={"sentinel": "core-many"}) as core_many,
+                    patch.object(core, "references_snapshot", return_value={"sentinel": "core-refs"}) as core_refs,
+                    patch.object(core, "read_source", return_value={"sentinel": "core-source"}) as core_source,
+                ):
+                    self.assertEqual(service.query("needle", 3), [{"sentinel": "core-query"}])
+                    self.assertEqual(service.inspect_snapshot("obj", "body"), {"sentinel": "core-inspect"})
+                    self.assertEqual(service.inspect_many(["obj"], "body", 4), {"sentinel": "core-many"})
+                    self.assertEqual(service.references_snapshot("obj", 5), {"sentinel": "core-refs"})
+                    self.assertEqual(service.read_source("sample.py", 2, 6), {"sentinel": "core-source"})
+
+                core_query.assert_called_once_with(ws, "needle", 3)
+                core_inspect.assert_called_once_with(ws, "obj", "body")
+                core_many.assert_called_once_with(ws, ["obj"], "body", 4)
+                core_refs.assert_called_once_with(ws, "obj", 5)
+                core_source.assert_called_once_with(ws, "sample.py", 2, 6)
             finally:
                 ws.close()
 
