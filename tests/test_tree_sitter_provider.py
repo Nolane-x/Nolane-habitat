@@ -92,7 +92,7 @@ class TreeSitterProviderContractTests(unittest.TestCase):
         )
         self.assertIn("Recovered", {symbol.name for symbol in result.symbols})
         self.assertTrue(result.diagnostics)
-        self.assertTrue(all(diag.provider == "tree-sitter" and diag.trust == "parser" for diag in result.diagnostics))
+        self.assertTrue(all(diag.source == "tree-sitter" and diag.trust == "parser" for diag in result.diagnostics))
 
 
 if __name__ == "__main__":
