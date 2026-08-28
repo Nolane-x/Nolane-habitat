@@ -81,7 +81,7 @@ class WorkspaceLspRuntimeTests(unittest.TestCase):
             self.assertEqual(provider["lifecycle"], "workspace-scoped")
             self.assertEqual(
                 set(provider["capabilities"]),
-                {"definition", "references", "hover", "document-symbols"},
+                {"definition", "references", "hover", "document-symbols", "diagnostics"},
             )
             self.assertNotIn("rename", provider["capabilities"])
             self.assertNotIn("code-action", provider["capabilities"])
