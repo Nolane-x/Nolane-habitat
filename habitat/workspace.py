@@ -13,6 +13,18 @@ from .semantic.lsp_runtime import LspRuntimeManager
 from .semantic.lsp_transport import LspServerSpec
 from .semantic.runtime import build_default_semantic_registry
 from .semantic.scip_runtime import ScipIndexerSpec, ScipRuntimeManager
+from .truth import (
+    claim_from_diagnostic_record,
+    claim_from_evidence_row,
+    claim_from_file_record,
+    claim_from_occurrence_record,
+    claim_from_relation_record,
+    claim_from_semantic_claim,
+    claim_from_symbol_record,
+    legacy_authority,
+    operation_allows_evidence,
+    project_truth,
+)
 from .util import sha256_file
 
 
@@ -212,6 +224,100 @@ class HabitatWorkspace(_core.HabitatWorkspace):
         }
         return report
 
+    def _truth_current_digests(self, file_rows: list[object]) -> dict[str, str | None]:
+        """Read current source bytes without refreshing or mutating workspace state."""
+        root = self.source_root.resolve()
+        current: dict[str, str | None] = {}
+        for row in file_rows:
+            path = str(row["path"])
+            raw = Path(path)
+            if raw.is_absolute():
+                current[path] = None
+                continue
+            resolved = (root / raw).resolve()
+            try:
+                resolved.relative_to(root)
+            except ValueError:
+                current[path] = None
+                continue
+            current[path] = sha256_file(resolved) if resolved.is_file() else None
+        return current
+
+    def truth_projection(self, *, semantic_claims=(), max_claims: int = 500) -> dict:
+        """Project bounded current/stale truth from already-resident workspace evidence.
+
+        This read-only facade never refreshes source, starts semantic runtimes, reconciles provider
+        admission, or performs semantic comparison. Semantic-plane claims enter only when explicitly
+        supplied by the caller.
+        """
+        revision = self.revision
+        file_rows = list(self.store.all_files())
+        symbol_rows = list(self.store.all_symbols())
+        indexed_digests = {str(row["path"]): str(row["digest"]) for row in file_rows}
+        current_digests = self._truth_current_digests(file_rows)
+
+        claims = [claim_from_file_record(row, revision=revision) for row in file_rows]
+        claims.extend(
+            claim_from_symbol_record(
+                row,
+                revision=revision,
+                source_digest=indexed_digests.get(str(row["path"])),
+            )
+            for row in symbol_rows
+        )
+
+        relation_keys: set[tuple[object, ...]] = set()
+        for symbol in symbol_rows:
+            for row in self.store.relations_for(str(symbol["id"])):
+                key = (
+                    row["source_id"],
+                    row["target_id"],
+                    row["kind"],
+                    row["trust"],
+                    row["evidence"],
+                )
+                if key in relation_keys:
+                    continue
+                relation_keys.add(key)
+                claims.append(claim_from_relation_record(row, revision=revision))
+
+        for row in self.store.all_diagnostics():
+            path = str(row["path"]) if row["path"] is not None else None
+            claims.append(
+                claim_from_diagnostic_record(
+                    row,
+                    revision=revision,
+                    source_digest=indexed_digests.get(path) if path is not None else None,
+                )
+            )
+
+        occurrence_ids: set[str] = set()
+        for file_row in file_rows:
+            path = str(file_row["path"])
+            for row in self.store.occurrences_for_path(path):
+                occurrence_id = str(row["id"])
+                if occurrence_id in occurrence_ids:
+                    continue
+                occurrence_ids.add(occurrence_id)
+                claims.append(
+                    claim_from_occurrence_record(
+                        row,
+                        revision=revision,
+                        source_digest=indexed_digests.get(path),
+                    )
+                )
+
+        claims.extend(claim_from_evidence_row(row) for row in self.store.active_evidence(limit=500))
+        claims.extend(claim_from_semantic_claim(row) for row in semantic_claims)
+
+        projection = project_truth(
+            claims,
+            current_revision=revision,
+            current_digests=current_digests,
+            max_claims=max_claims,
+        )
+        return {"revision": revision, **projection}
+
     def close(self) -> None:
         # Semantic runtimes may still need source materialization and the admission registry while
         # closing/revoking. Close them before the core closes backend/store authority.
@@ -236,10 +342,9 @@ class HabitatWorkspace(_core.HabitatWorkspace):
         lease_ttl_s: float = 120.0,
         approval_id: str | None = None,
     ) -> dict:
-        # Trust grade describes evidence quality, not action authority. Until the explicit Authority
-        # Kernel lands, replace_symbol_source is intentionally conservative: only an exact source
-        # anchor may authorize source replacement. Semantic/LSP/parser/derived evidence remains
-        # read-only input to cognition, navigation, impact analysis, and verification.
+        # Trust labels describe evidence provenance. Action authority is declared separately and
+        # evaluated categorically: no confidence value, plurality, or remembered origin can promote
+        # a weaker anchor into source mutation authority.
         for operation in operations if isinstance(operations, list) else ():
             if not isinstance(operation, dict) or operation.get("op") != "replace_symbol_source":
                 continue
@@ -247,11 +352,13 @@ class HabitatWorkspace(_core.HabitatWorkspace):
             if not isinstance(symbol_id, str) or not symbol_id:
                 continue
             symbol = self.store.symbol_by_id(symbol_id)
-            if symbol is not None and symbol["trust"] != "exact":
-                raise TransactionConflict(
-                    "source mutation requires an exact source-authorized anchor; "
-                    f"{symbol['trust']} evidence is read-only and non-authoritative"
-                )
+            if symbol is not None:
+                authority = legacy_authority(symbol["trust"])
+                if not operation_allows_evidence("replace_symbol_source", authority):
+                    raise TransactionConflict(
+                        "source mutation requires an exact source-authorized anchor; "
+                        f"{symbol['trust']} evidence is read-only and non-authoritative"
+                    )
         return super().stage_change(operations, episode_id, agent_id, lease_ttl_s, approval_id)
 
     def semantic_fabric(self) -> dict:
