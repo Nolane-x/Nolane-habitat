@@ -132,10 +132,10 @@ class HabitatWorkspace(_core.HabitatWorkspace):
         lease_ttl_s: float = 120.0,
         approval_id: str | None = None,
     ) -> dict:
-        # Trust grade describes evidence quality, not authority. Parser/heuristic/derived symbols are
-        # useful for navigation and recovery but cannot authorize source replacement. Exact and
-        # semantic anchors preserve the alpha.19 mutation path while admitted syntax providers stay
-        # non-authoritative by construction.
+        # Trust grade describes evidence quality, not action authority. Until the explicit Authority
+        # Kernel lands, replace_symbol_source is intentionally conservative: only an exact source
+        # anchor may authorize source replacement. Semantic/LSP/parser/derived evidence remains
+        # read-only input to cognition, navigation, impact analysis, and verification.
         for operation in operations if isinstance(operations, list) else ():
             if not isinstance(operation, dict) or operation.get("op") != "replace_symbol_source":
                 continue
@@ -143,10 +143,10 @@ class HabitatWorkspace(_core.HabitatWorkspace):
             if not isinstance(symbol_id, str) or not symbol_id:
                 continue
             symbol = self.store.symbol_by_id(symbol_id)
-            if symbol is not None and symbol["trust"] not in {"exact", "semantic"}:
+            if symbol is not None and symbol["trust"] != "exact":
                 raise TransactionConflict(
-                    "semantic mutation requires an exact or semantic source anchor; "
-                    f"{symbol['trust']} evidence is non-authoritative"
+                    "source mutation requires an exact source-authorized anchor; "
+                    f"{symbol['trust']} evidence is read-only and non-authoritative"
                 )
         return super().stage_change(operations, episode_id, agent_id, lease_ttl_s, approval_id)
 
