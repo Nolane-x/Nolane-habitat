@@ -118,6 +118,7 @@ def main() -> int:
             "crash-after-init",
             "hang-request",
             "malformed-frame",
+            "invalid-result-shape",
             "ignore-shutdown",
             "unsupported-capability",
             "stderr-spam",
@@ -256,6 +257,16 @@ def main() -> int:
         if args.mode == "malformed-frame" and method != "fake/state":
             sys.stdout.buffer.write(b"Content-Type: application/json\r\n\r\n{}")
             sys.stdout.buffer.flush()
+            continue
+
+        if args.mode == "invalid-result-shape" and method != "fake/state":
+            invalid_results = {
+                "textDocument/definition": "not-a-location",
+                "textDocument/references": {"not": "a-location-list"},
+                "textDocument/hover": ["not-a-hover-object"],
+                "textDocument/documentSymbol": {"not": "a-symbol-list"},
+            }
+            send({"jsonrpc": "2.0", "id": request_id, "result": invalid_results.get(method, 7)})
             continue
 
         if method == "textDocument/definition":
