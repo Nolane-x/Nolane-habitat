@@ -1,11 +1,12 @@
 from __future__ import annotations
 
 import importlib.util
-import os
 import shutil
 from dataclasses import dataclass, asdict
 from pathlib import Path
 from typing import Iterable
+
+from .admission import SemanticAdmissionRegistry
 
 
 @dataclass(frozen=True)
@@ -18,9 +19,14 @@ class SemanticProviderCapability:
     reason: str
     command: str | None = None
     version: str | None = None
+    admitted: bool = False
+    trust_ceiling: str = "parser"
+    lifecycle: str = "stateless"
 
     def as_dict(self) -> dict:
-        return asdict(self)
+        value = asdict(self)
+        value["detected"] = self.available
+        return value
 
 
 def _command_version(command: str | None) -> str | None:
@@ -43,12 +49,20 @@ def _find_first(commands: Iterable[str]) -> str | None:
     return None
 
 
-def semantic_fabric_report(root: Path) -> dict:
-    """Report the provider fabric without pretending unavailable integrations exist.
+def semantic_fabric_report(
+    root: Path,
+    *,
+    semantic_registry: SemanticAdmissionRegistry | None = None,
+) -> dict:
+    """Report host detection separately from Habitat provider admission.
 
-    The fabric intentionally exposes *capability classes* to Habitat while hiding concrete
-    technology names from the agent-facing semantic object model. This function is an operator
-    diagnostic surface, not an agent requirement.
+    ``fabric_version`` remains the alpha.19 wire/report version. ``contract_version``
+    versions the provider-admission semantics independently so a stronger internal contract
+    does not silently break existing consumers of the diagnostic surface.
+
+    When a workspace registry is supplied, its admitted provider set is merged into this
+    diagnostic view so reporting and compilation share the same admission truth. Host discovery
+    alone still never implies admission.
     """
     root = Path(root).resolve()
     tree_sitter_py = importlib.util.find_spec("tree_sitter") is not None
@@ -76,13 +90,13 @@ def semantic_fabric_report(root: Path) -> dict:
             "syntax.tree-sitter", "syntax", tree_available, "parser",
             ("incremental-parse", "syntax-tree", "error-tolerant-parse"),
             "tree_sitter Python binding or tree-sitter CLI detected" if tree_available else "Tree-sitter runtime not installed on this host",
-            tree_cli, _command_version(tree_cli),
+            tree_cli, _command_version(tree_cli), False, "parser", "workspace-scoped",
         ),
         SemanticProviderCapability(
             "index.scip", "precomputed-semantic-index", bool(scip_cmd or scip_indexes), "semantic",
             ("occurrences", "symbols", "definitions", "references"),
             "SCIP command or index detected" if (scip_cmd or scip_indexes) else "No SCIP command/index detected",
-            scip_cmd, _command_version(scip_cmd),
+            scip_cmd, _command_version(scip_cmd), False, "semantic", "stateless",
         ),
     ]
     for lang, value in lsp.items():
@@ -90,17 +104,51 @@ def semantic_fabric_report(root: Path) -> dict:
             f"lsp.{lang}", "language-semantic-service", bool(value["available"]), "semantic",
             ("definition", "references", "diagnostics", "hover", "capability-negotiation"),
             "language server detected" if value["available"] else "language server not detected",
-            value["command"], value["version"],
+            value["command"], value["version"], False, "semantic", "workspace-scoped",
         ))
+    providers = [c.as_dict() for c in capabilities]
+
+    if semantic_registry is not None:
+        provider_by_id = {provider["id"]: provider for provider in providers}
+        for identity in semantic_registry.cache_identity("parse"):
+            runtime_provider = {
+                "id": identity["provider_id"],
+                "layer": identity["layer"],
+                "available": True,
+                "detected": True,
+                "precision": identity["trust_ceiling"],
+                "capabilities": tuple(identity["capabilities"]),
+                "reason": identity["probe_reason"] or "provider admitted by Habitat semantic runtime",
+                "command": None,
+                "version": None,
+                "admitted": True,
+                "trust_ceiling": identity["trust_ceiling"],
+                "lifecycle": identity["lifecycle"],
+                "languages": tuple(identity["languages"]),
+                "incremental": bool(identity["incremental"]),
+                "admission_evidence": tuple(identity["admission_evidence"]),
+            }
+            current = provider_by_id.get(runtime_provider["id"])
+            if current is None:
+                providers.append(runtime_provider)
+                provider_by_id[runtime_provider["id"]] = runtime_provider
+            else:
+                current.update(runtime_provider)
+
+    detected_count = sum(1 for provider in providers if provider["detected"])
+    admitted_count = sum(1 for provider in providers if provider["admitted"])
     return {
         "fabric_version": 1,
+        "contract_version": 2,
         "root": str(root),
-        "providers": [c.as_dict() for c in capabilities],
-        "available_count": sum(1 for c in capabilities if c.available),
+        "providers": providers,
+        "available_count": detected_count,
+        "detected_count": detected_count,
+        "admitted_count": admitted_count,
         "scip_indexes": scip_indexes,
         "agent_abstraction": {
             "provider_independent_objects": ["symbol", "type", "call", "implements", "reads", "writes", "throws", "dataflow"],
             "rule": "Agents consume Habitat semantic objects and trust/provenance; concrete parser/LSP/SCIP names are diagnostics, not required reasoning vocabulary.",
         },
-        "claim_boundary": "Capability discovery only. Tree-sitter/LSP/SCIP are not claimed active unless the corresponding provider is detected and admitted.",
+        "claim_boundary": "Host detection does not mean admitted. Detected Tree-sitter/LSP/SCIP capabilities are not claimed active until Habitat admission evidence exists.",
     }

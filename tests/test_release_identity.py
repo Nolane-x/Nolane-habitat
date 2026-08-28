@@ -22,7 +22,15 @@ class ReleaseIdentityTests(unittest.TestCase):
         (root / "CHANGELOG.md").write_text(
             f"## {version} — 2026-08-23\n", encoding="utf-8"
         )
-        (root / "README.md").write_text(version + "\n", encoding="utf-8")
+        (root / "README.md").write_text(
+            f"Nolane Habitat {version}\n", encoding="utf-8"
+        )
+        (root / "docs" / "IMPLEMENTATION-STATUS.md").write_text(
+            f"# Implementation Status — {version}\n", encoding="utf-8"
+        )
+        (root / "docs" / "LIMITATIONS.md").write_text(
+            f"# Habitat {version} Limitations and Claim Boundary\n", encoding="utf-8"
+        )
         (root / "docs" / "CODEX-INTEGRATION.md").write_text(
             f"--ref v{version}\n", encoding="utf-8"
         )
@@ -114,7 +122,12 @@ class ReleaseIdentityTests(unittest.TestCase):
             self.assertEqual("passed", report["status"])
             self.assertEqual(
                 hashlib.sha256(
-                    json.dumps(unsigned, sort_keys=True, separators=(",", ":")).encode("utf-8")
+                    json.dumps(
+                        unsigned,
+                        ensure_ascii=False,
+                        sort_keys=True,
+                        separators=(",", ":"),
+                    ).encode("utf-8")
                 ).hexdigest(),
                 report["report_sha256"],
             )
