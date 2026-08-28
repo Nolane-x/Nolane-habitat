@@ -82,9 +82,15 @@ def main() -> int:
     parser.add_argument("--event-log")
     parser.add_argument("--delay-marker")
     parser.add_argument("--release-marker")
+    parser.add_argument("--startup-marker")
     args = parser.parse_args()
     documents: dict[str, dict] = {}
     cancellations: list[int] = []
+
+    if args.startup_marker:
+        startup = Path(args.startup_marker)
+        startup.parent.mkdir(parents=True, exist_ok=True)
+        startup.write_text(str(os.getpid()), encoding="utf-8")
 
     if args.mode == "stderr-spam":
         sys.stderr.write("x" * (96 * 1024))
