@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import json
-import re
 import sqlite3
 from contextlib import contextmanager
 from pathlib import Path
@@ -10,6 +9,15 @@ from typing import Iterable
 from .database_health import inspect_connection
 from .model import DiagnosticRecord, EventRecord, FileRecord, OccurrenceRecord, RelationRecord, Revision, SymbolRecord
 from .operations.faults import FaultInjector
+from .repositories import (
+    EvidenceRepository,
+    ExperimentationRepository,
+    LearningRepository,
+    RelationsRepository,
+    RuntimeRepository,
+    SymbolsRepository,
+)
+from .repositories.symbols import _index_terms
 from .sql_safety import quote_identifier, savepoint_identifier, user_version_pragma
 from .storage_migrations import (
     SCHEMA_VERSION,
@@ -43,10 +51,6 @@ class _TransactionAwareConnection(sqlite3.Connection):
         super().commit()
 
 
-def _index_terms(value: str) -> list[str]:
-    value=re.sub(r"([a-z0-9])([A-Z])",r"\1 \2",value or "").replace("_"," ").replace("-"," ")
-    return sorted({x.casefold() for x in re.findall(r"\w+",value,flags=re.UNICODE) if len(x)>=2 and not x.isdigit()})
-
 class Store:
     def __init__(self, db_path: Path):
         self.db_path = db_path
@@ -59,6 +63,48 @@ class Store:
         except BaseException:
             self.conn.close()
             raise
+
+    def _symbols_repository(self) -> SymbolsRepository:
+        repository = getattr(self, "_symbols_repository_instance", None)
+        if repository is None:
+            repository = SymbolsRepository(self)
+            self._symbols_repository_instance = repository
+        return repository
+
+    def _relations_repository(self) -> RelationsRepository:
+        repository = getattr(self, "_relations_repository_instance", None)
+        if repository is None:
+            repository = RelationsRepository(self)
+            self._relations_repository_instance = repository
+        return repository
+
+    def _runtime_repository(self) -> RuntimeRepository:
+        repository = getattr(self, "_runtime_repository_instance", None)
+        if repository is None:
+            repository = RuntimeRepository(self)
+            self._runtime_repository_instance = repository
+        return repository
+
+    def _evidence_repository(self) -> EvidenceRepository:
+        repository = getattr(self, "_evidence_repository_instance", None)
+        if repository is None:
+            repository = EvidenceRepository(self)
+            self._evidence_repository_instance = repository
+        return repository
+
+    def _experimentation_repository(self) -> ExperimentationRepository:
+        repository = getattr(self, "_experimentation_repository_instance", None)
+        if repository is None:
+            repository = ExperimentationRepository(self)
+            self._experimentation_repository_instance = repository
+        return repository
+
+    def _learning_repository(self) -> LearningRepository:
+        repository = getattr(self, "_learning_repository_instance", None)
+        if repository is None:
+            repository = LearningRepository(self)
+            self._learning_repository_instance = repository
+        return repository
 
     @contextmanager
     def atomic(self, fault_injector: FaultInjector | None = None):
@@ -585,53 +631,10 @@ class Store:
         )
 
     def replace_symbols_for_file(self, file_id: str, symbols: Iterable[SymbolRecord]) -> None:
-        old_ids = [r[0] for r in self.conn.execute("SELECT id FROM symbols WHERE file_id=?", (file_id,))]
-        for oid in old_ids:
-            self.conn.execute("DELETE FROM relations WHERE source_id=? OR target_id=?", (oid, oid))
-            self.delete_search(oid)
-        self.conn.execute("DELETE FROM symbols WHERE file_id=?", (file_id,))
-        for s in symbols:
-            self.conn.execute(
-                """INSERT INTO symbols(id,file_id,path,name,qualified_name,kind,language,start_line,end_line,signature,summary,trust)
-                   VALUES(?,?,?,?,?,?,?,?,?,?,?,?)""",
-                (s.id, s.file_id, s.path, s.name, s.qualified_name, s.kind, s.language,
-                 s.start_line, s.end_line, s.signature, s.summary, s.trust),
-            )
-            body = " ".join(filter(None, [s.signature, s.summary]))
-            self.index_search(s.id, "symbol", s.path, s.qualified_name, body)
-            for term in _index_terms(s.qualified_name + " " + s.path):
-                self.conn.execute("INSERT OR IGNORE INTO symbol_terms(term,symbol_id,path) VALUES(?,?,?)",(term,s.id,s.path))
+        self._symbols_repository().replace_for_file(file_id, symbols)
 
     def symbols_matching_terms(self, terms: list[str], limit: int = 1000):
-        """Bounded indexed candidate retrieval; avoids scanning every symbol for every task."""
-        if not terms or limit < 1:
-            return []
-        ids=[]; seen=set()
-        for raw in terms[:64]:
-            term=str(raw).casefold()
-            if not term: continue
-            prefixes=[term]
-            if len(term)>=7:
-                prefixes.append(term[:-1] if term.endswith("s") else term)
-                for suffix in ("ation","tion","ment","ing","ed","ity","ness"):
-                    if term.endswith(suffix) and len(term)-len(suffix)>=4:
-                        prefixes.append(term[:-len(suffix)])
-            clauses=[]; args=[]
-            for pfx in dict.fromkeys(prefixes):
-                clauses.append("term=? OR term LIKE ?"); args.extend([pfx,pfx+"%"] if len(pfx)>=4 else [pfx,pfx])
-            sql="SELECT DISTINCT symbol_id FROM symbol_terms WHERE "+" OR ".join(f"({c})" for c in clauses)+" LIMIT ?"
-            rows=self.conn.execute(sql,[*args,min(250,int(limit))]).fetchall()
-            for r in rows:
-                oid=r["symbol_id"]
-                if oid not in seen:
-                    seen.add(oid); ids.append(oid)
-                    if len(ids)>=limit: break
-            if len(ids)>=limit: break
-        if not ids: return []
-        marks=",".join("?" for _ in ids)
-        rows=self.conn.execute(f"SELECT * FROM symbols WHERE id IN ({marks})",ids).fetchall()
-        by={r["id"]:r for r in rows}
-        return [by[i] for i in ids if i in by]
+        return self._symbols_repository().matching_terms(terms, limit)
 
     def replace_diagnostics_for_file(self, file_id: str, diagnostics: Iterable[DiagnosticRecord]) -> None:
         old_ids = [r[0] for r in self.conn.execute("SELECT id FROM diagnostics WHERE file_id=?", (file_id,))]
@@ -732,48 +735,19 @@ class Store:
         return self.conn.execute("SELECT * FROM occurrences WHERE id=?", (object_id,)).fetchone()
 
     def append_evidence(self, value: dict) -> None:
-        self.conn.execute(
-            """INSERT OR REPLACE INTO evidence(id,kind,revision,path,object_id,severity,summary,trust,source,data_json,created_at,active)
-               VALUES(?,?,?,?,?,?,?,?,?,?,?,?)""",
-            (value["id"],value["kind"],value["revision"],value.get("path"),value.get("object_id"),value.get("severity","info"),
-             value["summary"],value.get("trust","derived"),value.get("source","workspace"),json.dumps(value.get("data",{}),separators=(",",":")),
-             value["created_at"],int(value.get("active",True))),
-        )
-        self.delete_search(value["id"])
-        self.index_search(value["id"],"evidence",value.get("path") or "",value["summary"],value["summary"])
+        self._evidence_repository().append(value)
 
     def evidence_by_id(self, evidence_id: str):
-        return self.conn.execute("SELECT * FROM evidence WHERE id=?",(evidence_id,)).fetchone()
+        return self._evidence_repository().by_id(evidence_id)
 
     def active_evidence(self, kind: str | None = None, limit: int = 500):
-        if kind:
-            return self.conn.execute("SELECT * FROM evidence WHERE active=1 AND kind=? ORDER BY created_at DESC LIMIT ?",(kind,limit)).fetchall()
-        return self.conn.execute("SELECT * FROM evidence WHERE active=1 ORDER BY created_at DESC LIMIT ?",(limit,)).fetchall()
+        return self._evidence_repository().active(kind, limit)
 
     def active_evidence_ids(self, *, kind: str | None = None, paths: list[str] | None = None, object_ids: list[str] | None = None, source: str | None = None) -> list[str]:
-        clauses=["active=1"]; args=[]
-        if kind: clauses.append("kind=?"); args.append(kind)
-        if source: clauses.append("source=?"); args.append(source)
-        selectors=[]
-        if paths:
-            selectors.append("path IN (%s)" % ",".join("?" for _ in paths)); args.extend(paths)
-        if object_ids:
-            selectors.append("object_id IN (%s)" % ",".join("?" for _ in object_ids)); args.extend(object_ids)
-        if selectors: clauses.append("("+" OR ".join(selectors)+")")
-        return [r["id"] for r in self.conn.execute("SELECT id FROM evidence WHERE "+" AND ".join(clauses)+" ORDER BY created_at,id",tuple(args)).fetchall()]
+        return self._evidence_repository().active_ids(kind=kind, paths=paths, object_ids=object_ids, source=source)
 
     def resolve_evidence(self, *, kind: str | None = None, paths: list[str] | None = None, object_ids: list[str] | None = None, source: str | None = None) -> int:
-        clauses=["active=1"]; args=[]
-        if kind: clauses.append("kind=?"); args.append(kind)
-        if source: clauses.append("source=?"); args.append(source)
-        selectors=[]
-        if paths:
-            selectors.append("path IN (%s)" % ",".join("?" for _ in paths)); args.extend(paths)
-        if object_ids:
-            selectors.append("object_id IN (%s)" % ",".join("?" for _ in object_ids)); args.extend(object_ids)
-        if selectors: clauses.append("("+" OR ".join(selectors)+")")
-        cur=self.conn.execute("UPDATE evidence SET active=0 WHERE "+" AND ".join(clauses),tuple(args))
-        return int(cur.rowcount or 0)
+        return self._evidence_repository().resolve(kind=kind, paths=paths, object_ids=object_ids, source=source)
 
     def save_merkle_snapshot(self, revision_id: str, snapshot: dict, created_at: str) -> None:
         """Persist a content-addressed Merkle snapshot without duplicating unchanged subtrees."""
@@ -880,46 +854,13 @@ class Store:
         return self.conn.execute("SELECT * FROM trace_calls WHERE trace_id=? ORDER BY seq", (trace_id,)).fetchall()
 
     def record_context_feedback(self, handle: str, object_id: str, verdict: str, weight: float, task_terms: list[str], revision: str, created_at: str) -> int:
-        if verdict not in {"used", "unhelpful"}:
-            raise ValueError("context feedback verdict must be used or unhelpful")
-        cur = self.conn.execute(
-            "INSERT INTO context_feedback(handle,object_id,verdict,weight,task_terms_json,revision,created_at) VALUES(?,?,?,?,?,?,?)",
-            (handle, object_id, verdict, float(weight), json.dumps(sorted(set(task_terms))), revision, created_at),
-        )
-        useful = float(weight) if verdict == "used" else 0.0
-        unhelpful = float(weight) if verdict == "unhelpful" else 0.0
-        for term in sorted(set(task_terms)):
-            self.conn.execute(
-                """INSERT INTO context_utility(object_id,term,useful_weight,unhelpful_weight,last_revision,updated_at)
-                   VALUES(?,?,?,?,?,?)
-                   ON CONFLICT(object_id,term) DO UPDATE SET
-                     useful_weight=MIN(10.0, context_utility.useful_weight*0.92+excluded.useful_weight),
-                     unhelpful_weight=MIN(10.0, context_utility.unhelpful_weight*0.92+excluded.unhelpful_weight),
-                     last_revision=excluded.last_revision,updated_at=excluded.updated_at""",
-                (object_id, term, useful, unhelpful, revision, created_at),
-            )
-        self.conn.commit()
-        return int(cur.lastrowid)
+        return self._learning_repository().record_context_feedback(handle, object_id, verdict, weight, task_terms, revision, created_at)
 
     def context_utility_for(self, object_id: str, terms: list[str]) -> dict:
-        terms = sorted(set(t for t in terms if t))
-        if not terms:
-            return {"useful_weight": 0.0, "unhelpful_weight": 0.0, "matched_terms": []}
-        marks = ",".join("?" for _ in terms)
-        rows = self.conn.execute(
-            f"SELECT term,useful_weight,unhelpful_weight FROM context_utility WHERE object_id=? AND term IN ({marks})",
-            [object_id, *terms],
-        ).fetchall()
-        return {
-            "useful_weight": sum(float(r["useful_weight"]) for r in rows),
-            "unhelpful_weight": sum(float(r["unhelpful_weight"]) for r in rows),
-            "matched_terms": [r["term"] for r in rows],
-        }
+        return self._learning_repository().context_utility_for(object_id, terms)
 
     def context_feedback_for_handle(self, handle: str, limit: int = 500):
-        return self.conn.execute(
-            "SELECT * FROM context_feedback WHERE handle=? ORDER BY seq ASC LIMIT ?", (handle, int(limit))
-        ).fetchall()
+        return self._learning_repository().context_feedback_for_handle(handle, limit)
 
     def create_episode(self, value: dict) -> None:
         self.conn.execute(
@@ -1001,60 +942,38 @@ class Store:
         ).fetchall()
 
     def create_hypothesis(self, value: dict) -> None:
-        self.conn.execute(
-            """INSERT INTO hypotheses(id,episode_id,task,statement,status,prior_confidence,current_confidence,base_revision,created_at,updated_at)
-               VALUES(?,?,?,?,?,?,?,?,?,?)""",
-            (value["id"],value.get("episode_id"),value["task"],value["statement"],value.get("status","active"),
-             float(value.get("prior_confidence",0.5)),float(value.get("current_confidence",value.get("prior_confidence",0.5))),
-             value["base_revision"],value["created_at"],value.get("updated_at",value["created_at"])),
-        ); self.conn.commit()
+        self._experimentation_repository().create_hypothesis(value)
 
     def hypothesis(self, hypothesis_id: str):
-        return self.conn.execute("SELECT * FROM hypotheses WHERE id=?",(hypothesis_id,)).fetchone()
+        return self._experimentation_repository().hypothesis(hypothesis_id)
 
     def hypotheses(self, episode_id: str | None = None, status: str | None = None, limit: int = 100):
-        clauses=[]; args=[]
-        if episode_id is not None: clauses.append("episode_id=?"); args.append(episode_id)
-        if status is not None: clauses.append("status=?"); args.append(status)
-        where=(" WHERE "+" AND ".join(clauses)) if clauses else ""
-        return self.conn.execute(f"SELECT * FROM hypotheses{where} ORDER BY updated_at DESC LIMIT ?",[*args,int(limit)]).fetchall()
+        return self._experimentation_repository().hypotheses(episode_id, status, limit)
 
     def update_hypothesis(self, hypothesis_id: str, *, status: str | None = None, confidence: float | None = None, updated_at: str) -> None:
-        row=self.hypothesis(hypothesis_id)
-        if not row: raise KeyError(hypothesis_id)
-        self.conn.execute("UPDATE hypotheses SET status=?,current_confidence=?,updated_at=? WHERE id=?",
-                          (status or row["status"],float(row["current_confidence"] if confidence is None else confidence),updated_at,hypothesis_id))
-        self.conn.commit()
+        self._experimentation_repository().update_hypothesis(
+            hypothesis_id, status=status, confidence=confidence, updated_at=updated_at
+        )
 
     def link_hypothesis_evidence(self, hypothesis_id: str, evidence_id: str | None, polarity: str, weight: float, note: str | None, revision: str, created_at: str) -> int:
-        if not self.hypothesis(hypothesis_id): raise KeyError(hypothesis_id)
-        cur=self.conn.execute("INSERT INTO hypothesis_evidence(hypothesis_id,evidence_id,polarity,weight,note,revision,created_at) VALUES(?,?,?,?,?,?,?)",
-                              (hypothesis_id,evidence_id,polarity,float(weight),note,revision,created_at))
-        self.conn.commit(); return int(cur.lastrowid)
+        return self._experimentation_repository().link_hypothesis_evidence(
+            hypothesis_id, evidence_id, polarity, weight, note, revision, created_at
+        )
 
     def hypothesis_evidence(self, hypothesis_id: str):
-        return self.conn.execute("SELECT * FROM hypothesis_evidence WHERE hypothesis_id=? ORDER BY seq",(hypothesis_id,)).fetchall()
+        return self._experimentation_repository().hypothesis_evidence(hypothesis_id)
 
     def create_experiment(self, value: dict) -> None:
-        self.conn.execute(
-            """INSERT INTO experiments(id,hypothesis_id,episode_id,description,discriminator,status,capability,expected_json,result_json,base_revision,created_at,completed_at)
-               VALUES(?,?,?,?,?,?,?,?,?,?,?,?)""",
-            (value["id"],value.get("hypothesis_id"),value.get("episode_id"),value["description"],value.get("discriminator"),
-             value.get("status","planned"),value.get("capability"),json.dumps(value.get("expected") or {},sort_keys=True),
-             json.dumps(value.get("result") or {},sort_keys=True),value["base_revision"],value["created_at"],value.get("completed_at")))
-        self.conn.commit()
+        self._experimentation_repository().create_experiment(value)
 
     def experiment(self, experiment_id: str):
-        return self.conn.execute("SELECT * FROM experiments WHERE id=?",(experiment_id,)).fetchone()
+        return self._experimentation_repository().experiment(experiment_id)
 
     def experiments_for_hypothesis(self, hypothesis_id: str, limit: int = 100):
-        return self.conn.execute("SELECT * FROM experiments WHERE hypothesis_id=? ORDER BY created_at LIMIT ?",(hypothesis_id,int(limit))).fetchall()
+        return self._experimentation_repository().experiments_for_hypothesis(hypothesis_id, limit)
 
     def complete_experiment(self, experiment_id: str, status: str, result: dict, completed_at: str) -> None:
-        cur=self.conn.execute("UPDATE experiments SET status=?,result_json=?,completed_at=? WHERE id=?",
-                              (status,json.dumps(result or {},sort_keys=True),completed_at,experiment_id))
-        if cur.rowcount != 1: raise KeyError(experiment_id)
-        self.conn.commit()
+        self._experimentation_repository().complete_experiment(experiment_id, status, result, completed_at)
 
     def append_event(self, event: EventRecord) -> int:
         cur = self.conn.execute(
@@ -1101,123 +1020,50 @@ class Store:
         return int(row[0] or 0)
 
     def create_epistemic_item(self, value: dict) -> None:
-        self.conn.execute(
-            """INSERT INTO epistemic_items(id,kind,statement,status,confidence,scope,agent_id,episode_id,base_revision,provenance_json,invalidation_json,created_at,updated_at)
-               VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?)""",
-            (value["id"],value["kind"],value["statement"],value["status"],value.get("confidence"),value.get("scope") or "workspace",
-             value.get("agent_id"),value.get("episode_id"),value["base_revision"],json.dumps(value.get("provenance") or {},sort_keys=True),
-             json.dumps(value.get("invalidation_conditions") or [],sort_keys=True),value["created_at"],value["updated_at"]),
-        )
-        self.conn.commit()
+        self._learning_repository().create_epistemic_item(value)
 
     def epistemic_item(self, item_id: str):
-        return self.conn.execute("SELECT * FROM epistemic_items WHERE id=?",(item_id,)).fetchone()
+        return self._learning_repository().epistemic_item(item_id)
 
     def epistemic_items(self, *, kind: str | None = None, status: str | None = None, agent_id: str | None = None, limit: int = 200):
-        where=[]; args=[]
-        if kind is not None: where.append("kind=?"); args.append(kind)
-        if status is not None: where.append("status=?"); args.append(status)
-        if agent_id is not None: where.append("(agent_id IS NULL OR agent_id=?)"); args.append(agent_id)
-        sql="SELECT * FROM epistemic_items"+(" WHERE "+" AND ".join(where) if where else "")+" ORDER BY updated_at DESC LIMIT ?"
-        return self.conn.execute(sql,(*args,int(limit))).fetchall()
+        return self._learning_repository().epistemic_items(kind=kind, status=status, agent_id=agent_id, limit=limit)
 
     def update_epistemic_item(self, item_id: str, *, status: str | None = None, confidence: float | None = None, updated_at: str, provenance: dict | None = None) -> None:
-        row=self.epistemic_item(item_id)
-        if not row: raise KeyError(item_id)
-        values={"status":status if status is not None else row["status"],"confidence":confidence if confidence is not None else row["confidence"],
-                "provenance_json":json.dumps(provenance,sort_keys=True) if provenance is not None else row["provenance_json"]}
-        self.conn.execute("UPDATE epistemic_items SET status=?,confidence=?,provenance_json=?,updated_at=? WHERE id=?",
-                          (values["status"],values["confidence"],values["provenance_json"],updated_at,item_id))
-        self.conn.commit()
+        self._learning_repository().update_epistemic_item(
+            item_id, status=status, confidence=confidence, updated_at=updated_at, provenance=provenance
+        )
 
     def create_project_memory(self, value: dict) -> None:
-        self.conn.execute("""INSERT INTO project_memories(id,kind,statement,status,scope,agent_id,episode_id,base_revision,confidence,provenance_json,evidence_json,valid_until_revision,supersedes,invalidated_by,created_at,updated_at) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""",
-            (value["id"],value["kind"],value["statement"],value.get("status","active"),value.get("scope","workspace"),value.get("agent_id"),value.get("episode_id"),value["base_revision"],value.get("confidence"),json.dumps(value.get("provenance") or {},ensure_ascii=False),json.dumps(value.get("evidence_ids") or [],ensure_ascii=False),value.get("valid_until_revision"),value.get("supersedes"),value.get("invalidated_by"),value["created_at"],value["updated_at"]))
-        self.conn.commit()
+        self._learning_repository().create_project_memory(value)
 
     def project_memory(self, memory_id: str):
-        return self.conn.execute("SELECT * FROM project_memories WHERE id=?",(memory_id,)).fetchone()
+        return self._learning_repository().project_memory(memory_id)
 
     def find_active_memory(self, kind: str, statement: str, agent_id: str | None, base_revision: str):
-        if agent_id is None:
-            return self.conn.execute("SELECT * FROM project_memories WHERE kind=? AND statement=? AND agent_id IS NULL AND base_revision=? AND status='active' ORDER BY updated_at DESC LIMIT 1",
-                                     (kind,statement,base_revision)).fetchone()
-        return self.conn.execute("SELECT * FROM project_memories WHERE kind=? AND statement=? AND agent_id=? AND base_revision=? AND status='active' ORDER BY updated_at DESC LIMIT 1",
-                                 (kind,statement,agent_id,base_revision)).fetchone()
+        return self._learning_repository().find_active_memory(kind, statement, agent_id, base_revision)
 
     def project_memories(self, *, kind: str | None=None, status: str | None="active", agent_id: str | None=None, limit: int=200):
-        sql="SELECT * FROM project_memories WHERE 1=1"; args=[]
-        if kind is not None: sql+=" AND kind=?"; args.append(kind)
-        if status is not None: sql+=" AND status=?"; args.append(status)
-        if agent_id is not None: sql+=" AND (agent_id=? OR agent_id IS NULL)"; args.append(agent_id)
-        sql+=" ORDER BY updated_at DESC LIMIT ?"; args.append(int(limit))
-        return self.conn.execute(sql,tuple(args)).fetchall()
+        return self._learning_repository().project_memories(kind=kind, status=status, agent_id=agent_id, limit=limit)
 
     def update_project_memory(self, memory_id: str, *, status: str | None=None, confidence: float | None=None, invalidated_by: str | None=None, updated_at: str):
-        row=self.project_memory(memory_id)
-        if not row: raise KeyError(memory_id)
-        self.conn.execute("UPDATE project_memories SET status=?,confidence=?,invalidated_by=?,updated_at=? WHERE id=?",
-            (status if status is not None else row["status"],confidence if confidence is not None else row["confidence"],invalidated_by if invalidated_by is not None else row["invalidated_by"],updated_at,memory_id))
-        self.conn.commit()
+        self._learning_repository().update_project_memory(
+            memory_id, status=status, confidence=confidence, invalidated_by=invalidated_by, updated_at=updated_at
+        )
 
     def append_runtime_event(self, value: dict) -> None:
-        self.conn.execute(
-            """INSERT INTO runtime_events(id,trace_id,span_id,parent_span_id,kind,name,status,path,symbol_id,agent_id,episode_id,revision,started_at,duration_ms,attributes_json,source)
-               VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""",
-            (value["id"],value.get("trace_id"),value.get("span_id"),value.get("parent_span_id"),value.get("kind") or "runtime",
-             value.get("name") or "runtime-event",value.get("status") or "observed",value.get("path"),value.get("symbol_id"),value.get("agent_id"),
-             value.get("episode_id"),value.get("revision") or "none",value.get("started_at") or "",value.get("duration_ms"),
-             json.dumps(value.get("attributes") or {},sort_keys=True),value.get("source") or "runtime"),
-        )
-        self.conn.commit()
+        self._runtime_repository().append(value)
 
     def runtime_event(self, event_id: str):
-        return self.conn.execute("SELECT * FROM runtime_events WHERE id=?",(event_id,)).fetchone()
+        return self._runtime_repository().by_id(event_id)
 
     def runtime_events(self, *, trace_id: str | None = None, agent_id: str | None = None, limit: int = 500):
-        where=[]; args=[]
-        if trace_id is not None: where.append("trace_id=?"); args.append(trace_id)
-        if agent_id is not None: where.append("agent_id=?"); args.append(agent_id)
-        sql="SELECT * FROM runtime_events"+(" WHERE "+" AND ".join(where) if where else "")+" ORDER BY started_at DESC LIMIT ?"
-        return self.conn.execute(sql,(*args,int(limit))).fetchall()
+        return self._runtime_repository().list(trace_id=trace_id, agent_id=agent_id, limit=limit)
 
     def replace_relations(self, relations: Iterable[RelationRecord]) -> None:
-        self.conn.execute("DELETE FROM relations")
-        for r in relations:
-            self.conn.execute(
-                "INSERT OR REPLACE INTO relations(source_id,target_id,kind,trust,evidence) VALUES(?,?,?,?,?)",
-                (r.source_id, r.target_id, r.kind, r.trust, r.evidence),
-            )
+        self._relations_repository().replace(relations)
 
     def sync_relations(self, relations: Iterable[RelationRecord]) -> dict:
-        """Set-diff the project relation graph and write only changed edges."""
-        incoming = {(r.source_id,r.target_id,r.kind): r for r in relations}
-        current_rows = self.conn.execute("SELECT * FROM relations").fetchall()
-        current = {(r["source_id"],r["target_id"],r["kind"]): r for r in current_rows}
-        inserted = updated = unchanged = 0
-        for key, r in incoming.items():
-            row = current.get(key)
-            if row is None:
-                self.conn.execute(
-                    "INSERT INTO relations(source_id,target_id,kind,trust,evidence) VALUES(?,?,?,?,?)",
-                    (r.source_id,r.target_id,r.kind,r.trust,r.evidence),
-                )
-                inserted += 1
-            elif row["trust"] != r.trust or row["evidence"] != r.evidence:
-                self.conn.execute(
-                    "UPDATE relations SET trust=?,evidence=? WHERE source_id=? AND target_id=? AND kind=?",
-                    (r.trust,r.evidence,r.source_id,r.target_id,r.kind),
-                )
-                updated += 1
-            else:
-                unchanged += 1
-        deleted_keys = set(current) - set(incoming)
-        if deleted_keys:
-            self.conn.executemany(
-                "DELETE FROM relations WHERE source_id=? AND target_id=? AND kind=?",
-                list(deleted_keys),
-            )
-        return {"inserted": inserted, "updated": updated, "deleted": len(deleted_keys), "unchanged": unchanged, "total": len(incoming)}
+        return self._relations_repository().sync(relations)
 
     def commit(self) -> None:
         self.conn.commit()
@@ -1229,22 +1075,19 @@ class Store:
         return self.conn.execute("SELECT * FROM files WHERE id=?", (object_id,)).fetchone()
 
     def symbol_by_id(self, object_id: str):
-        return self.conn.execute("SELECT * FROM symbols WHERE id=?", (object_id,)).fetchone()
+        return self._symbols_repository().by_id(object_id)
 
     def diagnostic_by_id(self, object_id: str):
         return self.conn.execute("SELECT * FROM diagnostics WHERE id=?", (object_id,)).fetchone()
 
     def symbols_named(self, name: str):
-        q = f"%{name.lower()}%"
-        return self.conn.execute(
-            "SELECT * FROM symbols WHERE lower(name) LIKE ? OR lower(qualified_name) LIKE ? LIMIT 100", (q, q)
-        ).fetchall()
+        return self._symbols_repository().named(name)
 
     def symbols_for_file(self, file_id: str):
-        return self.conn.execute("SELECT * FROM symbols WHERE file_id=? ORDER BY start_line", (file_id,)).fetchall()
+        return self._symbols_repository().for_file(file_id)
 
     def all_symbols(self):
-        return self.conn.execute("SELECT * FROM symbols ORDER BY path,start_line").fetchall()
+        return self._symbols_repository().all()
 
     def all_files(self):
         return self.conn.execute("SELECT * FROM files ORDER BY path").fetchall()
@@ -1256,14 +1099,10 @@ class Store:
         return self.conn.execute("SELECT * FROM diagnostics WHERE path=? ORDER BY line,column", (path,)).fetchall()
 
     def relations_for(self, object_id: str):
-        return self.conn.execute(
-            "SELECT * FROM relations WHERE source_id=? OR target_id=?", (object_id, object_id)
-        ).fetchall()
+        return self._relations_repository().for_object(object_id)
 
     def incoming_relations(self, object_id: str, kind: str | None = None):
-        if kind:
-            return self.conn.execute("SELECT * FROM relations WHERE target_id=? AND kind=?", (object_id, kind)).fetchall()
-        return self.conn.execute("SELECT * FROM relations WHERE target_id=?", (object_id,)).fetchall()
+        return self._relations_repository().incoming(object_id, kind)
 
     def search(self, query: str, limit: int = 30):
         terms = [t for t in query.replace('"', ' ').split() if t]
@@ -1497,13 +1336,11 @@ class Store:
         return self.conn.execute("SELECT * FROM resource_leases WHERE agent_id=? ORDER BY resource_kind,resource_id",(agent_id,)).fetchall()
 
     def hypothesis_evidence_rows(self, hypothesis_id: str):
-        return self.conn.execute("SELECT * FROM hypothesis_evidence WHERE hypothesis_id=? ORDER BY seq",(hypothesis_id,)).fetchall()
+        return self._experimentation_repository().hypothesis_evidence(hypothesis_id)
 
     def evidence_by_ids(self, ids: list[str]):
-        ids=[x for x in ids if x]
-        if not ids: return []
-        marks=",".join("?" for _ in ids)
-        return self.conn.execute(f"SELECT * FROM evidence WHERE id IN ({marks})",ids).fetchall()
+        return self._evidence_repository().by_ids(ids)
+
     # --- alpha.10 coordination / agent residency / approvals ---
     def record_agent_observation(self, agent_id: str, path: str, digest: str | None, revision: str, kind: str = "source", object_id: str = "", observed_at: str = "") -> None:
         if not self.agent_session(agent_id): raise KeyError(agent_id)
