@@ -4,7 +4,7 @@
 
 **Goal:** Make Foundation Convergence Wave 4 controlled Habitat-vs-filesystem experiments and explicit internal ablations first-class, deterministic, causally bound, and independently evaluable.
 
-**Architecture:** Extend the pure `habitat.benchmarking` domain layer rather than creating another runner. A deterministic immutable experiment plan produces exact run manifests for the filesystem control, Habitat ON, and each requested Habitat ablation. A separate evidence-admission layer accepts only results that were actually planned, preserves evaluator independence, and computes deltas without converting unavailable measurements into zero. The existing `benchmarks/agent_ab_harness.py` remains wire/CLI compatible and will be adapted to these contracts in a following Wave 4 slice after the reusable kernel is certified.
+**Architecture:** Extend the pure `habitat.benchmarking` domain layer rather than creating another runner. A deterministic immutable experiment plan produces exact run manifests for the filesystem control, Habitat ON, and each requested Habitat ablation. Evidence admission requires an explicit receipt carrying the exact planned-run identity and environment fingerprint, because `BenchmarkRun` alone does not encode enough experiment/environment identity to prove causal membership. Comparisons preserve unavailable measurements as unavailable. The existing `benchmarks/agent_ab_harness.py` remains wire/CLI compatible and will be adapted to these contracts in a following Wave 4 slice after the reusable kernel is certified.
 
 **Tech Stack:** Python 3.10+, frozen dataclasses, stdlib `hashlib`/`random`, `unittest`, existing `habitat.benchmarking` types.
 
@@ -34,7 +34,6 @@
 - Consumes: `BenchmarkSpec`, `AblationConfig`, `BenchmarkArm`.
 - Produces: `PlannedRun` and `ExperimentPlan`.
 
-`PlannedRun` fields:
 ```python
 @dataclass(frozen=True)
 class PlannedRun:
@@ -52,10 +51,8 @@ class PlannedRun:
 
     @property
     def identity(self) -> str: ...
-```
 
-`ExperimentPlan` fields and API:
-```python
+
 @dataclass(frozen=True)
 class ExperimentPlan:
     experiment_id: str
@@ -83,64 +80,37 @@ Conditions are exactly:
 
 For each repetition, condition execution order is deterministically shuffled with a stable SHA-256-derived random seed from `experiment_id`, task spec fingerprint, and repetition seed. Rebuilding the same plan must return identical order and identities. Different causal controls must change run identity.
 
-- [ ] **Step 1: Write failing tests**
-
-Tests must require:
-- fewer than 3 seeds rejected;
-- negative, boolean, and duplicate seeds rejected;
-- empty causal identity strings rejected;
-- duplicate/default entries in `habitat_ablations` rejected rather than silently weakening the experiment;
-- filesystem + Habitat ON always present;
-- every requested explicit ablation present exactly once per repetition and only under Habitat;
-- deterministic randomized order and stable run identities;
-- changing model/scaffold/evaluator/environment/spec/seed/ablation changes the relevant planned identity.
-
-- [ ] **Step 2: Verify RED**
-
-Run:
-```bash
-python -m unittest tests.test_benchmark_experiment -v
-```
-Expected: FAIL because `PlannedRun` / `ExperimentPlan` are not exported.
-
-- [ ] **Step 3: Implement minimal immutable experiment planning**
-
-Use the existing deterministic JSON/SHA-256 fingerprint conventions from `habitat/benchmarking/model.py`. Do not use Python's process-randomized `hash()`.
-
-- [ ] **Step 4: Verify focused GREEN and regression**
-
-Run:
-```bash
-python -m unittest tests.test_benchmark_experiment -v
-python -m unittest discover -s tests -v
-```
-Expected: all pass.
-
-- [ ] **Step 5: Commit**
-
-```bash
-git add habitat/benchmarking/experiment.py habitat/benchmarking/__init__.py tests/test_benchmark_experiment.py
-git commit -m "feat: add deterministic benchmark experiment planning"
-```
+- [ ] **Step 1: Write failing tests** requiring minimum/unique/non-negative integer seeds, non-empty causal identities, no default/duplicate explicit ablations, complete condition coverage, deterministic shuffle, and causal identity sensitivity.
+- [ ] **Step 2: Verify RED** with `python -m unittest tests.test_benchmark_experiment -v`; expected missing `PlannedRun` / `ExperimentPlan` exports only.
+- [ ] **Step 3: Implement minimal immutable experiment planning** using deterministic JSON/SHA-256 fingerprint conventions; never Python `hash()`.
+- [ ] **Step 4: Verify focused GREEN and regression** with focused unittest and full discovery.
+- [ ] **Step 5: Commit** as `feat: add deterministic benchmark experiment planning`.
 
 ---
 
-### Task 2: Planned-Result Admission and Experiment Completeness
+### Task 2: Planned-Result Receipt Admission and Experiment Completeness
 
 **Files:**
 - Modify: `habitat/benchmarking/experiment.py`
 - Modify: `habitat/benchmarking/__init__.py`
 - Test: `tests/test_benchmark_experiment.py`
 
+**Rationale:** `BenchmarkResult` binds a task spec, run, evaluator, model/scaffold, seed, arm, repetition, and ablation, but it does not independently prove which experiment/environment execution produced it. Admission therefore MUST NOT infer experiment membership merely from fields that happen to match. A first-class receipt binds the result to the exact `PlannedRun.identity` and exact environment fingerprint.
+
 **Interfaces:**
-- Consumes: `ExperimentPlan`, `PlannedRun`, `BenchmarkResult`.
-- Produces: `ExperimentEvidence` and `admit_experiment_results`.
 
 ```python
 @dataclass(frozen=True)
+class RecordedBenchmarkResult:
+    planned_run_identity: str
+    environment_fingerprint: str
+    result: BenchmarkResult
+
+
+@dataclass(frozen=True)
 class ExperimentEvidence:
     plan: ExperimentPlan
-    results: tuple[BenchmarkResult, ...]
+    records: tuple[RecordedBenchmarkResult, ...]
 
     @property
     def complete(self) -> bool: ...
@@ -151,42 +121,28 @@ class ExperimentEvidence:
 
 def admit_experiment_results(
     plan: ExperimentPlan,
-    results: Iterable[BenchmarkResult],
+    records: Iterable[RecordedBenchmarkResult],
 ) -> ExperimentEvidence: ...
 ```
 
-Admission must fail closed for:
-- a result bound to another spec;
-- model or scaffold mismatch;
-- evaluator mismatch;
-- repetition/seed/arm/ablation combination that was not planned;
-- duplicate run identity;
-- an impossible filesystem ablation.
+Admission is fail-closed. Every receipt must identify an exact planned run, and the admitted result must independently agree with that plan on:
+- environment fingerprint;
+- benchmark spec fingerprint;
+- arm and derived condition;
+- repetition and seed;
+- model and scaffold;
+- ablation;
+- evaluator identity.
 
-Partial evidence is retained and reports exact missing planned identities; completion becomes true only when every planned condition/repetition has one admitted independent result.
+Admission must reject an unknown planned identity, duplicate planned identity, another environment, another spec, model/scaffold/evaluator mismatch, unplanned repetition/seed/arm/ablation, impossible filesystem ablation, and non-receipt inputs. Agent self-report is preserved only as data and never substitutes for the independent evaluator verdict.
 
-- [ ] **Step 1: Write failing admission tests**
+Partial evidence is valid and reports exact missing planned identities in deterministic plan order. Completion becomes true only when every planned condition/repetition has exactly one admitted independently evaluated receipt.
 
-Include one valid partial evidence case, one exact complete case, and a subtest for every mismatch above.
-
-- [ ] **Step 2: Verify RED**
-
-Run focused unittest and confirm missing export/API failures only.
-
-- [ ] **Step 3: Implement fail-closed admission**
-
-Map results to planned runs using the same causal identity payload; never infer missing causal controls from metrics or self-reported success.
-
-- [ ] **Step 4: Verify focused GREEN and full regression**
-
-Run focused test then full `unittest discover`.
-
-- [ ] **Step 5: Commit**
-
-```bash
-git add habitat/benchmarking/experiment.py habitat/benchmarking/__init__.py tests/test_benchmark_experiment.py
-git commit -m "feat: admit benchmark evidence against exact plans"
-```
+- [ ] **Step 1: Write failing admission tests** for partial/complete evidence, receipt immutability, all causal mismatches, duplicates, invalid inputs, and independent-evaluator authority.
+- [ ] **Step 2: Verify RED** with focused/full unittest and confirm missing receipt/admission exports are the only failure.
+- [ ] **Step 3: Implement fail-closed receipt admission** without deriving missing causal identity from metrics or self-reports.
+- [ ] **Step 4: Verify focused GREEN and full regression**.
+- [ ] **Step 5: Commit** as `feat: admit benchmark evidence against exact plans`.
 
 ---
 
@@ -198,65 +154,21 @@ git commit -m "feat: admit benchmark evidence against exact plans"
 - Test: `tests/test_benchmark_experiment.py`
 
 **Interfaces:**
-- Consumes: complete or partial `ExperimentEvidence`.
-- Produces: `MetricDelta`, `ConditionComparison`, `compare_conditions`.
+- Consumes: complete or partial `ExperimentEvidence` receipts.
+- Produces: immutable `MetricDelta`, `ConditionComparison`, and `compare_conditions`.
 
-```python
-@dataclass(frozen=True)
-class MetricDelta:
-    baseline: int | float | None
-    candidate: int | float | None
-    delta: int | float | None
+The final Task 3 RED contract will preserve per-repetition distributions rather than collapse them into one headline. Comparisons pair only receipts from the same repetition/seed. Requested conditions must exist in the plan. A metric delta is unavailable whenever either side is unavailable; explicit measured zero remains zero. No statistical superiority claim is generated by this kernel.
 
-@dataclass(frozen=True)
-class ConditionComparison:
-    baseline_condition_id: str
-    candidate_condition_id: str
-    repetitions_compared: int
-    success_delta: int
-    metric_deltas: dict[str, tuple[MetricDelta, ...]]
-
-
-def compare_conditions(
-    evidence: ExperimentEvidence,
-    baseline_condition_id: str,
-    candidate_condition_id: str,
-) -> ConditionComparison: ...
-```
-
-Comparisons pair only the same repetition/seed. Requested conditions must exist in the plan. A metric delta is `None` whenever either side is unavailable. Do not create a single aggregate headline that hides per-run distribution.
-
-- [ ] **Step 1: Write failing comparison tests**
-
-Require exact causal pairing, per-repetition independent success deltas, unavailable-vs-zero preservation, unknown-condition rejection, and deterministic output order.
-
-- [ ] **Step 2: Verify RED**
-
-Run focused unittest and confirm only the new comparison API is missing/failing.
-
-- [ ] **Step 3: Implement minimal comparison layer**
-
-Compute only raw per-pair deltas and counts needed by the Foundation Convergence contract; no statistical superiority claim is generated here.
-
-- [ ] **Step 4: Verify exact-head readiness**
-
-Run:
-```bash
-python -m unittest tests.test_benchmark_experiment -v
-python -m unittest discover -s tests -v
-```
-Then require repository CI matrix, CodeQL, review/thread audit, changed-file boundary, and main-drift check on the exact final head.
-
-- [ ] **Step 5: Commit**
-
-```bash
-git add habitat/benchmarking/experiment.py habitat/benchmarking/__init__.py tests/test_benchmark_experiment.py
-git commit -m "feat: add causal benchmark condition comparisons"
-```
+- [ ] **Step 1: Write failing comparison tests** requiring exact causal pairing, per-repetition independent success deltas, unavailable-vs-zero preservation, unknown-condition rejection, immutable deterministic output, and partial-evidence behavior.
+- [ ] **Step 2: Verify RED** and confirm only the new comparison API is missing/failing.
+- [ ] **Step 3: Implement minimal comparison layer** with raw pair-level evidence only.
+- [ ] **Step 4: Verify exact-head readiness** with focused test, full regression, repository CI matrix, CodeQL, review/thread audit, changed-file boundary, and main-drift check.
+- [ ] **Step 5: Commit** as `feat: add causal benchmark condition comparisons`.
 
 ## Self-Review
 
-- Spec coverage: this slice makes controlled experiments and all Foundation-required ablation dimensions runnable as immutable plans, admits only causally comparable independent results, and provides raw paired deltas. Harness adaptation and held-out suite population remain later Wave 4 tasks, explicitly outside this kernel slice.
+- Spec coverage: this slice makes controlled experiments and all Foundation-required ablation dimensions runnable as immutable plans, admits only causally comparable independently evaluated receipts, and provides raw paired deltas. Harness adaptation and held-out suite population remain later Wave 4 tasks, explicitly outside this kernel slice.
+- Causal binding: environment/experiment membership is explicit through `RecordedBenchmarkResult`; raw `BenchmarkResult` matching is insufficient by design.
 - Placeholder scan: no TBD/TODO/implicit error-handling steps.
 - Type consistency: all new APIs consume the Wave 4A immutable contracts and preserve their `None` measurement semantics.
 - Compatibility: no existing protocol, workspace, storage, release, or schema-3 harness surface is modified by this slice.
