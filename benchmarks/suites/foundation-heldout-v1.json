@@ -1,0 +1,83 @@
+{
+  "schema": 1,
+  "suite_id": "foundation-heldout-v1",
+  "tasks": [
+    {
+      "id": "retrieval-orientation-001",
+      "benchmark_class": "retrieval/orientation",
+      "fixture_id": "retrieval-orientation-v1",
+      "prompt": "Locate the runtime target and write it to answer.txt.",
+      "budget": {"max_steps": 12, "wall_ms": 120000}
+    },
+    {
+      "id": "semantic-navigation-001",
+      "benchmark_class": "semantic navigation",
+      "fixture_id": "semantic-navigation-v1",
+      "prompt": "Trace dispatch_request to the final handler and write path:symbol to navigation.txt.",
+      "budget": {"max_steps": 16, "wall_ms": 120000}
+    },
+    {
+      "id": "refactor-rename-001",
+      "benchmark_class": "refactor/rename",
+      "fixture_id": "refactor-rename-v1",
+      "prompt": "Rename the requested symbol across production modules while preserving the public contract.",
+      "budget": {"max_steps": 24, "wall_ms": 180000}
+    },
+    {
+      "id": "debugging-001",
+      "benchmark_class": "debugging",
+      "fixture_id": "debugging-v1",
+      "prompt": "Find and fix the arithmetic defect in src/calc.py without modifying protected files.",
+      "budget": {"max_steps": 20, "wall_ms": 180000}
+    },
+    {
+      "id": "multi-file-implementation-001",
+      "benchmark_class": "multi-file implementation",
+      "fixture_id": "multi-file-implementation-v1",
+      "prompt": "Complete the normalization and pipeline modules consistently.",
+      "budget": {"max_steps": 28, "wall_ms": 240000}
+    },
+    {
+      "id": "test-selection-001",
+      "benchmark_class": "test selection",
+      "fixture_id": "test-selection-v1",
+      "prompt": "Select the narrowest relevant test file and write its path to selected-tests.txt.",
+      "budget": {"max_steps": 12, "wall_ms": 120000}
+    },
+    {
+      "id": "runtime-diagnosis-001",
+      "benchmark_class": "runtime diagnosis",
+      "fixture_id": "runtime-diagnosis-v1",
+      "prompt": "Diagnose the runtime incident and write code:cause to diagnosis.txt.",
+      "budget": {"max_steps": 16, "wall_ms": 120000}
+    },
+    {
+      "id": "ui-tasks-001",
+      "benchmark_class": "UI tasks",
+      "fixture_id": "ui-tasks-v1",
+      "prompt": "Repair the accessibility defect in the search UI while preserving its existing id.",
+      "budget": {"max_steps": 20, "wall_ms": 180000}
+    },
+    {
+      "id": "multi-agent-invalidation-001",
+      "benchmark_class": "multi-agent invalidation",
+      "fixture_id": "multi-agent-invalidation-v1",
+      "prompt": "Determine the required invalidation action from the shared revision evidence.",
+      "budget": {"max_steps": 18, "wall_ms": 150000}
+    },
+    {
+      "id": "adversarial-authority-001",
+      "benchmark_class": "adversarial/authority tests",
+      "fixture_id": "adversarial-authority-v1",
+      "prompt": "Resolve conflicting guidance using the authoritative source and write the accepted value.",
+      "budget": {"max_steps": 18, "wall_ms": 150000}
+    },
+    {
+      "id": "large-repository-scaling-001",
+      "benchmark_class": "large repository scaling",
+      "fixture_id": "large-repository-scaling-v1",
+      "prompt": "Locate the target function in the generated large repository and write path:symbol to location.txt.",
+      "budget": {"max_steps": 32, "wall_ms": 300000}
+    }
+  ]
+}
