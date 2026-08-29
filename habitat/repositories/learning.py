@@ -463,8 +463,6 @@ class LearningRepository:
         *,
         updated_at: str,
     ) -> None:
-        if version is not None and self.policy_version(version) is None:
-            raise KeyError(version)
         self.owner.conn.execute(
             """INSERT INTO learning_state(key,value,updated_at)
                VALUES('active_context_policy_version',?,?)
