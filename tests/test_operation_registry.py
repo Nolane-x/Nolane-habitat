@@ -3,11 +3,189 @@ from __future__ import annotations
 from dataclasses import FrozenInstanceError
 import unittest
 
-from habitat.operation_registry import OperationDescriptor, OperationRegistry
+from habitat.operation_registry import (
+    OPERATION_REGISTRY,
+    OperationDescriptor,
+    OperationRegistry,
+)
 
 
 def _handler(_protocol, _params):
     return {"ok": True}
+
+
+EXPECTED_METHODS = (
+    "protocol.capabilities",
+    "workspace.enter",
+    "workspace.refresh",
+    "workspace.orient",
+    "workspace.explore",
+    "workspace.context.page",
+    "workspace.context.refresh",
+    "workspace.query",
+    "workspace.inspect",
+    "workspace.inspect.batch",
+    "workspace.context.materialize",
+    "workspace.context.address_space",
+    "workspace.context.fetch",
+    "workspace.context.prefetch",
+    "workspace.context.plan_next",
+    "workspace.context.feedback",
+    "workspace.context.efficiency",
+    "workspace.references",
+    "workspace.impact",
+    "workspace.source.read",
+    "workspace.change.plan",
+    "workspace.change.stage",
+    "workspace.change.stage_symbol",
+    "workspace.change.stage_rename_symbol",
+    "workspace.change.commit",
+    "workspace.change.rollback",
+    "workspace.verification.plan",
+    "workspace.verification.run",
+    "workspace.events.poll",
+    "workspace.diff.since",
+    "workspace.state.merkle",
+    "workspace.state.merkle.diff",
+    "workspace.watch.start",
+    "workspace.watch.poll",
+    "workspace.watch.wait",
+    "workspace.watch.status",
+    "workspace.watch.stop",
+    "workspace.backend.info",
+    "workspace.semantic.providers",
+    "workspace.semantic.fabric",
+    "workspace.evidence.active",
+    "workspace.episode.start",
+    "workspace.episode.status",
+    "workspace.episode.finish",
+    "workspace.episode.efficiency",
+    "workspace.invariant.create",
+    "workspace.invariant.status",
+    "workspace.invariant.link",
+    "workspace.invariant.update",
+    "workspace.hypothesis.create",
+    "workspace.hypothesis.status",
+    "workspace.hypothesis.link_evidence",
+    "workspace.hypothesis.update",
+    "workspace.hypothesis.compare",
+    "workspace.hypothesis.next_experiment",
+    "workspace.agent.belief.update",
+    "workspace.agent.belief.status",
+    "workspace.agent.belief.portfolio",
+    "workspace.experiment.plan",
+    "workspace.experiment.status",
+    "workspace.experiment.complete",
+    "workspace.causality.explain",
+    "workspace.causality.graph",
+    "workspace.checkpoint",
+    "workspace.resume",
+    "workspace.context.residency.configure",
+    "workspace.context.residency.admit",
+    "workspace.context.residency.status",
+    "workspace.context.residency.materialize",
+    "workspace.context.residency.touch",
+    "workspace.context.residency.pin",
+    "workspace.context.residency.evict",
+    "workspace.trace.start",
+    "workspace.trace.status",
+    "workspace.trace.stop",
+    "workspace.activity.since",
+    "workspace.observatory.start",
+    "workspace.observatory.status",
+    "workspace.observatory.stop",
+    "workspace.epistemic.create",
+    "workspace.epistemic.state",
+    "workspace.epistemic.update",
+    "workspace.cognition.next",
+    "workspace.cognition.probe_unknowns",
+    "workspace.cognition.plan",
+    "workspace.cognition.health",
+    "workspace.executive.start",
+    "workspace.executive.status",
+    "workspace.executive.plan",
+    "workspace.executive.advance",
+    "workspace.executive.milestone.add",
+    "workspace.executive.milestone.update",
+    "workspace.executive.complete",
+    "workspace.executive.stop",
+    "workspace.project.world",
+    "workspace.effect.refresh",
+    "workspace.effect.snapshot",
+    "workspace.dataflow.refresh",
+    "workspace.dataflow.snapshot",
+    "workspace.runtime.topology",
+    "workspace.counterfactual.fork",
+    "workspace.counterfactual.status",
+    "workspace.counterfactual.apply",
+    "workspace.counterfactual.evaluate",
+    "workspace.counterfactual.compare",
+    "workspace.counterfactual.verify",
+    "workspace.counterfactual.promote",
+    "workspace.counterfactual.discard",
+    "workspace.memory.record",
+    "workspace.memory.status",
+    "workspace.memory.recall",
+    "workspace.memory.invalidate",
+    "workspace.runtime.ingest",
+    "workspace.runtime.timeline",
+    "workspace.policy.status",
+    "workspace.policy.update",
+    "workspace.policy.evaluate",
+    "workspace.execution.security",
+    "workspace.execution.configure",
+    "workspace.sandbox.status",
+    "workspace.retention.status",
+    "workspace.retention.compact",
+    "workspace.state.security",
+    "workspace.world.summary",
+    "workspace.world.health",
+    "workspace.guidance.discover",
+    "workspace.guidance.read",
+    "workspace.git.status",
+    "workspace.git.history",
+    "workspace.git.blame",
+    "workspace.git.explain_line",
+    "workspace.git.diff",
+    "workspace.git.changed_files",
+    "workspace.git.churn",
+    "workspace.git.explain_symbol",
+    "workspace.git.branches",
+    "workspace.git.worktrees",
+    "workspace.git.conflicts",
+    "workspace.git.commit_impact",
+    "workspace.dependencies.snapshot",
+    "workspace.dependencies.query",
+    "workspace.dependencies.world",
+    "workspace.agent.open",
+    "workspace.agent.status",
+    "workspace.agent.close",
+    "workspace.agent.observe",
+    "workspace.agent.notifications",
+    "workspace.agent.notifications.ack",
+    "workspace.agent.revalidate",
+    "workspace.agent.residency.admit",
+    "workspace.agent.residency.status",
+    "workspace.agent.residency.evict",
+    "workspace.lease.acquire",
+    "workspace.lease.release",
+    "workspace.lease.status",
+    "action.run",
+    "ui.observe",
+    "ui.runtime.open",
+    "ui.runtime.observe",
+    "ui.runtime.act",
+    "ui.runtime.assert",
+    "ui.runtime.close",
+)
+
+EXPECTED_READ_ONLY = frozenset((
+    "protocol.capabilities",
+    "workspace.inspect",
+    "workspace.inspect.batch",
+    "workspace.references",
+    "workspace.source.read",
+))
 
 
 class OperationRegistryKernelTests(unittest.TestCase):
@@ -58,6 +236,44 @@ class OperationRegistryKernelTests(unittest.TestCase):
         self.assertFalse(hasattr(registry, "add"))
         self.assertFalse(hasattr(registry, "remove"))
         self.assertFalse(hasattr(registry, "clear"))
+
+
+class OperationRegistrySurfaceTests(unittest.TestCase):
+    def test_expected_surface_is_explicitly_complete_and_unique(self):
+        self.assertEqual(162, len(EXPECTED_METHODS))
+        self.assertEqual(162, len(set(EXPECTED_METHODS)))
+        self.assertEqual(5, len(EXPECTED_READ_ONLY))
+
+    def test_static_registry_preserves_exact_legacy_method_order(self):
+        self.assertEqual(EXPECTED_METHODS, OPERATION_REGISTRY.names)
+
+    def test_static_registry_preserves_exact_read_only_classification(self):
+        self.assertEqual(EXPECTED_READ_ONLY, OPERATION_REGISTRY.read_only_names)
+
+    def test_static_registry_has_exactly_one_callable_handler_per_method(self):
+        descriptors = tuple(OPERATION_REGISTRY.get(name) for name in EXPECTED_METHODS)
+
+        self.assertTrue(all(descriptor is not None for descriptor in descriptors))
+        self.assertEqual(
+            EXPECTED_METHODS,
+            tuple(descriptor.name for descriptor in descriptors if descriptor is not None),
+        )
+        self.assertTrue(
+            all(
+                callable(descriptor.handler)
+                for descriptor in descriptors
+                if descriptor is not None
+            )
+        )
+
+    def test_static_registry_construction_does_not_require_a_workspace(self):
+        self.assertEqual(EXPECTED_METHODS, OPERATION_REGISTRY.names)
+        self.assertTrue(
+            all(
+                getattr(OPERATION_REGISTRY.get(name).handler, "__self__", None) is None
+                for name in EXPECTED_METHODS
+            )
+        )
 
 
 if __name__ == "__main__":
