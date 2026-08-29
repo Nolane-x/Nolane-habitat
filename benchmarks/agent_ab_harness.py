@@ -455,6 +455,9 @@ def main():
         except (TypeError,ValueError,KeyError,FileNotFoundError) as exc:
             ap.error(str(exc))
         runs=strong["runs"]
+        suite_classes={task["benchmark_class"] for task in strong["suite"]["tasks"]}
+        class_coverage=[benchmark_class for benchmark_class in BENCHMARK_CLASSES if benchmark_class in suite_classes]
+        missing_classes=[benchmark_class for benchmark_class in BENCHMARK_CLASSES if benchmark_class not in suite_classes]
         comparability={
             "same_model_observed":all(run.get("model_id")==args.model_id for run in runs),
             "same_scaffold_observed":all(run.get("scaffold_id")==args.scaffold_id for run in runs),
@@ -482,7 +485,13 @@ def main():
             "observed_scaffold_ids":[args.scaffold_id],
             "comparability":comparability,
             "paired_summary":strong["paired_summary"],
-            "benchmark_lab":{"schema":1,"experiments":strong["experiments"]},
+            "benchmark_lab":{
+                "schema":1,
+                "suite_id":strong["suite"]["suite_id"],
+                "class_coverage":class_coverage,
+                "missing_classes":missing_classes,
+                "experiments":strong["experiments"],
+            },
             "claim_boundary":"Strong mode binds one mutation-derived source revision to an explicit typed experiment plan, uses the same Habitat command for base and ablation conditions, requires matching execution receipts, and uses an independent evaluator. Receipts attest scaffold-applied configuration but are not cryptographic proof of internal model behavior.",
         }
         Path(args.out).write_text(json.dumps(report,indent=2,sort_keys=True),encoding="utf-8")
