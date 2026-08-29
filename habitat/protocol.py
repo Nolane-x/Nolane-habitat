@@ -95,13 +95,15 @@ class HabitatProtocol:
         if _contains_unpaired_surrogate(request):
             return self._error(request.get("id"), "INVALID_REQUEST", "request contains an unpaired surrogate")
         rid=request.get("id"); method=request.get("method"); params=request.get("params") or {}
+        descriptor=OPERATION_REGISTRY.get(method) if isinstance(method,str) else None
+        read_only=bool(descriptor and descriptor.read_only)
         if not isinstance(method,str):
             response=self._error(rid,"INVALID_REQUEST","method must be a string")
         elif not isinstance(params,dict):
             response=self._error(rid,"INVALID_REQUEST","params must be an object")
         else:
             activity_allowed=(
-                method not in self.READ_ONLY_METHODS
+                not read_only
                 and not method.startswith(("workspace.activity.","workspace.observatory.","workspace.trace."))
             )
             agent_id=params.get("agent_id") if isinstance(params.get("agent_id"),str) else None
@@ -124,7 +126,7 @@ class HabitatProtocol:
                 except Exception: pass
         # Trace is measurement infrastructure, not a source-state mutation. Control calls are excluded so
         # start/stop do not bias the measured workload they bracket.
-        if isinstance(method,str) and method not in self.READ_ONLY_METHODS and not method.startswith("workspace.trace."):
+        if isinstance(method,str) and not read_only and not method.startswith("workspace.trace."):
             try:
                 req_bytes=len(json.dumps(request,ensure_ascii=False,default=str,separators=(",",":")).encode("utf-8"))
                 resp_bytes=len(json.dumps(response,ensure_ascii=False,default=str,separators=(",",":")).encode("utf-8"))
