@@ -308,7 +308,12 @@ def run_strong_experiments(args, ablations: tuple[AblationConfig,...]) -> dict:
         for task_index,task in enumerate(suite["tasks"]):
             source=base/f"source-{task_index:04d}"
             nonce=hashlib.sha256(f"{suite['suite_id']}\0{task['id']}\0{args.seed}".encode("utf-8")).hexdigest()
-            fixture=materialize_fixture(task["fixture_id"],source,nonce)
+            fixture=materialize_fixture(
+                task["fixture_id"],
+                source,
+                nonce,
+                expected_benchmark_class=task["benchmark_class"],
+            )
             spec=BenchmarkSpec(
                 task_id=task["id"],
                 benchmark_class=task["benchmark_class"],
