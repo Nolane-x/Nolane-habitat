@@ -459,12 +459,21 @@ def main():
         suite_classes={task["benchmark_class"] for task in strong["suite"]["tasks"]}
         class_coverage=[benchmark_class for benchmark_class in BENCHMARK_CLASSES if benchmark_class in suite_classes]
         missing_classes=[benchmark_class for benchmark_class in BENCHMARK_CLASSES if benchmark_class not in suite_classes]
+        strong_evidence_admitted=all(exp["complete"] for exp in strong["experiments"])
+        admission_reasons=sorted({
+            record["rejection_reason"]
+            for experiment in strong["experiments"]
+            for record in experiment["records"]
+            if not record["admitted"] and isinstance(record.get("rejection_reason"),str)
+        })
+        if not strong_evidence_admitted and not admission_reasons:
+            admission_reasons=["one or more planned runs were not admitted"]
         comparability={
             "same_model_observed":all(run.get("model_id")==args.model_id for run in runs),
             "same_scaffold_observed":all(run.get("scaffold_id")==args.scaffold_id for run in runs),
             "independent_evaluator":True,
             "all_execution_receipts_valid":all(bool(run.get("receipt_valid")) for run in runs),
-            "strong_evidence_ready":all(exp["complete"] for exp in strong["experiments"]),
+            "strong_evidence_ready":strong_evidence_admitted,
             "reasons":[],
         }
         if not comparability["all_execution_receipts_valid"]:
@@ -491,6 +500,8 @@ def main():
                 "suite_id":strong["suite"]["suite_id"],
                 "class_coverage":class_coverage,
                 "missing_classes":missing_classes,
+                "strong_evidence_admitted":strong_evidence_admitted,
+                "admission_reasons":admission_reasons,
                 "experiments":strong["experiments"],
             },
             "claim_boundary":"Strong mode binds one mutation-derived source revision to an explicit typed experiment plan, uses the same Habitat command for base and ablation conditions, requires matching execution receipts, and uses an independent evaluator. Receipts attest scaffold-applied configuration but are not cryptographic proof of internal model behavior.",
