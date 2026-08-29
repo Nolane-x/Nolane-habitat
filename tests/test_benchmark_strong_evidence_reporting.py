@@ -125,7 +125,26 @@ print(json.dumps({
             self.assertEqual(0, proc.returncode, proc.stderr)
 
             report = json.loads(out.read_text(encoding="utf-8"))
-            experiment = report["benchmark_lab"]["experiments"][0]
+            benchmark_lab = report["benchmark_lab"]
+            self.assertEqual("strong-report-test", benchmark_lab["suite_id"])
+            self.assertEqual(["retrieval/orientation"], benchmark_lab["class_coverage"])
+            self.assertEqual(
+                [
+                    "semantic navigation",
+                    "refactor/rename",
+                    "debugging",
+                    "multi-file implementation",
+                    "test selection",
+                    "runtime diagnosis",
+                    "UI tasks",
+                    "multi-agent invalidation",
+                    "adversarial/authority tests",
+                    "large repository scaling",
+                ],
+                benchmark_lab["missing_classes"],
+            )
+
+            experiment = benchmark_lab["experiments"][0]
             self.assertFalse(experiment["complete"])
             self.assertEqual(1, len(experiment["missing_run_identities"]))
             self.assertEqual(9, len(experiment["records"]))
