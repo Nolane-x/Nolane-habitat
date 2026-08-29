@@ -120,17 +120,18 @@ class CandidateLifecycleModelTests(unittest.TestCase):
         self.assertEqual(EXPECTED_TRANSITIONS, LEGAL_CANDIDATE_TRANSITIONS)
 
     def test_candidate_is_frozen_and_binds_exact_policy_and_generator_identity(self):
-        candidate = PolicyCandidate(
-            candidate_id="cand-001",
-            policy_version="context-v2",
-            policy_fingerprint="a" * 64,
-            baseline_version="context-v1",
-            baseline_fingerprint="b" * 64,
-            generator_id="candidate-generator-v1",
-            state="candidate",
-            created_at="2026-08-29T14:10:00Z",
-            updated_at="2026-08-29T14:10:00Z",
-        )
+        values = {
+            "candidate_id": "cand-001",
+            "policy_version": "context-v2",
+            "policy_fingerprint": "a" * 64,
+            "baseline_version": "context-v1",
+            "baseline_fingerprint": "b" * 64,
+            "generator_id": "candidate-generator-v1",
+            "state": "candidate",
+            "created_at": "2026-08-29T14:10:00Z",
+            "updated_at": "2026-08-29T14:10:00Z",
+        }
+        candidate = PolicyCandidate(**values)
         self.assertEqual("candidate", candidate.state)
         with self.assertRaises(FrozenInstanceError):
             candidate.state = "shadow"
@@ -146,31 +147,10 @@ class CandidateLifecycleModelTests(unittest.TestCase):
             "updated_at",
         ):
             with self.subTest(field=field), self.assertRaises(ValueError):
-                PolicyCandidate(
-                    candidate_id="cand-001",
-                    policy_version="context-v2",
-                    policy_fingerprint="a" * 64,
-                    baseline_version="context-v1",
-                    baseline_fingerprint="b" * 64,
-                    generator_id="candidate-generator-v1",
-                    state="candidate",
-                    created_at="2026-08-29T14:10:00Z",
-                    updated_at="2026-08-29T14:10:00Z",
-                    **{field: "   "},
-                )
+                PolicyCandidate(**{**values, field: "   "})
 
         with self.assertRaises(ValueError):
-            PolicyCandidate(
-                candidate_id="cand-001",
-                policy_version="context-v2",
-                policy_fingerprint="a" * 64,
-                baseline_version="context-v1",
-                baseline_fingerprint="b" * 64,
-                generator_id="candidate-generator-v1",
-                state="unknown",
-                created_at="2026-08-29T14:10:00Z",
-                updated_at="2026-08-29T14:10:00Z",
-            )
+            PolicyCandidate(**{**values, "state": "unknown"})
 
 
 class EvaluationPacketTests(unittest.TestCase):
