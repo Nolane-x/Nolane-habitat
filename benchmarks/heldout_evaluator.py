@@ -20,6 +20,7 @@ def _safe_workspace_path(workspace: Path, relative: str) -> Path:
     candidate = PurePosixPath(relative)
     if (
         not relative
+        or "\\" in relative
         or candidate.is_absolute()
         or any(part in {"", ".", ".."} for part in candidate.parts)
     ):
