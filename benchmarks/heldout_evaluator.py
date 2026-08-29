@@ -25,7 +25,13 @@ def _safe_workspace_path(workspace: Path, relative: str) -> Path:
         or any(part in {"", ".", ".."} for part in candidate.parts)
     ):
         raise ValueError(f"unsafe evaluator path: {relative!r}")
-    return workspace.joinpath(*candidate.parts)
+    root = workspace.resolve()
+    resolved = root.joinpath(*candidate.parts).resolve(strict=False)
+    try:
+        resolved.relative_to(root)
+    except ValueError as exc:
+        raise ValueError(f"evaluator path escapes workspace: {relative!r}") from exc
+    return resolved
 
 
 def _payload_is_valid(payload: Mapping[str, object]) -> bool:
