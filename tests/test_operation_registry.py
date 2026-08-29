@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from dataclasses import FrozenInstanceError
 import unittest
+from unittest import mock
 
 from habitat.operation_registry import (
     OPERATION_REGISTRY,
@@ -274,6 +275,52 @@ class OperationRegistrySurfaceTests(unittest.TestCase):
                 for name in EXPECTED_METHODS
             )
         )
+
+
+class ProtocolRegistryRoutingTests(unittest.TestCase):
+    def test_protocol_public_projections_match_registry_contract(self):
+        from habitat.protocol import HabitatProtocol
+
+        self.assertIsInstance(HabitatProtocol.METHODS, list)
+        self.assertEqual(list(OPERATION_REGISTRY.names), HabitatProtocol.METHODS)
+        self.assertEqual(OPERATION_REGISTRY.read_only_names, HabitatProtocol.READ_ONLY_METHODS)
+
+    def test_dispatch_delegates_through_registry_handler_seam(self):
+        from habitat import protocol as protocol_module
+
+        calls = []
+
+        def handler(protocol, params):
+            calls.append((protocol, params))
+            return {"routed": params["value"]}
+
+        registry = OperationRegistry((OperationDescriptor("test.route", handler),))
+        protocol = protocol_module.HabitatProtocol(object())
+
+        with mock.patch.object(protocol_module, "OPERATION_REGISTRY", registry):
+            result = protocol._dispatch("test.route", {"value": 7})
+
+        self.assertEqual({"routed": 7}, result)
+        self.assertEqual([(protocol, {"value": 7})], calls)
+
+    def test_unknown_dispatch_preserves_exact_key_error_contract(self):
+        from habitat.protocol import HabitatProtocol
+
+        protocol = HabitatProtocol(object())
+        with self.assertRaises(KeyError) as raised:
+            protocol._dispatch("missing.operation", {})
+
+        self.assertEqual(("unknown method: missing.operation",), raised.exception.args)
+
+    def test_capabilities_preserve_exact_registry_order_and_list_shape(self):
+        from habitat.protocol import HabitatProtocol
+
+        result = HabitatProtocol(object())._dispatch("protocol.capabilities", {})
+
+        self.assertEqual("habitat.agent.v1alpha2", result["protocol"])
+        self.assertEqual(list(EXPECTED_METHODS), result["methods"])
+        self.assertIsInstance(result["methods"], list)
+        self.assertFalse(result["generic_shell"])
 
 
 if __name__ == "__main__":
