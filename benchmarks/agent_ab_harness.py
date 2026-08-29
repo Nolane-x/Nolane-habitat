@@ -25,10 +25,12 @@ from habitat.benchmarking import (
     ExperimentPlan,
     RecordedBenchmarkResult,
     admit_experiment_results,
+    compare_conditions,
 )
 
 REQUIRED_RESULT={"success":bool,"task_id":str,"tool_calls":int,"input_tokens":int,"output_tokens":int,"wall_ms":int}
 _OPTIONAL_METRICS=("exact_source_bytes","context_precision_proxy","context_recall_proxy","irrelevant_object_admission","ingest_ms","warm_reconcile_ms","provider_calls","failed_strategy_count","repeated_strategy_count","verification_count","mutation_rollback_count","mutation_conflict_count")
+_METRIC_FIELDS=("input_tokens","output_tokens","tool_calls","exact_source_bytes","context_precision_proxy","context_recall_proxy","irrelevant_object_admission","wall_ms","ingest_ms","warm_reconcile_ms","provider_calls","failed_strategy_count","repeated_strategy_count","verification_count","mutation_rollback_count","mutation_conflict_count")
 
 
 def load_suite(path: Path):
@@ -253,6 +255,34 @@ def _strong_metrics(result: dict) -> BenchmarkMetrics:
     )
 
 
+def _serialize_metrics(metrics: BenchmarkMetrics) -> dict:
+    return {field_name:getattr(metrics,field_name) for field_name in _METRIC_FIELDS}
+
+
+def _serialize_comparison(comparison) -> dict:
+    return {
+        "baseline_condition_id":comparison.baseline_condition_id,
+        "candidate_condition_id":comparison.candidate_condition_id,
+        "repetitions_compared":comparison.repetitions_compared,
+        "pairs":[
+            {
+                "repetition":pair.repetition,
+                "seed":pair.seed,
+                "baseline_run_identity":pair.baseline_run_identity,
+                "candidate_run_identity":pair.candidate_run_identity,
+                "baseline_success":pair.baseline_success,
+                "candidate_success":pair.candidate_success,
+                "success_delta":pair.success_delta,
+                "metric_deltas":{
+                    metric_name:{"baseline":delta.baseline,"candidate":delta.candidate,"delta":delta.delta}
+                    for metric_name,delta in pair.metric_deltas
+                },
+            }
+            for pair in comparison.pairs
+        ],
+    }
+
+
 def _serialize_plan(plan: ExperimentPlan) -> dict:
     return {
         "experiment_id":plan.experiment_id,
@@ -296,7 +326,7 @@ def run_strong_experiments(args, ablations: tuple[AblationConfig,...]) -> dict:
                 seeds=seeds,
                 habitat_ablations=ablations,
             )
-            records=[]
+            records=[]; attempted_records=[]
             for order_index,planned in enumerate(plan.planned_runs()):
                 repo=base/f"run-{task_index:04d}-{order_index:04d}-{planned.identity[:12]}"
                 clone_repo(source,repo)
@@ -306,8 +336,21 @@ def run_strong_experiments(args, ablations: tuple[AblationConfig,...]) -> dict:
                 result["evaluation"]=evaluation
                 result["success"]=bool(evaluation.get("success"))
                 runs.append(result)
-                if result.get("receipt_valid") and evaluation.get("ok"):
+
+                metrics=None; metrics_error=None
+                try:
                     metrics=_strong_metrics(result)
+                except (TypeError,ValueError) as exc:
+                    metrics_error=str(exc)
+
+                admitted=False; rejection_reason=None
+                if not result.get("receipt_valid"):
+                    rejection_reason="execution-receipt-mismatch"
+                elif not evaluation.get("ok"):
+                    rejection_reason="evaluator-not-admissible"
+                elif metrics is None:
+                    rejection_reason="invalid-benchmark-metrics"
+                else:
                     run=BenchmarkRun(
                         spec_fingerprint=spec.fingerprint,
                         arm=planned.arm,
@@ -330,7 +373,30 @@ def run_strong_experiments(args, ablations: tuple[AblationConfig,...]) -> dict:
                         environment_fingerprint=planned.environment_fingerprint,
                         result=BenchmarkResult(spec=spec,run=run,evaluation=evaluated),
                     ))
+                    admitted=True
+
+                attempted_records.append({
+                    "planned_run_identity":planned.identity,
+                    "condition_id":planned.condition_id,
+                    "arm":planned.arm,
+                    "repetition":planned.repetition,
+                    "seed":planned.seed,
+                    "ablation":_serialize_ablation(planned.ablation),
+                    "ablation_fingerprint":planned.ablation.fingerprint,
+                    "receipt_valid":bool(result.get("receipt_valid")),
+                    "admitted":admitted,
+                    "rejection_reason":rejection_reason,
+                    "metrics":_serialize_metrics(metrics) if metrics is not None else None,
+                    "metrics_error":metrics_error,
+                    "evaluation":evaluation,
+                })
+
             evidence=admit_experiment_results(plan,records)
+            comparisons=[_serialize_comparison(compare_conditions(evidence,"filesystem","habitat"))]
+            comparisons.extend(
+                _serialize_comparison(compare_conditions(evidence,"habitat",f"habitat:{ablation.fingerprint}"))
+                for ablation in ablations
+            )
             experiments.append({
                 "task_id":task["id"],
                 "benchmark_class":task["benchmark_class"],
@@ -340,6 +406,8 @@ def run_strong_experiments(args, ablations: tuple[AblationConfig,...]) -> dict:
                 "complete":evidence.complete,
                 "missing_run_identities":list(evidence.missing_run_identities),
                 "admitted_run_identities":[record.planned_run_identity for record in evidence.records],
+                "records":attempted_records,
+                "comparisons":comparisons,
             })
     base_runs=[run for run in runs if run.get("condition_id") in {"filesystem","habitat"}]
     return {"suite":suite,"runs":runs,"experiments":experiments,"paired_summary":paired_summary(base_runs)}
