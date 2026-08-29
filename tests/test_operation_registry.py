@@ -189,6 +189,44 @@ EXPECTED_READ_ONLY = frozenset((
 ))
 
 
+class _TelemetryWorkspace:
+    revision = "telemetry-revision"
+
+    def __init__(self):
+        self.activity = []
+        self.trace_calls = []
+
+    def activity_emit(self, event, *args, **kwargs):
+        self.activity.append((event, args, kwargs))
+
+    def record_trace_call(self, *args):
+        self.trace_calls.append(args)
+
+    def inspect_snapshot(self, object_id, include_source):
+        return {"object_id": object_id, "include_source": include_source}
+
+    def inspect_many(self, object_ids, include_source, max_objects):
+        return {"object_ids": object_ids, "include_source": include_source, "max_objects": max_objects}
+
+    def references_snapshot(self, object_id, limit):
+        return {"object_id": object_id, "limit": limit}
+
+    def read_source(self, path, start_line, max_lines):
+        return {"path": path, "start_line": start_line, "max_lines": max_lines}
+
+    def watch_status(self):
+        return {"running": False}
+
+    def activity_since(self, since_seq, limit):
+        return {"since_seq": since_seq, "limit": limit}
+
+    def observatory_status(self):
+        return {"running": False}
+
+    def trace_status(self, trace_id):
+        return {"trace_id": trace_id, "running": False}
+
+
 class OperationRegistryKernelTests(unittest.TestCase):
     def test_descriptor_is_frozen(self):
         descriptor = OperationDescriptor("alpha", _handler, read_only=True)
@@ -321,6 +359,73 @@ class ProtocolRegistryRoutingTests(unittest.TestCase):
         self.assertEqual(list(EXPECTED_METHODS), result["methods"])
         self.assertIsInstance(result["methods"], list)
         self.assertFalse(result["generic_shell"])
+
+
+class ProtocolRegistryTelemetryTests(unittest.TestCase):
+    @staticmethod
+    def _call(method, params=None):
+        from habitat.protocol import HabitatProtocol
+
+        workspace = _TelemetryWorkspace()
+        response = HabitatProtocol(workspace).handle(
+            {"id": "telemetry-test", "method": method, "params": params or {}}
+        )
+        return workspace, response
+
+    def test_read_only_telemetry_uses_registry_metadata_not_compatibility_projection(self):
+        from habitat.protocol import HabitatProtocol
+
+        cases = {
+            "protocol.capabilities": {},
+            "workspace.inspect": {"object_id": "object-1"},
+            "workspace.inspect.batch": {"object_ids": ["object-1"]},
+            "workspace.references": {"object_id": "object-1"},
+            "workspace.source.read": {"path": "module.py"},
+        }
+        self.assertEqual(EXPECTED_READ_ONLY, OPERATION_REGISTRY.read_only_names)
+
+        with mock.patch.object(HabitatProtocol, "READ_ONLY_METHODS", frozenset()):
+            for method, params in cases.items():
+                with self.subTest(method=method):
+                    workspace, response = self._call(method, params)
+                    self.assertTrue(response["ok"])
+                    self.assertEqual([], workspace.activity)
+                    self.assertEqual([], workspace.trace_calls)
+
+    def test_ordinary_operation_retains_activity_and_trace_telemetry(self):
+        workspace, response = self._call("workspace.watch.status")
+
+        self.assertTrue(response["ok"])
+        self.assertEqual(["tool.started", "tool.completed"], [item[0] for item in workspace.activity])
+        self.assertEqual(1, len(workspace.trace_calls))
+        self.assertEqual("workspace.watch.status", workspace.trace_calls[0][0])
+        self.assertTrue(workspace.trace_calls[0][1])
+
+    def test_activity_and_observatory_operations_keep_activity_exclusion_but_trace(self):
+        for method in ("workspace.activity.since", "workspace.observatory.status"):
+            with self.subTest(method=method):
+                workspace, response = self._call(method)
+                self.assertTrue(response["ok"])
+                self.assertEqual([], workspace.activity)
+                self.assertEqual(1, len(workspace.trace_calls))
+                self.assertEqual(method, workspace.trace_calls[0][0])
+
+    def test_trace_control_operations_keep_both_activity_and_trace_exclusions(self):
+        workspace, response = self._call("workspace.trace.status")
+
+        self.assertTrue(response["ok"])
+        self.assertEqual([], workspace.activity)
+        self.assertEqual([], workspace.trace_calls)
+
+    def test_unknown_operation_retains_legacy_failed_activity_and_trace_behavior(self):
+        workspace, response = self._call("missing.operation")
+
+        self.assertFalse(response["ok"])
+        self.assertEqual("NOT_FOUND", response["error"]["code"])
+        self.assertEqual(["tool.started", "tool.completed"], [item[0] for item in workspace.activity])
+        self.assertEqual(1, len(workspace.trace_calls))
+        self.assertEqual("missing.operation", workspace.trace_calls[0][0])
+        self.assertFalse(workspace.trace_calls[0][1])
 
 
 if __name__ == "__main__":
