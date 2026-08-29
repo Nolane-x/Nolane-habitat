@@ -143,6 +143,11 @@ print(json.dumps({
                 ],
                 benchmark_lab["missing_classes"],
             )
+            self.assertFalse(benchmark_lab["strong_evidence_admitted"])
+            self.assertEqual(
+                ["execution-receipt-mismatch"],
+                benchmark_lab["admission_reasons"],
+            )
 
             experiment = benchmark_lab["experiments"][0]
             self.assertFalse(experiment["complete"])
