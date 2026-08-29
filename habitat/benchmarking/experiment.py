@@ -8,6 +8,7 @@ from .model import (
     BENCHMARK_ARMS,
     AblationConfig,
     BenchmarkArm,
+    BenchmarkResult,
     BenchmarkSpec,
     _fingerprint,
     _require_non_empty,
@@ -191,3 +192,114 @@ class ExperimentPlan:
                     )
                 )
         return tuple(runs)
+
+
+@dataclass(frozen=True)
+class RecordedBenchmarkResult:
+    """A benchmark result accompanied by the causal receipt omitted from BenchmarkRun."""
+
+    planned_run_identity: str
+    environment_fingerprint: str
+    result: BenchmarkResult
+
+    def __post_init__(self) -> None:
+        _require_non_empty(self.planned_run_identity, "planned_run_identity")
+        _require_non_empty(self.environment_fingerprint, "environment_fingerprint")
+        if not isinstance(self.result, BenchmarkResult):
+            raise TypeError("result must be BenchmarkResult")
+
+
+def _normalize_records(value: object) -> tuple[RecordedBenchmarkResult, ...]:
+    if isinstance(value, (str, bytes)):
+        raise TypeError("records must be an iterable of RecordedBenchmarkResult")
+    try:
+        records = tuple(value)  # type: ignore[arg-type]
+    except TypeError as exc:
+        raise TypeError("records must be an iterable of RecordedBenchmarkResult") from exc
+    for record in records:
+        if not isinstance(record, RecordedBenchmarkResult):
+            raise TypeError("records entries must be RecordedBenchmarkResult")
+    return records
+
+
+def _validate_record_against_planned_run(
+    record: RecordedBenchmarkResult,
+    planned: PlannedRun,
+) -> None:
+    if record.environment_fingerprint != planned.environment_fingerprint:
+        raise ValueError("record environment fingerprint does not match planned run")
+
+    result = record.result
+    run = result.run
+    evaluation = result.evaluation
+
+    if result.spec.fingerprint != planned.spec_fingerprint:
+        raise ValueError("record benchmark spec does not match planned run")
+    if run.spec_fingerprint != planned.spec_fingerprint:
+        raise ValueError("record run spec fingerprint does not match planned run")
+    if run.arm != planned.arm:
+        raise ValueError("record benchmark arm does not match planned run")
+    if run.repetition != planned.repetition:
+        raise ValueError("record repetition does not match planned run")
+    if run.seed != planned.seed:
+        raise ValueError("record seed does not match planned run")
+    if run.model_id != planned.model_id:
+        raise ValueError("record model does not match planned run")
+    if run.scaffold_id != planned.scaffold_id:
+        raise ValueError("record scaffold does not match planned run")
+    if run.ablation != planned.ablation:
+        raise ValueError("record ablation does not match planned run")
+    if evaluation.evaluator_id != planned.evaluator_id:
+        raise ValueError("record evaluator does not match planned run")
+
+    actual_condition_id = _condition_id(run.arm, run.ablation)
+    if actual_condition_id != planned.condition_id:
+        raise ValueError("record condition does not match planned run")
+
+
+@dataclass(frozen=True)
+class ExperimentEvidence:
+    plan: ExperimentPlan
+    records: tuple[RecordedBenchmarkResult, ...] = ()
+
+    def __post_init__(self) -> None:
+        if not isinstance(self.plan, ExperimentPlan):
+            raise TypeError("plan must be ExperimentPlan")
+        records = _normalize_records(self.records)
+        planned_runs = self.plan.planned_runs()
+        planned_by_identity = {run.identity: run for run in planned_runs}
+        seen: set[str] = set()
+
+        for record in records:
+            identity = record.planned_run_identity
+            if identity in seen:
+                raise ValueError(f"duplicate planned run identity: {identity}")
+            planned = planned_by_identity.get(identity)
+            if planned is None:
+                raise ValueError("record planned run identity is not part of experiment plan")
+            _validate_record_against_planned_run(record, planned)
+            seen.add(identity)
+
+        object.__setattr__(self, "records", records)
+
+    @property
+    def missing_run_identities(self) -> tuple[str, ...]:
+        admitted = {record.planned_run_identity for record in self.records}
+        return tuple(
+            planned.identity
+            for planned in self.plan.planned_runs()
+            if planned.identity not in admitted
+        )
+
+    @property
+    def complete(self) -> bool:
+        return not self.missing_run_identities
+
+
+def admit_experiment_results(
+    plan: ExperimentPlan,
+    records: object,
+) -> ExperimentEvidence:
+    """Admit only independently evaluated receipts bound to exact planned runs."""
+
+    return ExperimentEvidence(plan=plan, records=_normalize_records(records))
