@@ -12,7 +12,7 @@ from .semantic.lsp_runtime import LspRuntimeManager
 from .semantic.lsp_transport import LspServerSpec
 from .semantic.runtime import build_default_semantic_registry
 from .semantic.scip_runtime import ScipIndexerSpec, ScipRuntimeManager
-from .services import IndexService, QueryService, RuntimeService, TransactionService
+from .services import IndexService, LearningService, QueryService, RuntimeService, TransactionService
 from .truth import (
     claim_from_diagnostic_record,
     claim_from_evidence_row,
@@ -69,6 +69,7 @@ class HabitatWorkspace(_core.HabitatWorkspace):
         self._query_service: QueryService | None = None
         self._transaction_service: TransactionService | None = None
         self._runtime_service: RuntimeService | None = None
+        self._learning_service: LearningService | None = None
         # Disagreement comparison is explicitly requested and never persisted in this wave. Keep
         # only one bounded summary for diagnostic Fabric projection; claims remain call-local.
         self._semantic_disagreement_state: dict | None = None
@@ -108,6 +109,13 @@ class HabitatWorkspace(_core.HabitatWorkspace):
         if service is None:
             service = RuntimeService(self)
             self._runtime_service = service
+        return service
+
+    def _learning(self) -> LearningService:
+        service = self._learning_service
+        if service is None:
+            service = LearningService(self)
+            self._learning_service = service
         return service
 
     def _compiler_state_fingerprint(self) -> str:
