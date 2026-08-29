@@ -3,6 +3,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from hashlib import sha256
 import json
+import math
 from typing import Literal
 
 BenchmarkClass = Literal[
@@ -18,6 +19,7 @@ BenchmarkClass = Literal[
     "adversarial/authority tests",
     "large repository scaling",
 ]
+BenchmarkArm = Literal["filesystem", "habitat"]
 SemanticMode = Literal["default", "parser_only", "precise_provider"]
 RetrievalPolicy = Literal["default", "static", "learned_candidate"]
 
@@ -35,6 +37,7 @@ BENCHMARK_CLASSES: tuple[BenchmarkClass, ...] = (
     "large repository scaling",
 )
 
+BENCHMARK_ARMS = frozenset({"filesystem", "habitat"})
 ABLATION_TARGETS = frozenset(
     {
         "graph_expansion",
@@ -64,6 +67,51 @@ def _fingerprint(payload: dict[str, object]) -> str:
         separators=(",", ":"),
     ).encode("utf-8")
     return sha256(encoded).hexdigest()
+
+
+def _require_non_negative_int(value: object, field_name: str, *, nullable: bool = False) -> None:
+    if value is None and nullable:
+        return
+    if isinstance(value, bool) or not isinstance(value, int):
+        expected = "int or None" if nullable else "int"
+        raise TypeError(f"{field_name} must be {expected}")
+    if value < 0:
+        raise ValueError(f"{field_name} must be non-negative")
+
+
+def _require_non_negative_number(value: object, field_name: str) -> None:
+    if isinstance(value, bool) or not isinstance(value, (int, float)):
+        raise TypeError(f"{field_name} must be a number")
+    numeric = float(value)
+    if not math.isfinite(numeric) or numeric < 0:
+        raise ValueError(f"{field_name} must be finite and non-negative")
+
+
+def _require_optional_unit_interval(value: object, field_name: str) -> None:
+    if value is None:
+        return
+    if isinstance(value, bool) or not isinstance(value, (int, float)):
+        raise TypeError(f"{field_name} must be a number or None")
+    numeric = float(value)
+    if not math.isfinite(numeric) or not 0.0 <= numeric <= 1.0:
+        raise ValueError(f"{field_name} must be finite and between 0 and 1")
+
+
+def _require_optional_bool(value: object, field_name: str) -> None:
+    if value is not None and not isinstance(value, bool):
+        raise TypeError(f"{field_name} must be bool or None")
+
+
+def _normalize_evidence_refs(value: object) -> tuple[str, ...]:
+    if isinstance(value, str):
+        raise TypeError("evidence_refs must be an iterable of evidence identifiers")
+    try:
+        refs = tuple(value)  # type: ignore[arg-type]
+    except TypeError as exc:
+        raise TypeError("evidence_refs must be an iterable of evidence identifiers") from exc
+    for ref in refs:
+        _require_non_empty(ref, "evidence reference")
+    return refs
 
 
 @dataclass(frozen=True)
@@ -125,3 +173,120 @@ class AblationConfig:
                 "retrieval_policy": self.retrieval_policy,
             }
         )
+
+
+@dataclass(frozen=True)
+class BenchmarkMetrics:
+    input_tokens: int | None = None
+    output_tokens: int | None = None
+    tool_calls: int = 0
+    exact_source_bytes: int = 0
+    context_precision_proxy: float | None = None
+    context_recall_proxy: float | None = None
+    irrelevant_object_admission: int = 0
+    wall_ms: float = 0.0
+    ingest_ms: float = 0.0
+    warm_reconcile_ms: float = 0.0
+    provider_calls: int = 0
+    failed_strategy_count: int = 0
+    repeated_strategy_count: int = 0
+    verification_count: int = 0
+    mutation_rollback_count: int = 0
+    mutation_conflict_count: int = 0
+
+    def __post_init__(self) -> None:
+        for field_name in ("input_tokens", "output_tokens"):
+            _require_non_negative_int(getattr(self, field_name), field_name, nullable=True)
+        for field_name in (
+            "tool_calls",
+            "exact_source_bytes",
+            "irrelevant_object_admission",
+            "provider_calls",
+            "failed_strategy_count",
+            "repeated_strategy_count",
+            "verification_count",
+            "mutation_rollback_count",
+            "mutation_conflict_count",
+        ):
+            _require_non_negative_int(getattr(self, field_name), field_name)
+        for field_name in ("wall_ms", "ingest_ms", "warm_reconcile_ms"):
+            _require_non_negative_number(getattr(self, field_name), field_name)
+        for field_name in ("context_precision_proxy", "context_recall_proxy"):
+            _require_optional_unit_interval(getattr(self, field_name), field_name)
+
+
+@dataclass(frozen=True)
+class BenchmarkRun:
+    spec_fingerprint: str
+    arm: BenchmarkArm
+    repetition: int
+    seed: int
+    model_id: str
+    scaffold_id: str
+    metrics: BenchmarkMetrics
+    ablation: AblationConfig = AblationConfig()
+    agent_claimed_success: bool | None = None
+    evidence_refs: tuple[str, ...] = ()
+
+    def __post_init__(self) -> None:
+        _require_non_empty(self.spec_fingerprint, "spec_fingerprint")
+        _require_non_empty(self.model_id, "model_id")
+        _require_non_empty(self.scaffold_id, "scaffold_id")
+        if self.arm not in BENCHMARK_ARMS:
+            raise ValueError(f"unknown benchmark arm: {self.arm}")
+        _require_non_negative_int(self.repetition, "repetition")
+        _require_non_negative_int(self.seed, "seed")
+        if not isinstance(self.metrics, BenchmarkMetrics):
+            raise TypeError("metrics must be BenchmarkMetrics")
+        if not isinstance(self.ablation, AblationConfig):
+            raise TypeError("ablation must be AblationConfig")
+        _require_optional_bool(self.agent_claimed_success, "agent_claimed_success")
+        object.__setattr__(self, "evidence_refs", _normalize_evidence_refs(self.evidence_refs))
+
+    @property
+    def identity(self) -> str:
+        return _fingerprint(
+            {
+                "spec_fingerprint": self.spec_fingerprint,
+                "arm": self.arm,
+                "repetition": self.repetition,
+                "seed": self.seed,
+                "model_id": self.model_id,
+                "scaffold_id": self.scaffold_id,
+                "ablation_fingerprint": self.ablation.fingerprint,
+            }
+        )
+
+
+@dataclass(frozen=True)
+class EvaluationResult:
+    evaluator_id: str
+    success: bool
+    regression_free: bool | None = None
+    hidden_test_success: bool | None = None
+    evidence_refs: tuple[str, ...] = ()
+
+    def __post_init__(self) -> None:
+        _require_non_empty(self.evaluator_id, "evaluator_id")
+        if not isinstance(self.success, bool):
+            raise TypeError("success must be bool")
+        _require_optional_bool(self.regression_free, "regression_free")
+        _require_optional_bool(self.hidden_test_success, "hidden_test_success")
+        object.__setattr__(self, "evidence_refs", _normalize_evidence_refs(self.evidence_refs))
+
+
+@dataclass(frozen=True)
+class BenchmarkResult:
+    spec: BenchmarkSpec
+    run: BenchmarkRun
+    evaluation: EvaluationResult
+
+    def __post_init__(self) -> None:
+        if not isinstance(self.spec, BenchmarkSpec):
+            raise TypeError("spec must be BenchmarkSpec")
+        if not isinstance(self.run, BenchmarkRun):
+            raise TypeError("run must be BenchmarkRun")
+        if not isinstance(self.evaluation, EvaluationResult):
+            raise TypeError("evaluation must be EvaluationResult")
+        if self.run.spec_fingerprint != self.spec.fingerprint:
+            raise ValueError("run spec fingerprint does not match BenchmarkSpec fingerprint")
