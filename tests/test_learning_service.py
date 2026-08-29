@@ -77,16 +77,15 @@ class LearningServiceTests(unittest.TestCase):
         baseline: ContextPolicy,
         candidate: ContextPolicy,
         *,
-        candidate_id: str = "candidate-1",
         generator_id: str = "generator",
     ) -> dict:
         created = service.create_policy_candidate(
             candidate.version,
             baseline_version=baseline.version,
             generator_id=generator_id,
-            candidate_id=candidate_id,
         )
-        self.assertEqual(candidate_id, created["candidate_id"])
+        self.assertIsInstance(created["candidate_id"], str)
+        self.assertTrue(created["candidate_id"])
         self.assertEqual("candidate", created["state"])
         return created
 
@@ -147,62 +146,59 @@ class LearningServiceTests(unittest.TestCase):
             try:
                 service = ws._learning()
                 baseline, candidate = self.register_pair(service)
-                self.create_candidate(service, baseline, candidate)
+                created = self.create_candidate(service, baseline, candidate)
+                candidate_id = created["candidate_id"]
 
                 with self.assertRaisesRegex(ValueError, "illegal.*candidate.*experiment"):
-                    service.transition_candidate("candidate-1", "experiment")
+                    service.transition_candidate(candidate_id, "experiment")
 
-                self.advance_to_experiment(service, "candidate-1")
+                self.advance_to_experiment(service, candidate_id)
                 with self.assertRaisesRegex(ValueError, "evaluation"):
-                    service.transition_candidate("candidate-1", "evaluated")
+                    service.transition_candidate(candidate_id, "evaluated")
 
                 self_eval = make_evaluation(
-                    candidate_id="candidate-1",
+                    candidate_id=candidate_id,
                     policy_fingerprint=candidate.fingerprint,
                     evaluator_id="generator",
                 )
                 with self.assertRaisesRegex(ValueError, "independent"):
-                    service.admit_evaluation("candidate-1", self_eval)
+                    service.admit_evaluation(candidate_id, self_eval)
 
                 wrong_policy_eval = make_evaluation(
-                    candidate_id="candidate-1",
+                    candidate_id=candidate_id,
                     policy_fingerprint=baseline.fingerprint,
                 )
                 with self.assertRaisesRegex(ValueError, "policy fingerprint"):
-                    service.admit_evaluation("candidate-1", wrong_policy_eval)
+                    service.admit_evaluation(candidate_id, wrong_policy_eval)
 
                 evaluation = make_evaluation(
-                    candidate_id="candidate-1",
+                    candidate_id=candidate_id,
                     policy_fingerprint=candidate.fingerprint,
                 )
-                service.admit_evaluation("candidate-1", evaluation)
+                service.admit_evaluation(candidate_id, evaluation)
                 self.assertEqual(
                     "evaluated",
-                    service.transition_candidate("candidate-1", "evaluated")["state"],
+                    service.transition_candidate(candidate_id, "evaluated")["state"],
                 )
                 self.assertEqual(
                     "canary",
-                    service.transition_candidate("candidate-1", "canary")["state"],
+                    service.transition_candidate(candidate_id, "canary")["state"],
                 )
 
-                baseline2 = make_policy("context-v3")
+                rejected_policy = make_policy("context-v3")
                 service.register_context_policy(
-                    baseline2,
+                    rejected_policy,
                     parent_version=candidate.version,
                     created_by="generator",
                 )
-                self.create_candidate(
-                    service,
-                    candidate,
-                    baseline2,
-                    candidate_id="candidate-reject",
-                )
+                rejected = self.create_candidate(service, candidate, rejected_policy)
+                rejected_id = rejected["candidate_id"]
                 self.assertEqual(
                     "rejected",
-                    service.transition_candidate("candidate-reject", "rejected")["state"],
+                    service.transition_candidate(rejected_id, "rejected")["state"],
                 )
                 with self.assertRaisesRegex(ValueError, "terminal|illegal"):
-                    service.transition_candidate("candidate-reject", "shadow")
+                    service.transition_candidate(rejected_id, "shadow")
             finally:
                 ws.close()
 
@@ -212,7 +208,8 @@ class LearningServiceTests(unittest.TestCase):
             try:
                 service = ws._learning()
                 baseline, candidate = self.register_pair(service)
-                self.create_candidate(service, baseline, candidate)
+                created = self.create_candidate(service, baseline, candidate)
+                candidate_id = created["candidate_id"]
                 outcome = OutcomeRecord(
                     policy_version=candidate.version,
                     task_fingerprint="task:heldout:1",
@@ -228,9 +225,9 @@ class LearningServiceTests(unittest.TestCase):
                     revision="rev:fixture",
                     created_at="2026-08-29T00:00:01+00:00",
                 )
-                recorded = service.record_policy_outcome("candidate-1", outcome)
+                recorded = service.record_policy_outcome(candidate_id, outcome)
                 self.assertGreater(recorded["outcome_id"], 0)
-                rows = ws.store._learning_repository().outcomes("candidate-1")
+                rows = ws.store._learning_repository().outcomes(candidate_id)
                 self.assertEqual(1, len(rows))
                 self.assertEqual(candidate.version, rows[0]["policy_version"])
             finally:
@@ -243,32 +240,35 @@ class LearningServiceTests(unittest.TestCase):
                 service = ws._learning()
                 baseline, candidate = self.register_pair(service)
                 self.seed_active_policy(ws, baseline)
-                self.create_candidate(service, baseline, candidate)
-                self.advance_to_experiment(service, "candidate-1")
+                created = self.create_candidate(service, baseline, candidate)
+                candidate_id = created["candidate_id"]
+                self.advance_to_experiment(service, candidate_id)
 
                 not_improved = make_evaluation(
-                    candidate_id="candidate-1",
+                    candidate_id=candidate_id,
                     policy_fingerprint=candidate.fingerprint,
                     improved=False,
                 )
-                service.admit_evaluation("candidate-1", not_improved)
-                service.transition_candidate("candidate-1", "evaluated")
-                service.transition_candidate("candidate-1", "canary")
+                service.admit_evaluation(candidate_id, not_improved)
+                service.transition_candidate(candidate_id, "evaluated")
+                service.transition_candidate(candidate_id, "canary")
                 with self.assertRaisesRegex(ValueError, "improv"):
-                    service.promote_candidate("candidate-1")
+                    service.promote_candidate(candidate_id)
 
                 improved = make_evaluation(
-                    candidate_id="candidate-1",
+                    candidate_id=candidate_id,
                     policy_fingerprint=candidate.fingerprint,
                     improved=True,
                 )
-                service.admit_evaluation("candidate-1", improved)
-                promoted = service.promote_candidate("candidate-1")
+                service.admit_evaluation(candidate_id, improved)
+                promoted = service.promote_candidate(candidate_id)
                 self.assertEqual("promoted", promoted["state"])
                 self.assertEqual(candidate.version, promoted["active_version"])
-                self.assertEqual(candidate.version, ws.store._learning_repository().active_context_policy_version())
-                active = service.active_context_policy()
-                self.assertEqual(candidate, active)
+                self.assertEqual(
+                    candidate.version,
+                    ws.store._learning_repository().active_context_policy_version(),
+                )
+                self.assertEqual(candidate, service.active_context_policy())
             finally:
                 ws.close()
 
@@ -279,13 +279,14 @@ class LearningServiceTests(unittest.TestCase):
                 service = ws._learning()
                 baseline, candidate = self.register_pair(service)
                 self.seed_active_policy(ws, baseline)
-                self.create_candidate(service, baseline, candidate)
+                created = self.create_candidate(service, baseline, candidate)
+                candidate_id = created["candidate_id"]
                 evaluation = make_evaluation(
-                    candidate_id="candidate-1",
+                    candidate_id=candidate_id,
                     policy_fingerprint=candidate.fingerprint,
                     improved=True,
                 )
-                self.advance_to_canary(service, "candidate-1", evaluation)
+                self.advance_to_canary(service, candidate_id, evaluation)
                 repository = ws.store._learning_repository()
                 original_append_activation = LearningRepository.append_activation
 
@@ -300,11 +301,11 @@ class LearningServiceTests(unittest.TestCase):
                     new=fail_after_activation,
                 ):
                     with self.assertRaisesRegex(RuntimeError, "injected promotion failure"):
-                        service.promote_candidate("candidate-1")
+                        service.promote_candidate(candidate_id)
 
-                self.assertEqual("canary", repository.candidate("candidate-1")["state"])
+                self.assertEqual("canary", repository.candidate(candidate_id)["state"])
                 self.assertEqual(baseline.version, repository.active_context_policy_version())
-                self.assertEqual([], repository.activations("candidate-1"))
+                self.assertEqual([], repository.activations(candidate_id))
             finally:
                 ws.close()
 
@@ -315,18 +316,19 @@ class LearningServiceTests(unittest.TestCase):
                 service = ws._learning()
                 baseline, candidate = self.register_pair(service)
                 self.seed_active_policy(ws, baseline)
-                self.create_candidate(service, baseline, candidate)
+                created = self.create_candidate(service, baseline, candidate)
+                candidate_id = created["candidate_id"]
                 evaluation = make_evaluation(
-                    candidate_id="candidate-1",
+                    candidate_id=candidate_id,
                     policy_fingerprint=candidate.fingerprint,
                     improved=True,
                     reproduction_tolerance=0.05,
                 )
-                admitted = self.advance_to_canary(service, "candidate-1", evaluation)
-                promoted = service.promote_candidate("candidate-1")
+                admitted = self.advance_to_canary(service, candidate_id, evaluation)
+                promoted = service.promote_candidate(candidate_id)
                 self.assertEqual("promoted", promoted["state"])
 
-                activations = ws.store._learning_repository().activations("candidate-1")
+                activations = ws.store._learning_repository().activations(candidate_id)
                 self.assertEqual(1, len(activations))
                 row = activations[0]
                 self.assertEqual("promote", row["action"])
@@ -353,18 +355,19 @@ class LearningServiceTests(unittest.TestCase):
                 service = ws._learning()
                 baseline, candidate = self.register_pair(service)
                 self.seed_active_policy(ws, baseline)
-                self.create_candidate(service, baseline, candidate)
+                created = self.create_candidate(service, baseline, candidate)
+                candidate_id = created["candidate_id"]
                 evaluation = make_evaluation(
-                    candidate_id="candidate-1",
+                    candidate_id=candidate_id,
                     policy_fingerprint=candidate.fingerprint,
                     improved=True,
                     reproduction_tolerance=0.05,
                 )
-                self.advance_to_canary(service, "candidate-1", evaluation)
-                service.promote_candidate("candidate-1")
+                self.advance_to_canary(service, candidate_id, evaluation)
+                service.promote_candidate(candidate_id)
 
                 wrong_policy = make_evaluation(
-                    candidate_id="candidate-1",
+                    candidate_id=candidate_id,
                     policy_fingerprint=candidate.fingerprint,
                     improved=False,
                     baseline_benchmark_fingerprint=evaluation.baseline_benchmark_fingerprint,
@@ -372,10 +375,10 @@ class LearningServiceTests(unittest.TestCase):
                     reproduction_tolerance=0.0,
                 )
                 with self.assertRaisesRegex(ValueError, "previous policy fingerprint"):
-                    service.rollback_candidate("candidate-1", wrong_policy)
+                    service.rollback_candidate(candidate_id, wrong_policy)
 
                 wrong_benchmark = make_evaluation(
-                    candidate_id="candidate-1",
+                    candidate_id=candidate_id,
                     policy_fingerprint=baseline.fingerprint,
                     improved=False,
                     baseline_benchmark_fingerprint=evaluation.baseline_benchmark_fingerprint,
@@ -383,10 +386,10 @@ class LearningServiceTests(unittest.TestCase):
                     reproduction_tolerance=0.0,
                 )
                 with self.assertRaisesRegex(ValueError, "benchmark fingerprint"):
-                    service.rollback_candidate("candidate-1", wrong_benchmark)
+                    service.rollback_candidate(candidate_id, wrong_benchmark)
 
                 too_loose = make_evaluation(
-                    candidate_id="candidate-1",
+                    candidate_id=candidate_id,
                     policy_fingerprint=baseline.fingerprint,
                     improved=False,
                     baseline_benchmark_fingerprint=evaluation.baseline_benchmark_fingerprint,
@@ -394,24 +397,24 @@ class LearningServiceTests(unittest.TestCase):
                     reproduction_tolerance=0.06,
                 )
                 with self.assertRaisesRegex(ValueError, "tolerance"):
-                    service.rollback_candidate("candidate-1", too_loose)
+                    service.rollback_candidate(candidate_id, too_loose)
 
                 reproduction = make_evaluation(
-                    candidate_id="candidate-1",
+                    candidate_id=candidate_id,
                     policy_fingerprint=baseline.fingerprint,
                     improved=False,
                     baseline_benchmark_fingerprint=evaluation.baseline_benchmark_fingerprint,
                     candidate_benchmark_fingerprint=evaluation.baseline_benchmark_fingerprint,
                     reproduction_tolerance=0.0,
                 )
-                rolled_back = service.rollback_candidate("candidate-1", reproduction)
+                rolled_back = service.rollback_candidate(candidate_id, reproduction)
                 self.assertEqual("rolled_back", rolled_back["state"])
                 self.assertEqual(baseline.version, rolled_back["active_version"])
                 repository = ws.store._learning_repository()
                 self.assertEqual(baseline.version, repository.active_context_policy_version())
                 self.assertEqual(baseline, service.active_context_policy())
 
-                activations = repository.activations("candidate-1")
+                activations = repository.activations(candidate_id)
                 self.assertEqual(2, len(activations))
                 rollback = activations[-1]
                 self.assertEqual("rollback", rollback["action"])
@@ -433,21 +436,22 @@ class LearningServiceTests(unittest.TestCase):
                 service = ws._learning()
                 baseline, candidate = self.register_pair(service)
                 self.seed_active_policy(ws, baseline)
-                self.create_candidate(service, baseline, candidate)
+                created = self.create_candidate(service, baseline, candidate)
+                candidate_id = created["candidate_id"]
                 evaluation = make_evaluation(
-                    candidate_id="candidate-1",
+                    candidate_id=candidate_id,
                     policy_fingerprint=candidate.fingerprint,
                     improved=True,
                     reproduction_tolerance=0.0,
                 )
-                self.advance_to_canary(service, "candidate-1", evaluation)
-                service.promote_candidate("candidate-1")
+                self.advance_to_canary(service, candidate_id, evaluation)
+                service.promote_candidate(candidate_id)
                 repository = ws.store._learning_repository()
-                before = repository.activations("candidate-1")
+                before = repository.activations(candidate_id)
                 self.assertEqual(1, len(before))
 
                 reproduction = make_evaluation(
-                    candidate_id="candidate-1",
+                    candidate_id=candidate_id,
                     policy_fingerprint=baseline.fingerprint,
                     improved=False,
                     baseline_benchmark_fingerprint=evaluation.baseline_benchmark_fingerprint,
@@ -467,10 +471,10 @@ class LearningServiceTests(unittest.TestCase):
                     new=fail_after_activation,
                 ):
                     with self.assertRaisesRegex(RuntimeError, "injected rollback failure"):
-                        service.rollback_candidate("candidate-1", reproduction)
+                        service.rollback_candidate(candidate_id, reproduction)
 
-                self.assertEqual("promoted", repository.candidate("candidate-1")["state"])
+                self.assertEqual("promoted", repository.candidate(candidate_id)["state"])
                 self.assertEqual(candidate.version, repository.active_context_policy_version())
-                self.assertEqual(1, len(repository.activations("candidate-1")))
+                self.assertEqual(1, len(repository.activations(candidate_id)))
             finally:
                 ws.close()
