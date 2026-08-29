@@ -4,22 +4,10 @@ import json
 from typing import TYPE_CHECKING
 
 from ..learning_plane import ContextPolicy, EvaluationPacket, OutcomeRecord, PolicyCandidate
+from ..learning_plane.model import _thaw_json_value
 
 if TYPE_CHECKING:
     from ..storage import Store
-
-
-def _thaw_json(value: object) -> object:
-    if isinstance(value, tuple):
-        if all(
-            isinstance(item, tuple)
-            and len(item) == 2
-            and isinstance(item[0], str)
-            for item in value
-        ):
-            return {str(key): _thaw_json(item) for key, item in value}
-        return [_thaw_json(item) for item in value]
-    return value
 
 
 class LearningRepository:
@@ -324,7 +312,7 @@ class LearningRepository:
                 json.dumps(outcome.context_refs, separators=(",", ":")),
                 json.dumps(outcome.action_refs, separators=(",", ":")),
                 json.dumps(outcome.verification_refs, separators=(",", ":")),
-                json.dumps(_thaw_json(outcome.independent_outcome), sort_keys=True, separators=(",", ":")),
+                json.dumps(_thaw_json_value(outcome.independent_outcome), sort_keys=True, separators=(",", ":")),
                 json.dumps(dict(outcome.resource_metrics), sort_keys=True, separators=(",", ":")),
                 json.dumps(outcome.errors, separators=(",", ":")),
                 json.dumps(outcome.rollbacks, separators=(",", ":")),
