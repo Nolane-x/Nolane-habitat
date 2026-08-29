@@ -427,8 +427,11 @@ def _load_catalog() -> tuple[dict[str, object], dict[str, dict[str, object]]]:
         if not isinstance(row, dict):
             raise ValueError("held-out suite task must be an object")
         fixture_id = row.get("fixture_id")
+        benchmark_class = row.get("benchmark_class")
         if not isinstance(fixture_id, str) or fixture_id in by_fixture:
             raise ValueError("fixture ids must be unique strings")
+        if not isinstance(benchmark_class, str) or not benchmark_class:
+            raise ValueError("catalog benchmark classes must be non-empty strings")
         by_fixture[fixture_id] = row
 
     if set(by_fixture) != set(_FIXTURE_BUILDERS):
@@ -440,6 +443,8 @@ def materialize_fixture(
     fixture_id: str,
     destination: Path,
     mutation_nonce: str,
+    *,
+    expected_benchmark_class: str | None = None,
 ) -> MaterializedFixture:
     if not isinstance(fixture_id, str):
         raise TypeError("fixture_id must be str")
@@ -449,6 +454,8 @@ def materialize_fixture(
         raise TypeError("mutation_nonce must be str")
     if not mutation_nonce:
         raise ValueError("mutation_nonce must not be empty")
+    if expected_benchmark_class is not None and not isinstance(expected_benchmark_class, str):
+        raise TypeError("expected_benchmark_class must be str or None")
 
     destination = Path(destination)
     if destination.exists():
@@ -463,6 +470,18 @@ def materialize_fixture(
     task = catalog.get(fixture_id)
     if task is None:
         raise KeyError(f"unknown fixture: {fixture_id}")
+    catalog_benchmark_class = task.get("benchmark_class")
+    if not isinstance(catalog_benchmark_class, str):
+        raise ValueError("fixture catalog benchmark class must be a string")
+    if (
+        expected_benchmark_class is not None
+        and expected_benchmark_class != catalog_benchmark_class
+    ):
+        raise ValueError(
+            "fixture benchmark class mismatch: "
+            f"{fixture_id} is {catalog_benchmark_class!r}, "
+            f"got {expected_benchmark_class!r}"
+        )
     builder = _FIXTURE_BUILDERS.get(fixture_id)
     if builder is None:
         raise KeyError(f"unknown fixture: {fixture_id}")
