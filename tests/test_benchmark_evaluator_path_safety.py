@@ -51,6 +51,29 @@ class IndependentEvaluatorPathSafetyTests(unittest.TestCase):
             self.assertIs(verdict["hidden_test_success"], False)
             self.assertIs(verdict["success"], False)
 
+    def test_evaluator_rejects_symlink_target_outside_workspace(self):
+        with tempfile.TemporaryDirectory() as td:
+            base = Path(td)
+            root = base / "repo"
+            root.mkdir()
+            outside = base / "outside.txt"
+            outside.write_text("escape\n", encoding="utf-8")
+            link = root / "answer.txt"
+            try:
+                link.symlink_to(outside)
+            except OSError as exc:
+                self.skipTest(f"symlink creation unavailable: {exc}")
+            payload = signed_evaluator_payload(
+                {"kind": "answer_file", "path": "answer.txt", "expected": "escape"}
+            )
+
+            verdict = evaluate_fixture(root, payload)
+
+            self.assertIs(verdict["evaluator_payload_valid"], True)
+            self.assertIs(verdict["regression_free"], True)
+            self.assertIs(verdict["hidden_test_success"], False)
+            self.assertIs(verdict["success"], False)
+
 
 if __name__ == "__main__":
     unittest.main()
