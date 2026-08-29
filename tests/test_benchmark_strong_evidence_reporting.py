@@ -155,6 +155,14 @@ print(json.dumps({
             self.assertEqual("habitat", rejected[0]["condition_id"])
             self.assertEqual(1, rejected[0]["repetition"])
             self.assertEqual("execution-receipt-mismatch", rejected[0]["rejection_reason"])
+            self.assertEqual(
+                rejected[0]["planned_run_identity"],
+                rejected[0]["execution_receipt"]["planned_run_identity"],
+            )
+            self.assertEqual(
+                rejected[0]["seed"] + 1000,
+                rejected[0]["execution_receipt"]["seed"],
+            )
 
             admitted = next(record for record in experiment["records"] if record["admitted"])
             metrics = admitted["metrics"]
