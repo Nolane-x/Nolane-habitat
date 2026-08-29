@@ -145,6 +145,50 @@ class BenchmarkMetricsTests(unittest.TestCase):
         self.assertIsNone(metrics.context_precision_proxy)
         self.assertIsNone(metrics.context_recall_proxy)
 
+    def test_omitted_measurements_are_unavailable_and_explicit_zero_stays_zero(self):
+        unavailable = BenchmarkMetrics()
+        for field in (
+            "input_tokens",
+            "output_tokens",
+            "tool_calls",
+            "exact_source_bytes",
+            "context_precision_proxy",
+            "context_recall_proxy",
+            "irrelevant_object_admission",
+            "wall_ms",
+            "ingest_ms",
+            "warm_reconcile_ms",
+            "provider_calls",
+            "failed_strategy_count",
+            "repeated_strategy_count",
+            "verification_count",
+            "mutation_rollback_count",
+            "mutation_conflict_count",
+        ):
+            with self.subTest(field=field):
+                self.assertIsNone(getattr(unavailable, field))
+
+        measured_zero = BenchmarkMetrics(
+            input_tokens=0,
+            output_tokens=0,
+            tool_calls=0,
+            exact_source_bytes=0,
+            context_precision_proxy=0.0,
+            context_recall_proxy=0.0,
+            irrelevant_object_admission=0,
+            wall_ms=0.0,
+            ingest_ms=0.0,
+            warm_reconcile_ms=0.0,
+            provider_calls=0,
+            failed_strategy_count=0,
+            repeated_strategy_count=0,
+            verification_count=0,
+            mutation_rollback_count=0,
+            mutation_conflict_count=0,
+        )
+        self.assertEqual(0, measured_zero.tool_calls)
+        self.assertEqual(0.0, measured_zero.wall_ms)
+
     def test_all_count_and_byte_metrics_reject_negative_values(self):
         fields = (
             "input_tokens",
