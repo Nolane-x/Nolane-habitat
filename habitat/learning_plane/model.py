@@ -51,6 +51,14 @@ _POLICY_FIELDS = frozenset(
 _SHA256_RE = re.compile(r"^[0-9a-f]{64}$")
 
 
+class _FrozenJsonObject(tuple):
+    """Immutable JSON object rows with container identity preserved."""
+
+
+class _FrozenJsonArray(tuple):
+    """Immutable JSON array values with container identity preserved."""
+
+
 def _require_non_empty(value: object, field_name: str) -> str:
     if not isinstance(value, str):
         raise TypeError(f"{field_name} must be str")
@@ -132,10 +140,23 @@ def _freeze_json_value(value: object, field_name: str) -> object:
             key_text = _require_non_empty(key, f"{field_name} key")
             pairs.append((key_text, _freeze_json_value(item, field_name)))
         pairs.sort(key=lambda item: item[0])
-        return tuple(pairs)
+        return _FrozenJsonObject(pairs)
     if isinstance(value, (list, tuple)):
-        return tuple(_freeze_json_value(item, field_name) for item in value)
+        return _FrozenJsonArray(
+            _freeze_json_value(item, field_name) for item in value
+        )
     raise TypeError(f"{field_name} must contain JSON-compatible values")
+
+
+def _thaw_json_value(value: object) -> object:
+    if isinstance(value, _FrozenJsonObject):
+        return {
+            str(key): _thaw_json_value(item)
+            for key, item in value
+        }
+    if isinstance(value, _FrozenJsonArray):
+        return [_thaw_json_value(item) for item in value]
+    return value
 
 
 def _normalize_mapping(value: object, field_name: str) -> tuple[tuple[str, object], ...]:
