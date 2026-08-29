@@ -12,7 +12,7 @@ from types import MappingProxyType
 from .sql_safety import quote_identifier
 
 
-SCHEMA_VERSION = 22
+SCHEMA_VERSION = 23
 
 _ADDITIVE_COLUMNS = MappingProxyType({
     "files": MappingProxyType({
@@ -25,6 +25,90 @@ _ADDITIVE_COLUMNS = MappingProxyType({
     }),
 })
 
+_LEARNING_TABLE_DDL = MappingProxyType({
+    "learning_policy_versions": """
+        CREATE TABLE IF NOT EXISTS learning_policy_versions(
+          version TEXT PRIMARY KEY,
+          fingerprint TEXT NOT NULL UNIQUE,
+          policy_json TEXT NOT NULL,
+          parent_version TEXT REFERENCES learning_policy_versions(version),
+          created_by TEXT NOT NULL,
+          created_at TEXT NOT NULL
+        )
+    """,
+    "learning_candidates": """
+        CREATE TABLE IF NOT EXISTS learning_candidates(
+          candidate_id TEXT PRIMARY KEY,
+          policy_version TEXT NOT NULL REFERENCES learning_policy_versions(version),
+          policy_fingerprint TEXT NOT NULL,
+          baseline_version TEXT NOT NULL REFERENCES learning_policy_versions(version),
+          baseline_fingerprint TEXT NOT NULL,
+          generator_id TEXT NOT NULL,
+          state TEXT NOT NULL,
+          created_at TEXT NOT NULL,
+          updated_at TEXT NOT NULL
+        )
+    """,
+    "learning_outcomes": """
+        CREATE TABLE IF NOT EXISTS learning_outcomes(
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          candidate_id TEXT NOT NULL REFERENCES learning_candidates(candidate_id),
+          policy_version TEXT NOT NULL REFERENCES learning_policy_versions(version),
+          task_fingerprint TEXT NOT NULL,
+          benchmark_class TEXT NOT NULL,
+          provider_fingerprints_json TEXT NOT NULL,
+          context_refs_json TEXT NOT NULL,
+          action_refs_json TEXT NOT NULL,
+          verification_refs_json TEXT NOT NULL,
+          independent_outcome_json TEXT NOT NULL,
+          resource_metrics_json TEXT NOT NULL,
+          errors_json TEXT NOT NULL,
+          rollbacks_json TEXT NOT NULL,
+          revision TEXT NOT NULL,
+          created_at TEXT NOT NULL
+        )
+    """,
+    "learning_evaluations": """
+        CREATE TABLE IF NOT EXISTS learning_evaluations(
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          candidate_id TEXT NOT NULL REFERENCES learning_candidates(candidate_id),
+          policy_fingerprint TEXT NOT NULL,
+          evaluator_id TEXT NOT NULL,
+          heldout_suite_id TEXT NOT NULL,
+          baseline_benchmark_fingerprint TEXT NOT NULL,
+          candidate_benchmark_fingerprint TEXT NOT NULL,
+          improved INTEGER NOT NULL,
+          evidence_refs_json TEXT NOT NULL,
+          reproduction_tolerance REAL,
+          created_at TEXT NOT NULL
+        )
+    """,
+    "learning_activations": """
+        CREATE TABLE IF NOT EXISTS learning_activations(
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          candidate_id TEXT NOT NULL REFERENCES learning_candidates(candidate_id),
+          action TEXT NOT NULL,
+          previous_version TEXT,
+          previous_fingerprint TEXT,
+          active_version TEXT NOT NULL REFERENCES learning_policy_versions(version),
+          active_fingerprint TEXT NOT NULL,
+          evaluation_id INTEGER NOT NULL REFERENCES learning_evaluations(id),
+          baseline_benchmark_fingerprint TEXT NOT NULL,
+          candidate_benchmark_fingerprint TEXT NOT NULL,
+          reproduction_benchmark_fingerprint TEXT,
+          reproduction_tolerance REAL,
+          created_at TEXT NOT NULL
+        )
+    """,
+    "learning_state": """
+        CREATE TABLE IF NOT EXISTS learning_state(
+          key TEXT PRIMARY KEY,
+          value TEXT,
+          updated_at TEXT NOT NULL
+        )
+    """,
+})
+
 _REQUIRED_COLUMNS = MappingProxyType({
     "files": frozenset({
         "id", "path", "language", "size", "digest", "mtime_ns",
@@ -34,6 +118,31 @@ _REQUIRED_COLUMNS = MappingProxyType({
         "seq", "handle", "page_id", "object_id", "path", "source_bytes",
         "authority_bytes_read", "revision", "episode_id", "fetched_at",
     }),
+    "learning_policy_versions": frozenset({
+        "version", "fingerprint", "policy_json", "parent_version", "created_by", "created_at",
+    }),
+    "learning_candidates": frozenset({
+        "candidate_id", "policy_version", "policy_fingerprint", "baseline_version",
+        "baseline_fingerprint", "generator_id", "state", "created_at", "updated_at",
+    }),
+    "learning_outcomes": frozenset({
+        "id", "candidate_id", "policy_version", "task_fingerprint", "benchmark_class",
+        "provider_fingerprints_json", "context_refs_json", "action_refs_json",
+        "verification_refs_json", "independent_outcome_json", "resource_metrics_json",
+        "errors_json", "rollbacks_json", "revision", "created_at",
+    }),
+    "learning_evaluations": frozenset({
+        "id", "candidate_id", "policy_fingerprint", "evaluator_id", "heldout_suite_id",
+        "baseline_benchmark_fingerprint", "candidate_benchmark_fingerprint", "improved",
+        "evidence_refs_json", "reproduction_tolerance", "created_at",
+    }),
+    "learning_activations": frozenset({
+        "id", "candidate_id", "action", "previous_version", "previous_fingerprint",
+        "active_version", "active_fingerprint", "evaluation_id",
+        "baseline_benchmark_fingerprint", "candidate_benchmark_fingerprint",
+        "reproduction_benchmark_fingerprint", "reproduction_tolerance", "created_at",
+    }),
+    "learning_state": frozenset({"key", "value", "updated_at"}),
 })
 
 _ADDITIVE_TABLES = frozenset(_ADDITIVE_COLUMNS)
@@ -137,6 +246,24 @@ def _file_sha256(path: Path) -> str:
 def repair_additive_columns(conn: sqlite3.Connection) -> None:
     """Bring legacy tables forward before their version marker is recorded."""
 
+    for ddl in _LEARNING_TABLE_DDL.values():
+        conn.execute(ddl)
+    conn.execute(
+        "CREATE INDEX IF NOT EXISTS idx_learning_candidates_state "
+        "ON learning_candidates(state,updated_at,candidate_id)"
+    )
+    conn.execute(
+        "CREATE INDEX IF NOT EXISTS idx_learning_outcomes_candidate "
+        "ON learning_outcomes(candidate_id,id)"
+    )
+    conn.execute(
+        "CREATE INDEX IF NOT EXISTS idx_learning_evaluations_candidate "
+        "ON learning_evaluations(candidate_id,id)"
+    )
+    conn.execute(
+        "CREATE INDEX IF NOT EXISTS idx_learning_activations_candidate "
+        "ON learning_activations(candidate_id,id)"
+    )
     for issue in additive_schema_issues(conn):
         table, column = issue.split(".", 1)
         table_name = quote_identifier(table, _ADDITIVE_TABLES)
