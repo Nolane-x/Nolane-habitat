@@ -1,5 +1,6 @@
 """Typed, deterministic domain contracts for Habitat Benchmark Lab."""
 
+from .experiment import ExperimentPlan, PlannedRun
 from .model import (
     ABLATION_TARGETS,
     BENCHMARK_CLASSES,
@@ -26,6 +27,8 @@ __all__ = [
     "BenchmarkRun",
     "BenchmarkSpec",
     "EvaluationResult",
+    "ExperimentPlan",
+    "PlannedRun",
     "RetrievalPolicy",
     "SemanticMode",
 ]
