@@ -25,6 +25,7 @@ from .model import (
     RetrievalPolicy,
     SemanticMode,
 )
+from .suite import HeldOutSuite, HeldOutTask
 
 __all__ = [
     "ABLATION_TARGETS",
@@ -40,6 +41,8 @@ __all__ = [
     "EvaluationResult",
     "ExperimentEvidence",
     "ExperimentPlan",
+    "HeldOutSuite",
+    "HeldOutTask",
     "MetricDelta",
     "PairedRunComparison",
     "PlannedRun",
