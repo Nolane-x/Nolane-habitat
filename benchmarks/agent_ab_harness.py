@@ -389,6 +389,7 @@ def run_strong_experiments(args, ablations: tuple[AblationConfig,...]) -> dict:
                     "ablation":_serialize_ablation(planned.ablation),
                     "ablation_fingerprint":planned.ablation.fingerprint,
                     "receipt_valid":bool(result.get("receipt_valid")),
+                    "execution_receipt":result.get("execution_receipt"),
                     "admitted":admitted,
                     "rejection_reason":rejection_reason,
                     "metrics":_serialize_metrics(metrics) if metrics is not None else None,
