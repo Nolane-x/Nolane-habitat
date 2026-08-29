@@ -8,9 +8,16 @@ import unittest
 
 from habitat.benchmarking import (
     AblationConfig,
+    BenchmarkMetrics,
+    BenchmarkResult,
+    BenchmarkRun,
     BenchmarkSpec,
+    EvaluationResult,
+    ExperimentEvidence,
     ExperimentPlan,
     PlannedRun,
+    RecordedBenchmarkResult,
+    admit_experiment_results,
 )
 
 
@@ -50,6 +57,64 @@ def expected_condition_order(plan: ExperimentPlan, seed: int) -> tuple[str, ...]
     condition_ids = [condition_id for condition_id, _arm, _ablation in plan.conditions]
     rng.shuffle(condition_ids)
     return tuple(condition_ids)
+
+
+def make_record(
+    plan: ExperimentPlan,
+    planned: PlannedRun,
+    *,
+    planned_run_identity: str | None = None,
+    environment_fingerprint: str | None = None,
+    spec: BenchmarkSpec | None = None,
+    spec_fingerprint: str | None = None,
+    arm: str | None = None,
+    repetition: int | None = None,
+    seed: int | None = None,
+    model_id: str | None = None,
+    scaffold_id: str | None = None,
+    ablation: AblationConfig | None = None,
+    evaluator_id: str | None = None,
+    evaluator_success: bool = True,
+    agent_claimed_success: bool | None = None,
+    metrics: BenchmarkMetrics | None = None,
+) -> RecordedBenchmarkResult:
+    actual_spec = plan.spec if spec is None else spec
+    run = BenchmarkRun(
+        spec_fingerprint=(
+            actual_spec.fingerprint if spec_fingerprint is None else spec_fingerprint
+        ),
+        arm=planned.arm if arm is None else arm,
+        repetition=planned.repetition if repetition is None else repetition,
+        seed=planned.seed if seed is None else seed,
+        model_id=planned.model_id if model_id is None else model_id,
+        scaffold_id=planned.scaffold_id if scaffold_id is None else scaffold_id,
+        metrics=BenchmarkMetrics(input_tokens=0, tool_calls=0, wall_ms=0.0)
+        if metrics is None
+        else metrics,
+        ablation=planned.ablation if ablation is None else ablation,
+        agent_claimed_success=agent_claimed_success,
+        evidence_refs=("trajectory:raw",),
+    )
+    result = BenchmarkResult(
+        spec=actual_spec,
+        run=run,
+        evaluation=EvaluationResult(
+            evaluator_id=planned.evaluator_id if evaluator_id is None else evaluator_id,
+            success=evaluator_success,
+            evidence_refs=("evaluator:hidden",),
+        ),
+    )
+    return RecordedBenchmarkResult(
+        planned_run_identity=(
+            planned.identity if planned_run_identity is None else planned_run_identity
+        ),
+        environment_fingerprint=(
+            planned.environment_fingerprint
+            if environment_fingerprint is None
+            else environment_fingerprint
+        ),
+        result=result,
+    )
 
 
 class ExperimentPlanValidationTests(unittest.TestCase):
@@ -212,6 +277,115 @@ class PlannedRunTests(unittest.TestCase):
         run = make_plan().planned_runs()[0]
         with self.assertRaises(FrozenInstanceError):
             run.seed = 999
+
+
+class ExperimentEvidenceAdmissionTests(unittest.TestCase):
+    def test_recorded_result_is_frozen_and_requires_receipt_identity(self):
+        plan = make_plan(habitat_ablations=())
+        planned = plan.planned_runs()[0]
+        record = make_record(plan, planned)
+        with self.assertRaises(FrozenInstanceError):
+            record.environment_fingerprint = "other"
+        with self.assertRaises(ValueError):
+            RecordedBenchmarkResult(
+                planned_run_identity="   ",
+                environment_fingerprint=planned.environment_fingerprint,
+                result=record.result,
+            )
+        with self.assertRaises(ValueError):
+            RecordedBenchmarkResult(
+                planned_run_identity=planned.identity,
+                environment_fingerprint="   ",
+                result=record.result,
+            )
+
+    def test_partial_evidence_preserves_exact_missing_planned_identities(self):
+        plan = make_plan(habitat_ablations=())
+        planned_runs = plan.planned_runs()
+        evidence = admit_experiment_results(plan, (make_record(plan, planned_runs[0]),))
+        self.assertIsInstance(evidence, ExperimentEvidence)
+        self.assertFalse(evidence.complete)
+        self.assertEqual((planned_runs[0].identity,), tuple(r.planned_run_identity for r in evidence.records))
+        self.assertEqual(
+            tuple(run.identity for run in planned_runs[1:]),
+            evidence.missing_run_identities,
+        )
+
+    def test_complete_evidence_requires_one_independent_result_for_every_planned_run(self):
+        plan = make_plan()
+        records = tuple(make_record(plan, planned) for planned in plan.planned_runs())
+        evidence = admit_experiment_results(plan, records)
+        self.assertTrue(evidence.complete)
+        self.assertEqual((), evidence.missing_run_identities)
+        self.assertEqual(records, evidence.records)
+
+    def test_agent_self_report_does_not_override_independent_evaluator(self):
+        plan = make_plan(habitat_ablations=())
+        planned = plan.planned_runs()[0]
+        record = make_record(
+            plan,
+            planned,
+            evaluator_success=False,
+            agent_claimed_success=True,
+        )
+        evidence = admit_experiment_results(plan, (record,))
+        self.assertTrue(evidence.records[0].result.run.agent_claimed_success)
+        self.assertFalse(evidence.records[0].result.evaluation.success)
+
+    def test_admission_rejects_receipt_not_bound_to_exact_plan(self):
+        plan = make_plan(habitat_ablations=())
+        planned = next(run for run in plan.planned_runs() if run.condition_id == "habitat")
+        other_spec = make_spec(task_id="other-task")
+        cases = {
+            "unknown planned identity": make_record(
+                plan,
+                planned,
+                planned_run_identity="0" * 64,
+            ),
+            "environment": make_record(
+                plan,
+                planned,
+                environment_fingerprint="env-sha256:other",
+            ),
+            "spec": make_record(plan, planned, spec=other_spec),
+            "arm": make_record(plan, planned, arm="filesystem"),
+            "repetition": make_record(plan, planned, repetition=planned.repetition + 1),
+            "seed": make_record(plan, planned, seed=planned.seed + 1),
+            "model": make_record(plan, planned, model_id="other-model"),
+            "scaffold": make_record(plan, planned, scaffold_id="other-scaffold"),
+            "ablation": make_record(
+                plan,
+                planned,
+                ablation=AblationConfig(disabled_subsystems={"memory"}),
+            ),
+            "evaluator": make_record(plan, planned, evaluator_id="other-evaluator"),
+        }
+        for label, record in cases.items():
+            with self.subTest(label=label), self.assertRaises(ValueError):
+                admit_experiment_results(plan, (record,))
+
+    def test_admission_rejects_impossible_filesystem_ablation(self):
+        plan = make_plan(habitat_ablations=())
+        planned = next(run for run in plan.planned_runs() if run.condition_id == "filesystem")
+        record = make_record(
+            plan,
+            planned,
+            ablation=AblationConfig(disabled_subsystems={"memory"}),
+        )
+        with self.assertRaises(ValueError):
+            admit_experiment_results(plan, (record,))
+
+    def test_admission_rejects_duplicate_planned_run_identity(self):
+        plan = make_plan(habitat_ablations=())
+        planned = plan.planned_runs()[0]
+        record = make_record(plan, planned)
+        with self.assertRaisesRegex(ValueError, "duplicate"):
+            admit_experiment_results(plan, (record, record))
+
+    def test_admission_rejects_non_record_entries(self):
+        plan = make_plan(habitat_ablations=())
+        with self.assertRaises(TypeError):
+            admit_experiment_results(plan, ("not-a-record",))
 
 
 if __name__ == "__main__":
