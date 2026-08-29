@@ -79,9 +79,12 @@ def _require_non_negative_int(value: object, field_name: str, *, nullable: bool 
         raise ValueError(f"{field_name} must be non-negative")
 
 
-def _require_non_negative_number(value: object, field_name: str) -> None:
+def _require_non_negative_number(value: object, field_name: str, *, nullable: bool = False) -> None:
+    if value is None and nullable:
+        return
     if isinstance(value, bool) or not isinstance(value, (int, float)):
-        raise TypeError(f"{field_name} must be a number")
+        expected = "a number or None" if nullable else "a number"
+        raise TypeError(f"{field_name} must be {expected}")
     numeric = float(value)
     if not math.isfinite(numeric) or numeric < 0:
         raise ValueError(f"{field_name} must be finite and non-negative")
@@ -179,25 +182,25 @@ class AblationConfig:
 class BenchmarkMetrics:
     input_tokens: int | None = None
     output_tokens: int | None = None
-    tool_calls: int = 0
-    exact_source_bytes: int = 0
+    tool_calls: int | None = None
+    exact_source_bytes: int | None = None
     context_precision_proxy: float | None = None
     context_recall_proxy: float | None = None
-    irrelevant_object_admission: int = 0
-    wall_ms: float = 0.0
-    ingest_ms: float = 0.0
-    warm_reconcile_ms: float = 0.0
-    provider_calls: int = 0
-    failed_strategy_count: int = 0
-    repeated_strategy_count: int = 0
-    verification_count: int = 0
-    mutation_rollback_count: int = 0
-    mutation_conflict_count: int = 0
+    irrelevant_object_admission: int | None = None
+    wall_ms: float | None = None
+    ingest_ms: float | None = None
+    warm_reconcile_ms: float | None = None
+    provider_calls: int | None = None
+    failed_strategy_count: int | None = None
+    repeated_strategy_count: int | None = None
+    verification_count: int | None = None
+    mutation_rollback_count: int | None = None
+    mutation_conflict_count: int | None = None
 
     def __post_init__(self) -> None:
-        for field_name in ("input_tokens", "output_tokens"):
-            _require_non_negative_int(getattr(self, field_name), field_name, nullable=True)
         for field_name in (
+            "input_tokens",
+            "output_tokens",
             "tool_calls",
             "exact_source_bytes",
             "irrelevant_object_admission",
@@ -208,9 +211,9 @@ class BenchmarkMetrics:
             "mutation_rollback_count",
             "mutation_conflict_count",
         ):
-            _require_non_negative_int(getattr(self, field_name), field_name)
+            _require_non_negative_int(getattr(self, field_name), field_name, nullable=True)
         for field_name in ("wall_ms", "ingest_ms", "warm_reconcile_ms"):
-            _require_non_negative_number(getattr(self, field_name), field_name)
+            _require_non_negative_number(getattr(self, field_name), field_name, nullable=True)
         for field_name in ("context_precision_proxy", "context_recall_proxy"):
             _require_optional_unit_interval(getattr(self, field_name), field_name)
 
