@@ -56,13 +56,15 @@ class LearningContextPolicyRuntimeTests(unittest.TestCase):
         )
 
     def deterministic_candidates(self) -> dict[str, dict]:
+        # Deliberately use distinct object kinds so this fixture exercises learning-policy behavior
+        # rather than the compiler's existing per-kind/file diversity caps.
         return {
             "fake:lexical": {
                 "object_id": "fake:lexical",
                 "score": 0.40,
                 "reason": "lexical fixture",
                 "lane": "lexical",
-                "kind": "file",
+                "kind": "artifact",
                 "path": "lexical.txt",
                 "trust": "exact",
             },
@@ -71,7 +73,7 @@ class LearningContextPolicyRuntimeTests(unittest.TestCase):
                 "score": 0.50,
                 "reason": "structural fixture",
                 "lane": "symbol",
-                "kind": "file",
+                "kind": "symbol",
                 "path": "structural.txt",
                 "trust": "semantic",
             },
@@ -80,7 +82,7 @@ class LearningContextPolicyRuntimeTests(unittest.TestCase):
                 "score": 0.30,
                 "reason": "evidence fixture",
                 "lane": "evidence",
-                "kind": "file",
+                "kind": "evidence",
                 "path": "evidence.txt",
                 "trust": "derived",
             },
@@ -89,7 +91,7 @@ class LearningContextPolicyRuntimeTests(unittest.TestCase):
                 "score": 0.20,
                 "reason": "mixed fixture",
                 "lane": "lexical+graph+diagnostic",
-                "kind": "file",
+                "kind": "diagnostic",
                 "path": "mixed.txt",
                 "trust": "heuristic",
             },
@@ -185,7 +187,40 @@ class LearningContextPolicyRuntimeTests(unittest.TestCase):
                 self.assertEqual(policy.fingerprint, result.decision_packet["learning_policy_fingerprint"])
                 self.assertEqual(policy.version, stored["learning_policy_version"])
                 self.assertEqual(policy.fingerprint, stored["learning_policy_fingerprint"])
-                self.assertIn("fake:mixed", result.decision_packet["exact_source_required_before_mutation"])
+            finally:
+                ws.close()
+
+    def test_active_policy_never_suppresses_authority_warnings(self):
+        with WorkspaceTemporaryDirectory() as temp:
+            ws = self.make_workspace(temp)
+            try:
+                policy = make_policy(
+                    "context-runtime-authority-v1",
+                    lexical_weight=2.0,
+                    structural_weight=0.5,
+                    evidence_weight=1.5,
+                    source_prefetch_budget=4,
+                )
+                self.activate(ws, policy)
+                compiler = ContextCompiler(ws)
+                with self.candidate_patch(), patch.object(
+                    ContextCompiler,
+                    "_expand_graph",
+                    new=lambda _self, _candidates, _task_class, max_roots=8, depth=2: None,
+                ), patch.object(
+                    ContextCompiler,
+                    "_apply_utility_prior",
+                    new=lambda _self, _candidates, _task, _agent_id=None: 0,
+                ):
+                    result = compiler.compile("target", budget=4)
+
+                self.assertIn(
+                    "fake:mixed",
+                    result.decision_packet["exact_source_required_before_mutation"],
+                )
+                self.assertTrue(any("heuristic" in item for item in result.unknowns))
+                mixed = next(obj for obj in result.objects if obj.object_id == "fake:mixed")
+                self.assertEqual("heuristic", mixed.trust)
             finally:
                 ws.close()
 
@@ -259,7 +294,7 @@ class LearningContextPolicyRuntimeTests(unittest.TestCase):
                     "score": 0.80,
                     "reason": "target fixture",
                     "lane": "lexical+symbol",
-                    "kind": "file",
+                    "kind": "artifact",
                     "path": "target.py",
                     "trust": "exact",
                 }
