@@ -94,8 +94,13 @@ def paired_summary(runs: list[dict]) -> dict:
 def main():
     ap=argparse.ArgumentParser(); ap.add_argument("--suite",required=True); ap.add_argument("--baseline-cmd",required=True); ap.add_argument("--habitat-cmd",required=True)
     ap.add_argument("--evaluator-cmd"); ap.add_argument("--repetitions",type=int,default=3); ap.add_argument("--timeout",type=int,default=1800); ap.add_argument("--seed",type=int,default=10); ap.add_argument("--out",required=True)
+    ap.add_argument("--strong-evidence",action="store_true"); ap.add_argument("--model-id"); ap.add_argument("--scaffold-id"); ap.add_argument("--evaluator-id"); ap.add_argument("--environment-fingerprint")
     args=ap.parse_args()
     if args.repetitions<1 or args.repetitions>50: raise ValueError("repetitions must be in [1,50]")
+    if args.strong_evidence:
+        if args.repetitions<3: ap.error("strong evidence requires at least 3 repetitions")
+        for option,value in (("--model-id",args.model_id),("--scaffold-id",args.scaffold_id),("--evaluator-id",args.evaluator_id),("--environment-fingerprint",args.environment_fingerprint),("--evaluator-cmd",args.evaluator_cmd)):
+            if not isinstance(value,str) or not value.strip(): ap.error(f"{option} is required in strong evidence mode")
     suite=load_suite(Path(args.suite)); rng=random.Random(args.seed); runs=[]
     with tempfile.TemporaryDirectory(prefix="habitat-ab-") as td:
         base=Path(td)
