@@ -3,8 +3,23 @@ from __future__ import annotations
 import json
 from typing import TYPE_CHECKING
 
+from ..learning_plane import ContextPolicy, EvaluationPacket, OutcomeRecord, PolicyCandidate
+
 if TYPE_CHECKING:
     from ..storage import Store
+
+
+def _thaw_json(value: object) -> object:
+    if isinstance(value, tuple):
+        if all(
+            isinstance(item, tuple)
+            and len(item) == 2
+            and isinstance(item[0], str)
+            for item in value
+        ):
+            return {str(key): _thaw_json(item) for key, item in value}
+        return [_thaw_json(item) for item in value]
+    return value
 
 
 class LearningRepository:
@@ -183,5 +198,277 @@ class LearningRepository:
             "UPDATE project_memories SET status=?,confidence=?,invalidated_by=?,updated_at=? WHERE id=?",
             (status if status is not None else row["status"], confidence if confidence is not None else row["confidence"],
              invalidated_by if invalidated_by is not None else row["invalidated_by"], updated_at, memory_id),
+        )
+        self.owner.conn.commit()
+
+    # --- Foundation Convergence Wave 5: Learning Plane persistence ---
+    def create_policy_version(
+        self,
+        policy: ContextPolicy,
+        *,
+        parent_version: str | None,
+        created_by: str,
+        created_at: str,
+    ) -> None:
+        if not isinstance(policy, ContextPolicy):
+            raise TypeError("policy must be ContextPolicy")
+        if parent_version is not None and self.policy_version(parent_version) is None:
+            raise KeyError(parent_version)
+        self.owner.conn.execute(
+            """INSERT INTO learning_policy_versions(version,fingerprint,policy_json,parent_version,created_by,created_at)
+               VALUES(?,?,?,?,?,?)""",
+            (
+                policy.version,
+                policy.fingerprint,
+                json.dumps(policy.canonical_payload, sort_keys=True, separators=(",", ":")),
+                parent_version,
+                created_by,
+                created_at,
+            ),
+        )
+        self.owner.conn.commit()
+
+    def policy_version(self, version: str):
+        return self.owner.conn.execute(
+            "SELECT * FROM learning_policy_versions WHERE version=?",
+            (version,),
+        ).fetchone()
+
+    def policy_versions(self, limit: int = 500):
+        return self.owner.conn.execute(
+            "SELECT * FROM learning_policy_versions ORDER BY created_at ASC,version ASC LIMIT ?",
+            (int(limit),),
+        ).fetchall()
+
+    def create_candidate(self, candidate: PolicyCandidate) -> None:
+        if not isinstance(candidate, PolicyCandidate):
+            raise TypeError("candidate must be PolicyCandidate")
+        policy = self.policy_version(candidate.policy_version)
+        baseline = self.policy_version(candidate.baseline_version)
+        if policy is None:
+            raise KeyError(candidate.policy_version)
+        if baseline is None:
+            raise KeyError(candidate.baseline_version)
+        if policy["fingerprint"] != candidate.policy_fingerprint:
+            raise ValueError("candidate policy fingerprint does not match immutable policy version")
+        if baseline["fingerprint"] != candidate.baseline_fingerprint:
+            raise ValueError("candidate baseline fingerprint does not match immutable policy version")
+        self.owner.conn.execute(
+            """INSERT INTO learning_candidates(candidate_id,policy_version,policy_fingerprint,baseline_version,baseline_fingerprint,generator_id,state,created_at,updated_at)
+               VALUES(?,?,?,?,?,?,?,?,?)""",
+            (
+                candidate.candidate_id,
+                candidate.policy_version,
+                candidate.policy_fingerprint,
+                candidate.baseline_version,
+                candidate.baseline_fingerprint,
+                candidate.generator_id,
+                candidate.state,
+                candidate.created_at,
+                candidate.updated_at,
+            ),
+        )
+        self.owner.conn.commit()
+
+    def candidate(self, candidate_id: str):
+        return self.owner.conn.execute(
+            "SELECT * FROM learning_candidates WHERE candidate_id=?",
+            (candidate_id,),
+        ).fetchone()
+
+    def update_candidate_state(
+        self,
+        candidate_id: str,
+        *,
+        expected_state: str,
+        new_state: str,
+        updated_at: str,
+    ) -> None:
+        current = self.candidate(candidate_id)
+        if current is None:
+            raise KeyError(candidate_id)
+        if current["state"] != expected_state:
+            raise ValueError(
+                f"candidate state changed: expected {expected_state}, found {current['state']}"
+            )
+        cursor = self.owner.conn.execute(
+            """UPDATE learning_candidates SET state=?,updated_at=?
+               WHERE candidate_id=? AND state=?""",
+            (new_state, updated_at, candidate_id, expected_state),
+        )
+        if cursor.rowcount != 1:
+            self.owner.conn.rollback()
+            raise ValueError("candidate state changed concurrently")
+        self.owner.conn.commit()
+
+    def append_outcome(self, candidate_id: str, outcome: OutcomeRecord) -> int:
+        if not isinstance(outcome, OutcomeRecord):
+            raise TypeError("outcome must be OutcomeRecord")
+        candidate = self.candidate(candidate_id)
+        if candidate is None:
+            raise KeyError(candidate_id)
+        if candidate["policy_version"] != outcome.policy_version:
+            raise ValueError("outcome policy version does not match candidate")
+        cursor = self.owner.conn.execute(
+            """INSERT INTO learning_outcomes(
+                 candidate_id,policy_version,task_fingerprint,benchmark_class,
+                 provider_fingerprints_json,context_refs_json,action_refs_json,verification_refs_json,
+                 independent_outcome_json,resource_metrics_json,errors_json,rollbacks_json,revision,created_at
+               ) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?)""",
+            (
+                candidate_id,
+                outcome.policy_version,
+                outcome.task_fingerprint,
+                outcome.benchmark_class,
+                json.dumps(outcome.provider_fingerprints, separators=(",", ":")),
+                json.dumps(outcome.context_refs, separators=(",", ":")),
+                json.dumps(outcome.action_refs, separators=(",", ":")),
+                json.dumps(outcome.verification_refs, separators=(",", ":")),
+                json.dumps(_thaw_json(outcome.independent_outcome), sort_keys=True, separators=(",", ":")),
+                json.dumps(dict(outcome.resource_metrics), sort_keys=True, separators=(",", ":")),
+                json.dumps(outcome.errors, separators=(",", ":")),
+                json.dumps(outcome.rollbacks, separators=(",", ":")),
+                outcome.revision,
+                outcome.created_at,
+            ),
+        )
+        self.owner.conn.commit()
+        return int(cursor.lastrowid)
+
+    def outcomes(self, candidate_id: str, limit: int = 1000):
+        return self.owner.conn.execute(
+            "SELECT * FROM learning_outcomes WHERE candidate_id=? ORDER BY id ASC LIMIT ?",
+            (candidate_id, int(limit)),
+        ).fetchall()
+
+    def append_evaluation(
+        self,
+        candidate_id: str,
+        packet: EvaluationPacket,
+        *,
+        created_at: str,
+    ) -> int:
+        if not isinstance(packet, EvaluationPacket):
+            raise TypeError("packet must be EvaluationPacket")
+        candidate = self.candidate(candidate_id)
+        if candidate is None:
+            raise KeyError(candidate_id)
+        if packet.candidate_id != candidate_id:
+            raise ValueError("evaluation candidate identity mismatch")
+        if packet.policy_fingerprint != candidate["policy_fingerprint"]:
+            raise ValueError("evaluation policy fingerprint does not match candidate")
+        cursor = self.owner.conn.execute(
+            """INSERT INTO learning_evaluations(
+                 candidate_id,policy_fingerprint,evaluator_id,heldout_suite_id,
+                 baseline_benchmark_fingerprint,candidate_benchmark_fingerprint,improved,
+                 evidence_refs_json,reproduction_tolerance,created_at
+               ) VALUES(?,?,?,?,?,?,?,?,?,?)""",
+            (
+                candidate_id,
+                packet.policy_fingerprint,
+                packet.evaluator_id,
+                packet.heldout_suite_id,
+                packet.baseline_benchmark_fingerprint,
+                packet.candidate_benchmark_fingerprint,
+                int(packet.improved),
+                json.dumps(packet.evidence_refs, separators=(",", ":")),
+                packet.reproduction_tolerance,
+                created_at,
+            ),
+        )
+        self.owner.conn.commit()
+        return int(cursor.lastrowid)
+
+    def evaluations(self, candidate_id: str, limit: int = 1000):
+        return self.owner.conn.execute(
+            "SELECT * FROM learning_evaluations WHERE candidate_id=? ORDER BY id ASC LIMIT ?",
+            (candidate_id, int(limit)),
+        ).fetchall()
+
+    def latest_evaluation(self, candidate_id: str):
+        return self.owner.conn.execute(
+            "SELECT * FROM learning_evaluations WHERE candidate_id=? ORDER BY id DESC LIMIT 1",
+            (candidate_id,),
+        ).fetchone()
+
+    def append_activation(
+        self,
+        *,
+        candidate_id: str,
+        action: str,
+        previous_version: str | None,
+        previous_fingerprint: str | None,
+        active_version: str,
+        active_fingerprint: str,
+        evaluation_id: int,
+        baseline_benchmark_fingerprint: str,
+        candidate_benchmark_fingerprint: str,
+        reproduction_benchmark_fingerprint: str | None,
+        reproduction_tolerance: float | None,
+        created_at: str,
+    ) -> int:
+        candidate = self.candidate(candidate_id)
+        if candidate is None:
+            raise KeyError(candidate_id)
+        evaluation = self.owner.conn.execute(
+            "SELECT * FROM learning_evaluations WHERE id=?",
+            (int(evaluation_id),),
+        ).fetchone()
+        if evaluation is None or evaluation["candidate_id"] != candidate_id:
+            raise ValueError("activation evaluation does not belong to candidate")
+        active = self.policy_version(active_version)
+        if active is None:
+            raise KeyError(active_version)
+        if active["fingerprint"] != active_fingerprint:
+            raise ValueError("activation fingerprint does not match immutable policy version")
+        cursor = self.owner.conn.execute(
+            """INSERT INTO learning_activations(
+                 candidate_id,action,previous_version,previous_fingerprint,active_version,active_fingerprint,
+                 evaluation_id,baseline_benchmark_fingerprint,candidate_benchmark_fingerprint,
+                 reproduction_benchmark_fingerprint,reproduction_tolerance,created_at
+               ) VALUES(?,?,?,?,?,?,?,?,?,?,?,?)""",
+            (
+                candidate_id,
+                action,
+                previous_version,
+                previous_fingerprint,
+                active_version,
+                active_fingerprint,
+                int(evaluation_id),
+                baseline_benchmark_fingerprint,
+                candidate_benchmark_fingerprint,
+                reproduction_benchmark_fingerprint,
+                reproduction_tolerance,
+                created_at,
+            ),
+        )
+        self.owner.conn.commit()
+        return int(cursor.lastrowid)
+
+    def activations(self, candidate_id: str, limit: int = 1000):
+        return self.owner.conn.execute(
+            "SELECT * FROM learning_activations WHERE candidate_id=? ORDER BY id ASC LIMIT ?",
+            (candidate_id, int(limit)),
+        ).fetchall()
+
+    def active_context_policy_version(self) -> str | None:
+        row = self.owner.conn.execute(
+            "SELECT value FROM learning_state WHERE key='active_context_policy_version'"
+        ).fetchone()
+        return None if row is None else row["value"]
+
+    def set_active_context_policy_version(
+        self,
+        version: str | None,
+        *,
+        updated_at: str,
+    ) -> None:
+        if version is not None and self.policy_version(version) is None:
+            raise KeyError(version)
+        self.owner.conn.execute(
+            """INSERT INTO learning_state(key,value,updated_at)
+               VALUES('active_context_policy_version',?,?)
+               ON CONFLICT(key) DO UPDATE SET value=excluded.value,updated_at=excluded.updated_at""",
+            (version, updated_at),
         )
         self.owner.conn.commit()
