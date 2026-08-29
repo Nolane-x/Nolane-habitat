@@ -17,6 +17,24 @@ from .model import (
 
 
 _DEFAULT_ABLATION = AblationConfig()
+_METRIC_NAMES = (
+    "input_tokens",
+    "output_tokens",
+    "tool_calls",
+    "exact_source_bytes",
+    "context_precision_proxy",
+    "context_recall_proxy",
+    "irrelevant_object_admission",
+    "wall_ms",
+    "ingest_ms",
+    "warm_reconcile_ms",
+    "provider_calls",
+    "failed_strategy_count",
+    "repeated_strategy_count",
+    "verification_count",
+    "mutation_rollback_count",
+    "mutation_conflict_count",
+)
 
 
 def _normalize_seeds(value: object) -> tuple[int, ...]:
@@ -303,3 +321,116 @@ def admit_experiment_results(
     """Admit only independently evaluated receipts bound to exact planned runs."""
 
     return ExperimentEvidence(plan=plan, records=_normalize_records(records))
+
+
+@dataclass(frozen=True)
+class MetricDelta:
+    baseline: int | float | None
+    candidate: int | float | None
+    delta: int | float | None
+
+
+@dataclass(frozen=True)
+class PairedRunComparison:
+    repetition: int
+    seed: int
+    baseline_run_identity: str
+    candidate_run_identity: str
+    baseline_success: bool
+    candidate_success: bool
+    success_delta: int
+    metric_deltas: tuple[tuple[str, MetricDelta], ...]
+
+
+@dataclass(frozen=True)
+class ConditionComparison:
+    baseline_condition_id: str
+    candidate_condition_id: str
+    pairs: tuple[PairedRunComparison, ...]
+
+    @property
+    def repetitions_compared(self) -> int:
+        return len(self.pairs)
+
+
+def _metric_delta(baseline: int | float | None, candidate: int | float | None) -> MetricDelta:
+    delta: int | float | None
+    if baseline is None or candidate is None:
+        delta = None
+    else:
+        delta = candidate - baseline
+    return MetricDelta(baseline=baseline, candidate=candidate, delta=delta)
+
+
+def compare_conditions(
+    evidence: ExperimentEvidence,
+    baseline_condition_id: str,
+    candidate_condition_id: str,
+) -> ConditionComparison:
+    """Compare causally paired condition results without hiding per-run missingness."""
+
+    if not isinstance(evidence, ExperimentEvidence):
+        raise TypeError("evidence must be ExperimentEvidence")
+
+    condition_ids = {condition_id for condition_id, _arm, _ablation in evidence.plan.conditions}
+    if baseline_condition_id not in condition_ids:
+        raise ValueError(f"unknown baseline condition: {baseline_condition_id}")
+    if candidate_condition_id not in condition_ids:
+        raise ValueError(f"unknown candidate condition: {candidate_condition_id}")
+    if baseline_condition_id == candidate_condition_id:
+        raise ValueError("baseline and candidate conditions must differ")
+
+    records_by_identity = {
+        record.planned_run_identity: record
+        for record in evidence.records
+    }
+    planned_by_condition_and_repetition = {
+        (planned.condition_id, planned.repetition): planned
+        for planned in evidence.plan.planned_runs()
+    }
+
+    pairs: list[PairedRunComparison] = []
+    for repetition, seed in enumerate(evidence.plan.seeds):
+        baseline_planned = planned_by_condition_and_repetition[(baseline_condition_id, repetition)]
+        candidate_planned = planned_by_condition_and_repetition[(candidate_condition_id, repetition)]
+        if baseline_planned.seed != seed or candidate_planned.seed != seed:
+            raise ValueError("planned condition seeds do not match experiment repetition")
+
+        baseline_record = records_by_identity.get(baseline_planned.identity)
+        candidate_record = records_by_identity.get(candidate_planned.identity)
+        if baseline_record is None or candidate_record is None:
+            continue
+
+        baseline_result = baseline_record.result
+        candidate_result = candidate_record.result
+        baseline_success = baseline_result.evaluation.success
+        candidate_success = candidate_result.evaluation.success
+        metric_deltas = tuple(
+            (
+                metric_name,
+                _metric_delta(
+                    getattr(baseline_result.run.metrics, metric_name),
+                    getattr(candidate_result.run.metrics, metric_name),
+                ),
+            )
+            for metric_name in _METRIC_NAMES
+        )
+
+        pairs.append(
+            PairedRunComparison(
+                repetition=repetition,
+                seed=seed,
+                baseline_run_identity=baseline_planned.identity,
+                candidate_run_identity=candidate_planned.identity,
+                baseline_success=baseline_success,
+                candidate_success=candidate_success,
+                success_delta=int(candidate_success) - int(baseline_success),
+                metric_deltas=metric_deltas,
+            )
+        )
+
+    return ConditionComparison(
+        baseline_condition_id=baseline_condition_id,
+        candidate_condition_id=candidate_condition_id,
+        pairs=tuple(pairs),
+    )
