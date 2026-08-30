@@ -118,6 +118,18 @@ class HabitatWorkspace(_core.HabitatWorkspace):
             self._learning_service = service
         return service
 
+    def capability_report(self) -> dict:
+        from .security.capabilities import build_capability_report
+
+        provider = self.backend.execution_provider
+        attestation = provider.containment_attestation()
+        return build_capability_report(
+            source_authority=self.backend.source_authority.info.as_dict(),
+            execution_provider=provider.info.as_dict(),
+            generated_at_revision=self.revision,
+            execution_attestation=attestation,
+        ).as_dict()
+
     def _compiler_state_fingerprint(self) -> str:
         with self._semantic_scope():
             return super()._compiler_state_fingerprint()
