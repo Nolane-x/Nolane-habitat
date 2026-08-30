@@ -8,8 +8,15 @@ from .base import (
     BackendInfo, BackendSyncReceipt, ExecutionProvider, ExecutionProviderInfo,
     ProjectBackend, SourceAuthority, SourceAuthorityInfo, SourceRangeReceipt, SourceStatFingerprint,
 )
-from ..execution import discover_capabilities, run_action
+from ..execution import (
+    containment_probe,
+    discover_capabilities,
+    resource_limit_probe,
+    run_action,
+    secret_boundary_probe,
+)
 from ..sandbox import bubblewrap_probe, run_bwrap_action
+from ..security.containment import ContainmentAttestation, ProbeReceipt, unverified_attestation
 from ..source_bridge import atomic_write
 from ..util import iter_project_files, sha256_bytes, stable_id
 
@@ -96,15 +103,19 @@ class LocalSourceAuthority(SourceAuthority):
         return _safe(self.root, relpath).is_file()
 
     def delete_file(self, relpath: str) -> None:
-        p=_safe(self.root,relpath)
-        if p.is_file(): p.unlink()
+        p = _safe(self.root, relpath)
+        if p.is_file():
+            p.unlink()
 
     def move_file(self, from_relpath: str, to_relpath: str) -> None:
-        src=_safe(self.root,from_relpath); dst=_safe(self.root,to_relpath)
-        if not src.is_file(): raise FileNotFoundError(from_relpath)
-        if dst.exists(): raise FileExistsError(to_relpath)
-        dst.parent.mkdir(parents=True,exist_ok=True)
-        os.replace(src,dst)
+        src = _safe(self.root, from_relpath)
+        dst = _safe(self.root, to_relpath)
+        if not src.is_file():
+            raise FileNotFoundError(from_relpath)
+        if dst.exists():
+            raise FileExistsError(to_relpath)
+        dst.parent.mkdir(parents=True, exist_ok=True)
+        os.replace(src, dst)
 
 
 class DirectoryMirrorSourceAuthority(SourceAuthority):
@@ -152,34 +163,46 @@ class DirectoryMirrorSourceAuthority(SourceAuthority):
                 mp = _safe(self._materialized_root, rel)
                 if not ap.is_file():
                     if mp.is_file():
-                        mp.unlink(); deleted.append(rel)
+                        mp.unlink()
+                        deleted.append(rel)
                     continue
-                a_bytes = ap.read_bytes(); bytes_read += len(a_bytes)
+                a_bytes = ap.read_bytes()
+                bytes_read += len(a_bytes)
                 mirror_matches = False
                 if mp.is_file():
                     mirror_matches = sha256_bytes(mp.read_bytes()) == sha256_bytes(a_bytes)
                 if not mirror_matches:
-                    atomic_write(mp, a_bytes); changed.append(rel); hydrated.append(rel)
+                    atomic_write(mp, a_bytes)
+                    changed.append(rel)
+                    hydrated.append(rel)
             return BackendSyncReceipt(
                 changed_paths=changed, deleted_paths=deleted, hydrated_paths=hydrated,
                 authoritative_bytes_read=bytes_read, authoritative_bytes_written=0,
                 mode="authority-to-mirror", paths_considered=len(wanted), listing_mode="targeted-no-enumeration",
             )
 
-        auth = self._authority_map(); mirror = self._mirror_map(); wanted = set(auth) | set(mirror)
+        auth = self._authority_map()
+        mirror = self._mirror_map()
+        wanted = set(auth) | set(mirror)
         for rel in sorted(wanted):
-            ap = auth.get(rel); mp = mirror.get(rel)
+            ap = auth.get(rel)
+            mp = mirror.get(rel)
             if ap is None:
                 if mp is not None and mp.exists():
-                    mp.unlink(); deleted.append(rel)
+                    mp.unlink()
+                    deleted.append(rel)
                 continue
-            a_bytes = ap.read_bytes(); bytes_read += len(a_bytes)
+            a_bytes = ap.read_bytes()
+            bytes_read += len(a_bytes)
             if mp is None or not mp.exists() or sha256_bytes(mp.read_bytes()) != sha256_bytes(a_bytes):
                 atomic_write(_safe(self._materialized_root, rel), a_bytes)
-                changed.append(rel); hydrated.append(rel)
+                changed.append(rel)
+                hydrated.append(rel)
         for d in sorted((p for p in self._materialized_root.rglob("*") if p.is_dir()), key=lambda p: len(p.parts), reverse=True):
-            try: d.rmdir()
-            except OSError: pass
+            try:
+                d.rmdir()
+            except OSError:
+                pass
         return BackendSyncReceipt(
             changed_paths=changed, deleted_paths=deleted, hydrated_paths=hydrated,
             authoritative_bytes_read=bytes_read, authoritative_bytes_written=0,
@@ -188,7 +211,6 @@ class DirectoryMirrorSourceAuthority(SourceAuthority):
 
     def read_bytes(self, relpath: str) -> bytes:
         return _safe(self.authoritative_root, relpath).read_bytes()
-
 
     def stat_fingerprint(self, relpath: str) -> SourceStatFingerprint | None:
         return _fingerprint(_safe(self.authoritative_root, relpath))
@@ -204,39 +226,121 @@ class DirectoryMirrorSourceAuthority(SourceAuthority):
         return _safe(self.authoritative_root, relpath).is_file()
 
     def delete_file(self, relpath: str) -> None:
-        ap=_safe(self.authoritative_root,relpath); mp=_safe(self._materialized_root,relpath)
-        if ap.is_file(): ap.unlink()
-        if mp.is_file(): mp.unlink()
+        ap = _safe(self.authoritative_root, relpath)
+        mp = _safe(self._materialized_root, relpath)
+        if ap.is_file():
+            ap.unlink()
+        if mp.is_file():
+            mp.unlink()
 
     def move_file(self, from_relpath: str, to_relpath: str) -> None:
-        ap=_safe(self.authoritative_root,from_relpath); ad=_safe(self.authoritative_root,to_relpath)
-        mp=_safe(self._materialized_root,from_relpath); md=_safe(self._materialized_root,to_relpath)
-        if not ap.is_file(): raise FileNotFoundError(from_relpath)
-        if ad.exists(): raise FileExistsError(to_relpath)
-        ad.parent.mkdir(parents=True,exist_ok=True); os.replace(ap,ad)
+        ap = _safe(self.authoritative_root, from_relpath)
+        ad = _safe(self.authoritative_root, to_relpath)
+        mp = _safe(self._materialized_root, from_relpath)
+        md = _safe(self._materialized_root, to_relpath)
+        if not ap.is_file():
+            raise FileNotFoundError(from_relpath)
+        if ad.exists():
+            raise FileExistsError(to_relpath)
+        ad.parent.mkdir(parents=True, exist_ok=True)
+        os.replace(ap, ad)
         if mp.is_file():
-            md.parent.mkdir(parents=True,exist_ok=True)
-            if md.exists(): md.unlink()
-            os.replace(mp,md)
+            md.parent.mkdir(parents=True, exist_ok=True)
+            if md.exists():
+                md.unlink()
+            os.replace(mp, md)
         else:
-            atomic_write(md,ad.read_bytes())
+            atomic_write(md, ad.read_bytes())
 
 
 class LocalExecutionProvider(ExecutionProvider):
     def __init__(self, root: Path, *, provider_id: str | None = None, kind: str = "local-process", containment_profile: str = "trusted-local"):
         self.root = root.expanduser().resolve()
-        if containment_profile not in {"trusted-local","network-contained"}: raise ValueError("unsupported containment profile")
+        if containment_profile not in {"trusted-local", "network-contained"}:
+            raise ValueError("unsupported containment profile")
         self.containment_profile = containment_profile
         self._info = ExecutionProviderInfo(
             provider_id=provider_id or stable_id("executor", kind, str(self.root)),
             kind=kind,
             execution_root=str(self.root),
-            capabilities=("discover", "execute", "network-containment" if containment_profile=="network-contained" else "trusted-local"),
+            capabilities=("discover", "execute", "network-containment" if containment_profile == "network-contained" else "trusted-local"),
         )
 
     @property
     def info(self) -> ExecutionProviderInfo:
         return self._info
+
+    def containment_attestation(self) -> ContainmentAttestation:
+        if self.containment_profile == "trusted-local":
+            return unverified_attestation(
+                self.info.provider_id,
+                self.info.kind,
+                "trusted-local process execution intentionally carries no containment claim",
+            )
+
+        namespace = containment_probe()
+        limits = resource_limit_probe()
+        secrets = secret_boundary_probe()
+        network_ok = bool(namespace.get("network_namespace_available"))
+        user_ok = bool(namespace.get("user_namespace_available", network_ok))
+        namespace_attempted = bool(namespace.get("unshare")) or network_ok or user_ok
+        limit_ok = bool(limits.get("available"))
+        limit_attempted = bool(limits.get("attempted", bool(limits.get("mechanism")))) or limit_ok
+        secret_ok = bool(secrets.get("available"))
+        reason = str(namespace.get("reason") or "network/user namespace probe unavailable")
+        limit_reason = str(limits.get("reason") or "resource-limit probe unavailable")
+        secret_reason = str(secrets.get("reason") or "secret-boundary probe unavailable")
+        receipts = (
+            ProbeReceipt(
+                receipt_id=f"{self.info.provider_id}:probe:network",
+                provider_id=self.info.provider_id,
+                control="network_isolation",
+                mechanism="linux-unshare-user-network",
+                attempted=namespace_attempted,
+                success=network_ok,
+                detail=reason,
+            ),
+            ProbeReceipt(
+                receipt_id=f"{self.info.provider_id}:probe:user",
+                provider_id=self.info.provider_id,
+                control="user_isolation",
+                mechanism="linux-unshare-user-network",
+                attempted=namespace_attempted,
+                success=user_ok,
+                detail=reason,
+            ),
+            ProbeReceipt(
+                receipt_id=f"{self.info.provider_id}:probe:resource",
+                provider_id=self.info.provider_id,
+                control="resource_limits",
+                mechanism=str(limits.get("mechanism") or "posix-rlimit"),
+                attempted=limit_attempted,
+                success=limit_ok,
+                detail=limit_reason,
+            ),
+            ProbeReceipt(
+                receipt_id=f"{self.info.provider_id}:probe:secret",
+                provider_id=self.info.provider_id,
+                control="secret_boundary",
+                mechanism=str(secrets.get("mechanism") or "restricted-environment-allowlist"),
+                attempted=True,
+                success=secret_ok,
+                detail=secret_reason,
+            ),
+        )
+        return ContainmentAttestation(
+            provider_id=self.info.provider_id,
+            provider_version=self.info.kind,
+            process_isolation=False,
+            filesystem_isolation=False,
+            network_isolation=network_ok,
+            user_isolation=user_ok,
+            capability_drop=False,
+            resource_limits=limit_ok,
+            secret_boundary=secret_ok,
+            probe_receipts=receipts,
+            claim_boundary="network-contained proves only successful user/network namespace, strict POSIX resource-limit, and restricted-environment controls; filesystem and process isolation are not provided",
+        )
 
     def discover_capabilities(self) -> list[dict]:
         return [{**c, "execution_provider_id": self.info.provider_id, "execution_backend": self.info.kind} for c in discover_capabilities(self.root)]
@@ -250,27 +354,63 @@ class LocalExecutionProvider(ExecutionProvider):
 
 class BubblewrapExecutionProvider(ExecutionProvider):
     """Optional full-sandbox execution provider. Construction is fail-closed when host probing fails."""
+
     def __init__(self, root: Path, *, provider_id: str | None = None, kind: str = "bubblewrap-sandbox"):
-        self.root=root.expanduser().resolve()
-        probe=bubblewrap_probe()
+        self.root = root.expanduser().resolve()
+        probe = bubblewrap_probe()
         if not probe.get("available"):
-            raise RuntimeError("bubblewrap sandbox unavailable: "+str(probe.get("reason")))
-        self._probe=probe
-        self._info=ExecutionProviderInfo(
-            provider_id=provider_id or stable_id("executor",kind,str(self.root)), kind=kind, execution_root=str(self.root),
-            capabilities=("discover","execute","full-sandbox","filesystem-confinement","network-confinement","pid-namespace","secret-env-scrub"),
+            raise RuntimeError("bubblewrap sandbox unavailable: " + str(probe.get("reason")))
+        self._probe = probe
+        self._info = ExecutionProviderInfo(
+            provider_id=provider_id or stable_id("executor", kind, str(self.root)),
+            kind=kind,
+            execution_root=str(self.root),
+            capabilities=("discover", "execute", "full-sandbox", "filesystem-confinement", "network-confinement", "pid-namespace", "secret-env-scrub"),
         )
 
     @property
     def info(self) -> ExecutionProviderInfo:
         return self._info
 
+    def containment_attestation(self) -> ContainmentAttestation:
+        limits = resource_limit_probe()
+        limit_ok = bool(limits.get("available"))
+        limit_attempted = bool(limits.get("attempted", bool(limits.get("mechanism")))) or limit_ok
+        fields = {
+            "process_isolation": bool(self._probe.get("pid_namespace")),
+            "filesystem_isolation": bool(self._probe.get("filesystem_confinement")),
+            "network_isolation": bool(self._probe.get("network_confinement")),
+            "user_isolation": bool(self._probe.get("user_namespace")),
+            "capability_drop": bool(self._probe.get("capabilities_dropped")),
+            "resource_limits": limit_ok,
+            "secret_boundary": bool(self._probe.get("secret_environment_scrubbed")),
+        }
+        probe_reason = str(self._probe.get("reason") or "bubblewrap primitive probe unavailable")
+        limit_reason = str(limits.get("reason") or "resource-limit probe unavailable")
+        receipts = (
+            ProbeReceipt(f"{self.info.provider_id}:probe:process", self.info.provider_id, "process_isolation", "bubblewrap-pid-namespace", True, fields["process_isolation"], probe_reason),
+            ProbeReceipt(f"{self.info.provider_id}:probe:filesystem", self.info.provider_id, "filesystem_isolation", "bubblewrap-mount-namespace-bind-profile", True, fields["filesystem_isolation"], probe_reason),
+            ProbeReceipt(f"{self.info.provider_id}:probe:network", self.info.provider_id, "network_isolation", "bubblewrap-network-namespace", True, fields["network_isolation"], probe_reason),
+            ProbeReceipt(f"{self.info.provider_id}:probe:user", self.info.provider_id, "user_isolation", "bubblewrap-user-namespace", True, fields["user_isolation"], probe_reason),
+            ProbeReceipt(f"{self.info.provider_id}:probe:capability", self.info.provider_id, "capability_drop", "bubblewrap-cap-drop-all", True, fields["capability_drop"], probe_reason),
+            ProbeReceipt(f"{self.info.provider_id}:probe:resource", self.info.provider_id, "resource_limits", str(limits.get("mechanism") or "posix-rlimit"), limit_attempted, fields["resource_limits"], limit_reason),
+            ProbeReceipt(f"{self.info.provider_id}:probe:secret", self.info.provider_id, "secret_boundary", "bubblewrap-clear-environment", True, fields["secret_boundary"], probe_reason),
+        )
+        return ContainmentAttestation(
+            provider_id=self.info.provider_id,
+            provider_version=self.info.kind,
+            probe_receipts=receipts,
+            claim_boundary=str(self._probe.get("claim_boundary") or "Bubblewrap provider evidence does not prove kernel/runtime vulnerabilities and installs no Habitat custom seccomp filter"),
+            **fields,
+        )
+
     def discover_capabilities(self) -> list[dict]:
-        return [{**c,"execution_provider_id":self.info.provider_id,"execution_backend":self.info.kind,"sandboxed":True} for c in discover_capabilities(self.root)]
+        return [{**c, "execution_provider_id": self.info.provider_id, "execution_backend": self.info.kind, "sandboxed": True} for c in discover_capabilities(self.root)]
 
     def run(self, capability: dict, timeout_s: int = 60, argv_override: list[str] | None = None):
-        receipt=run_bwrap_action(self.root,capability,timeout_s,argv_override)
-        receipt.execution_provider_id=self.info.provider_id; receipt.execution_backend=self.info.kind
+        receipt = run_bwrap_action(self.root, capability, timeout_s, argv_override)
+        receipt.execution_provider_id = self.info.provider_id
+        receipt.execution_backend = self.info.kind
         return receipt
 
 
@@ -278,7 +418,8 @@ class CompositeProjectBackend(ProjectBackend):
     def __init__(self, source_authority: SourceAuthority, execution_provider: ExecutionProvider, *, backend_id: str | None = None, kind: str = "composite"):
         self._source_authority = source_authority
         self._execution_provider = execution_provider
-        ai = source_authority.info; ei = execution_provider.info
+        ai = source_authority.info
+        ei = execution_provider.info
         self._info = BackendInfo(
             backend_id=backend_id or stable_id("backend", kind, ai.authority_id, ei.provider_id),
             kind=kind,
@@ -305,7 +446,7 @@ class CompositeProjectBackend(ProjectBackend):
         return self._execution_provider
 
     def discover_capabilities(self) -> list[dict]:
-        out=[]
+        out = []
         for c in self.execution_provider.discover_capabilities():
             out.append({**c, "backend_id": self.info.backend_id, "source_authority_id": self.info.source_authority_id})
         return out
@@ -317,8 +458,8 @@ class CompositeProjectBackend(ProjectBackend):
         # A decoupled executor is allowed for observation/test workloads, but source mutations are not
         # silently promoted from an execution checkout into canonical authority. Until a provider exposes
         # an explicit durable write-back contract, fail closed if execution changed project paths.
-        exec_root=Path(self.execution_provider.info.execution_root).resolve()
-        authority_root=Path(self.source_authority.info.authoritative_root).resolve()
+        exec_root = Path(self.execution_provider.info.execution_root).resolve()
+        authority_root = Path(self.source_authority.info.authoritative_root).resolve()
         if receipt.changed_paths and exec_root != authority_root:
             raise RuntimeError("execution mutated a non-authoritative checkout; no durable source write-back bridge is configured")
         return receipt
@@ -375,10 +516,10 @@ def backend_from_manifest(manifest: dict, habitat_dir: Path) -> ProjectBackend:
 
         ekind = ecfg.get("type") or cfg.get("execution_kind") or ("authority-local-process" if akind == "directory-mirror" else "local-process")
         execution_root = Path(ecfg.get("execution_root") or authority.info.authoritative_root)
-        if ekind in {"bubblewrap","bubblewrap-sandbox"} or ecfg.get("containment_profile") == "filesystem-contained":
+        if ekind in {"bubblewrap", "bubblewrap-sandbox"} or ecfg.get("containment_profile") == "filesystem-contained":
             executor = BubblewrapExecutionProvider(execution_root, provider_id=ecfg.get("id"), kind="bubblewrap-sandbox")
         else:
-            executor = LocalExecutionProvider(execution_root, provider_id=ecfg.get("id"), kind=ekind, containment_profile=ecfg.get("containment_profile","trusted-local"))
+            executor = LocalExecutionProvider(execution_root, provider_id=ecfg.get("id"), kind=ekind, containment_profile=ecfg.get("containment_profile", "trusted-local"))
         return CompositeProjectBackend(authority, executor, backend_id=backend_id, kind=kind)
 
     if kind == "local-filesystem":
