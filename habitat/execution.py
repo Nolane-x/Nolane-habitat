@@ -495,10 +495,6 @@ def run_action(
         outp = Path(td) / "stdout.bin"
         errp = Path(td) / "stderr.bin"
         if capability.startswith("python."):
-            # CPython timestamp bytecode can be stale after a same-size source edit within one
-            # second. Remove project bytecode and prevent this run from writing any replacement;
-            # installed dependencies keep their normal cache and no CPython-internal path mapping
-            # is required across interpreter versions.
             _prepare_python_bytecode_cache(root)
             execution_env = dict(popen_kwargs.get("env") or os.environ)
             execution_env.pop("PYTHONPYCACHEPREFIX", None)
@@ -542,3 +538,83 @@ def run_action(
                    "policy": "conservative common-secret patterns; not a complete DLP system"},
     )
     return bind_containment_attestation(receipt, attestation, security_profile=containment_profile)
+
+
+def validate_containment_binding(
+    receipt: ExecutionReceipt,
+    *,
+    expected_provider_id: str | None = None,
+) -> ContainmentAttestation:
+    """Validate typed containment evidence serialized into an execution receipt.
+
+    This is a consistency/integrity check over Habitat-authored evidence, not a signature or MAC.
+    """
+    fingerprint = receipt.environment_fingerprint
+    if not isinstance(fingerprint, dict):
+        raise RuntimeError("containment receipt has no environment fingerprint")
+    raw = fingerprint.get("containment_attestation")
+    stored_fingerprint = fingerprint.get("containment_attestation_fingerprint")
+    if not isinstance(raw, dict) or not isinstance(stored_fingerprint, str):
+        raise RuntimeError("containment receipt is missing typed attestation binding")
+
+    try:
+        raw_receipts = raw["probe_receipts"]
+        if not isinstance(raw_receipts, list):
+            raise TypeError("probe_receipts must be list")
+        receipts = tuple(
+            ProbeReceipt(
+                receipt_id=item["receipt_id"],
+                provider_id=item["provider_id"],
+                control=item["control"],
+                mechanism=item["mechanism"],
+                attempted=item["attempted"],
+                success=item["success"],
+                detail=item["detail"],
+            )
+            for item in raw_receipts
+        )
+        attestation = ContainmentAttestation(
+            provider_id=raw["provider_id"],
+            provider_version=raw["provider_version"],
+            process_isolation=raw["process_isolation"],
+            filesystem_isolation=raw["filesystem_isolation"],
+            network_isolation=raw["network_isolation"],
+            user_isolation=raw["user_isolation"],
+            capability_drop=raw["capability_drop"],
+            resource_limits=raw["resource_limits"],
+            secret_boundary=raw["secret_boundary"],
+            probe_receipts=receipts,
+            claim_boundary=raw["claim_boundary"],
+        )
+    except (KeyError, TypeError, ValueError) as exc:
+        raise RuntimeError(f"invalid containment attestation in receipt: {exc}") from exc
+
+    if attestation.as_dict() != raw:
+        raise RuntimeError("containment attestation serialization is non-canonical")
+    if attestation.fingerprint != stored_fingerprint:
+        raise RuntimeError("containment attestation fingerprint mismatch")
+    if expected_provider_id is not None and attestation.provider_id != expected_provider_id:
+        raise RuntimeError("containment attestation provider mismatch")
+
+    full_sandbox = all((
+        attestation.process_isolation,
+        attestation.filesystem_isolation,
+        attestation.network_isolation,
+        attestation.user_isolation,
+        attestation.capability_drop,
+    ))
+    expected_projection = {
+        "sandboxed": bool(full_sandbox),
+        "network_restricted": attestation.network_isolation,
+        "filesystem_restricted": attestation.filesystem_isolation,
+        "process_isolated": attestation.process_isolation,
+        "user_isolated": attestation.user_isolation,
+        "capabilities_dropped": attestation.capability_drop,
+        "resource_limited": attestation.resource_limits,
+        "secret_environment_scrubbed": attestation.secret_boundary,
+        "claim_boundary": attestation.claim_boundary,
+    }
+    for key, expected in expected_projection.items():
+        if fingerprint.get(key) != expected:
+            raise RuntimeError(f"containment legacy projection mismatch: {key}")
+    return attestation

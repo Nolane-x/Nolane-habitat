@@ -14,6 +14,7 @@ from ..execution import (
     resource_limit_probe,
     run_action,
     secret_boundary_probe,
+    validate_containment_binding,
 )
 from ..sandbox import bubblewrap_probe, run_bwrap_action
 from ..security.containment import ContainmentAttestation, ProbeReceipt, unverified_attestation
@@ -347,6 +348,8 @@ class LocalExecutionProvider(ExecutionProvider):
 
     def run(self, capability: dict, timeout_s: int = 60, argv_override: list[str] | None = None):
         attestation = self.containment_attestation()
+        if attestation.provider_id != self.info.provider_id:
+            raise RuntimeError("execution provider attestation provider mismatch")
         receipt = run_action(
             self.root,
             capability["id"],
@@ -356,6 +359,7 @@ class LocalExecutionProvider(ExecutionProvider):
             self.containment_profile,
             containment_attestation=attestation,
         )
+        validate_containment_binding(receipt, expected_provider_id=self.info.provider_id)
         receipt.execution_provider_id = self.info.provider_id
         receipt.execution_backend = self.info.kind
         return receipt
@@ -418,6 +422,8 @@ class BubblewrapExecutionProvider(ExecutionProvider):
 
     def run(self, capability: dict, timeout_s: int = 60, argv_override: list[str] | None = None):
         attestation = self.containment_attestation()
+        if attestation.provider_id != self.info.provider_id:
+            raise RuntimeError("execution provider attestation provider mismatch")
         receipt = run_bwrap_action(
             self.root,
             capability,
@@ -425,6 +431,7 @@ class BubblewrapExecutionProvider(ExecutionProvider):
             argv_override,
             containment_attestation=attestation,
         )
+        validate_containment_binding(receipt, expected_provider_id=self.info.provider_id)
         receipt.execution_provider_id = self.info.provider_id
         receipt.execution_backend = self.info.kind
         return receipt
