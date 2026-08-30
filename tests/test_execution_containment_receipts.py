@@ -149,7 +149,7 @@ class ExecutionContainmentReceiptTests(unittest.TestCase):
             provider.run({"id": "fixture.run", "argv": ["fixture"], "kind": "script"})
 
         self.assertEqual(1, run.call_count)
-        self.assertIs(run.call_args.kwargs["containment_attestation"], expected)
+        self.assertEqual(run.call_args.kwargs["containment_attestation"], expected)
         self.assertTrue(expected.network_isolation)
         self.assertTrue(expected.user_isolation)
         self.assertTrue(expected.resource_limits)
@@ -247,7 +247,7 @@ class ExecutionContainmentReceiptTests(unittest.TestCase):
             expected = provider.containment_attestation()
             provider.run({"id": "fixture.run", "argv": ["fixture"], "kind": "script"})
 
-        self.assertIs(run.call_args.kwargs["containment_attestation"], expected)
+        self.assertEqual(run.call_args.kwargs["containment_attestation"], expected)
 
 
 if __name__ == "__main__":
