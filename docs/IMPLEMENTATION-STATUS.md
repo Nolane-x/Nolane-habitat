@@ -59,7 +59,8 @@
 - cinematic graph includes Executive Trajectory and Milestone entities, active strategy and executive counts without exposing raw private chain-of-thought;
 - process-shared Playwright runtime uses explicit leases so the final workspace close drains the browser driver deterministically;
 - adaptive LOD/clustering, focus hysteresis, temporal heat and agent trails remain inherited from alpha.13;
-- operational SLO admission uses immutable profiles/samples, preserves unavailable measurements as `None`, fails closed on missing or insufficient evidence, and emits deterministic commit-bound reports only when externally measured samples are explicitly supplied.
+- operational SLO admission uses immutable profiles/samples, preserves unavailable measurements as `None`, fails closed on missing or insufficient evidence, and emits deterministic commit-bound reports only when externally measured samples are explicitly supplied;
+- deterministic scale evidence reuses the Foundation baseline lifecycle over canonical generated fixtures, binds multi-cycle raw observations to a source commit and workload fingerprint, and requires an independent matching baseline before conversion to SLO samples; unavailable memory remains `None`.
 
 ### Machine contracts
 - workspace manifest schema 10 advertises `world_model.executive_trajectory=true`;
@@ -76,7 +77,7 @@
 - Project Memory retrieval and cognitive planning are bounded heuristics and never source truth;
 - full hostile-code isolation remains provider/host dependent; unsupported containment must not be described as a production sandbox;
 - non-Python/TypeScript semantic precision and live production-world cognition remain uneven;
-- the SLO kernel evaluates supplied measurements but does not yet generate canonical scale-profile measurements itself, so its existence alone is not production SLO evidence or a performance superiority claim.
+- deterministic scale evidence currently provides wall-time observations only; portable peak process-memory measurement and a separately curated production baseline remain absent, so CI scale artifacts are descriptive/non-gating and do not establish production SLO compliance or performance superiority.
 
 ## Not implemented / not claimed
 - raw model chain-of-thought capture/display;
