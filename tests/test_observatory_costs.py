@@ -4,7 +4,7 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from benchmarks.observatory_projection_costs import measure_observatory_projection_costs
+from benchmarks.observatory_projection_costs import measure_observatory_costs
 from habitat.workspace import HabitatWorkspace
 
 
@@ -23,7 +23,7 @@ class ObservatoryCostEvidenceTests(unittest.TestCase):
     def test_headless_cost_evidence_is_descriptive_state_neutral_and_nulls_frontend(self):
         ws = self.make_workspace()
         before = "\n".join(ws.store.conn.iterdump())
-        report = measure_observatory_projection_costs(ws, include_frontend=False)
+        report = measure_observatory_costs(ws, include_frontend=False)
         after = "\n".join(ws.store.conn.iterdump())
 
         self.assertEqual(before, after)
@@ -39,7 +39,7 @@ class ObservatoryCostEvidenceTests(unittest.TestCase):
     def test_frontend_cost_evidence_measures_without_mutating_authoritative_state(self):
         ws = self.make_workspace()
         before = "\n".join(ws.store.conn.iterdump())
-        report = measure_observatory_projection_costs(ws, include_frontend=True)
+        report = measure_observatory_costs(ws, include_frontend=True)
         after = "\n".join(ws.store.conn.iterdump())
 
         self.assertEqual(before, after)
