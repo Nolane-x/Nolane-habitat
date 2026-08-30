@@ -110,6 +110,10 @@ class LearningService:
             raise KeyError(policy_version)
         if baseline is None:
             raise KeyError(baseline_version)
+        if policy["parent_version"] != baseline_version:
+            raise ValueError(
+                "candidate policy parent lineage does not match the declared baseline version"
+            )
         active_version = self.repository.active_context_policy_version()
         if active_version is not None and active_version != baseline_version:
             raise ValueError(
