@@ -42,6 +42,10 @@ jobs:
       - name: Collect non-gating foundation baseline evidence
         continue-on-error: true
         run: python benchmarks/foundation_baseline.py --repo . --out .test-artifacts/foundation-baseline.json
+      - name: Collect deterministic scale evidence
+        if: matrix.os == 'ubuntu-latest' && matrix.python == '3.14'
+        continue-on-error: true
+        run: python benchmarks/foundation_scale.py --source-commit ${{ env.HABITAT_SOURCE_COMMIT }} --profile-id foundation-scale-ci-v1 --repo-files 64 --bytes-per-file 512 --cycles 2 --seed 0 --out .test-artifacts/foundation-scale.json
       - name: Run isolated regression matrix
         run: python tools/run_test_matrix.py --mode shard --workers 1 --timeout 600 --source-commit ${{ env.HABITAT_SOURCE_COMMIT }} --out .test-artifacts/matrix.json
       - name: Verify public compatibility contract
