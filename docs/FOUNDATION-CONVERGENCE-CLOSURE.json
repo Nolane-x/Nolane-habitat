@@ -1,0 +1,134 @@
+{
+  "schema": 1,
+  "suite": "foundation-convergence-closure",
+  "spec_path": "docs/design/FOUNDATION-CONVERGENCE.md",
+  "verification_model": "Evidence index only. The referenced tests, tools, benchmarks, and CI workflow provide executable verification; this manifest does not self-certify by storing passed/complete booleans.",
+  "criteria": [
+    {
+      "id": 1,
+      "criterion": "Existing alpha.19 public protocol and MCP compatibility tests pass.",
+      "evidence": [
+        "tests/test_contracts.py",
+        "tests/test_protocol_conformance.py",
+        "habitat/mcp_adapter.py",
+        "tools/verify_contracts.py",
+        ".github/workflows/ci.yml"
+      ],
+      "evidence_scope": "Versioned compatibility collection includes the public protocol and compact MCP catalog; removal of an MCP tool is explicitly classified as breaking and CI runs the commit-bound compatibility verifier."
+    },
+    {
+      "id": 2,
+      "criterion": "Existing workspaces migrate/open without destructive loss.",
+      "evidence": [
+        "tests/test_storage_migrations.py"
+      ],
+      "evidence_scope": "Legacy databases are backed up before repair; failed migration restores the pre-migration schema and version marker, and newer workspaces are rejected before mutation."
+    },
+    {
+      "id": 3,
+      "criterion": "Semantic precision is benchmarked across multiple languages/providers instead of described only by capability detection.",
+      "evidence": [
+        "benchmarks/semantic_precision_matrix.py",
+        "tests/test_semantic_precision_matrix.py",
+        "tests/test_semantic_precision_ci_gate.py",
+        ".github/workflows/ci.yml"
+      ],
+      "evidence_scope": "Repository-owned oracle fixtures measure declaration TP/FP/FN, precision, and recall for Python and TypeScript across the Habitat compile lane and Tree-sitter. Missing providers remain unavailable/null rather than fabricating measurements; CI gates and uploads the report."
+    },
+    {
+      "id": 4,
+      "criterion": "Every high-impact semantic/evidence object has explicit provenance and authority class.",
+      "evidence": [
+        "tests/test_truth_adapters.py",
+        "tests/test_truth_authority.py",
+        "tests/test_truth_claims.py"
+      ],
+      "evidence_scope": "Truth adapters map source, semantic, evidence, epistemic, and memory records conservatively; unknown trust fails closed, semantic claims cannot self-promote to source authority, and operation authority requirements are explicit."
+    },
+    {
+      "id": 5,
+      "criterion": "Read-only protocol operations remain state-neutral.",
+      "evidence": [
+        "tests/test_protocol_conformance.py",
+        "tests/test_operation_registry.py"
+      ],
+      "evidence_scope": "Declared read operations preserve source bytes, workspace revision, and full logical SQLite state; drifted exact reads fail closed without hidden refresh or telemetry mutation, and MCP read tools preserve logical state."
+    },
+    {
+      "id": 6,
+      "criterion": "Mutation/recovery/fault-injection suites remain green.",
+      "evidence": [
+        "tests/test_db_recovery_suite.py",
+        "tests/test_mutation_recovery_suite.py",
+        "tests/test_reliability_suite.py",
+        "tools/run_db_recovery_suite.py",
+        "tools/run_mutation_recovery_suite.py",
+        "tools/run_reliability_suite.py",
+        ".github/workflows/ci.yml"
+      ],
+      "evidence_scope": "The main CI workflow gates database recovery, source-mutation recovery, and fault-injection reliability as separate commit-bound evidence steps."
+    },
+    {
+      "id": 7,
+      "criterion": "Major cognitive subsystems have controlled ablation evidence.",
+      "evidence": [
+        "tests/test_benchmark_wave4_closure.py",
+        "tests/test_benchmark_strong_harness.py",
+        "tests/test_benchmark_strong_evidence_reporting.py"
+      ],
+      "evidence_scope": "Required cognitive ablations are representable and scheduled under shared seeds/conditions, including semantic-provider and retrieval-policy arms, with held-out evaluation failing closed before a solution exists."
+    },
+    {
+      "id": 8,
+      "criterion": "At least one soft policy is improved by the Learning Plane on held-out tasks and promoted through an independent evaluation gate.",
+      "evidence": [
+        "tests/test_learning_plane_heldout_promotion.py",
+        "tests/test_learning_service.py"
+      ],
+      "evidence_scope": "The closure fixture makes the baseline fail and candidate succeed on held-out selection, binds an independent evaluator packet, advances the governed lifecycle to canary, promotes the candidate, and observes the promoted policy in live context compilation."
+    },
+    {
+      "id": 9,
+      "criterion": "Learned policy rollback restores the exact previous policy and reproduces its benchmark fingerprint within declared tolerance.",
+      "evidence": [
+        "tests/test_learning_plane_heldout_promotion.py",
+        "tests/test_learning_service.py",
+        "tests/test_learning_plane_repository.py"
+      ],
+      "evidence_scope": "Rollback rejects a tampered benchmark fingerprint and a looser-than-declared tolerance, accepts exact reproduction at tolerance 0.0, then restores the prior active policy version and fingerprint in live compilation."
+    },
+    {
+      "id": 10,
+      "criterion": "Repository current-version/docs/release identity is machine-consistent.",
+      "evidence": [
+        "tools/check_release_identity.py",
+        "tests/test_release_identity.py",
+        "tests/test_release_identity_consistency.py",
+        ".github/workflows/ci.yml"
+      ],
+      "evidence_scope": "The commit-bound identity verifier checks package/version/current-document identity and current local links; CI gates this verifier before the regression suite."
+    },
+    {
+      "id": 11,
+      "criterion": "No learning mechanism can edit or override constitutional invariants.",
+      "evidence": [
+        "tests/test_learning_plane_heldout_promotion.py",
+        "tests/test_learning_context_policy_runtime.py",
+        "tests/test_learning_plane_model.py",
+        "tests/test_truth_authority.py"
+      ],
+      "evidence_scope": "Constitutional targets are unrepresentable as ContextPolicy fields; learned policies only alter soft context parameters, cannot suppress authority warnings, and cannot convert confidence into mutation authority."
+    },
+    {
+      "id": 12,
+      "criterion": "Observatory can be disabled without disabling the control/cognition/runtime core.",
+      "evidence": [
+        "tests/test_observatory_headless.py",
+        "tests/test_observatory_projection_faults.py",
+        "tests/test_observatory_frontend_split.py"
+      ],
+      "evidence_scope": "The --no-observatory server path never starts the frontend; a clean headless protocol session succeeds without importing the Observatory facade or frontend, while projection fault tests preserve observer-only behavior."
+    }
+  ],
+  "claim_boundary": "This index supports only the repository-defined Foundation Convergence exit criteria under the tested fixtures, environments, providers, and CI gates. It is not evidence of AGI, universal correctness or safety, universal semantic quality, or superiority over other systems."
+}

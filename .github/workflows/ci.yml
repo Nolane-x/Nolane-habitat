@@ -37,6 +37,8 @@ jobs:
         run: python tools/check_release_identity.py --source-commit ${{ env.HABITAT_SOURCE_COMMIT }} --out .test-artifacts/identity.json
       - name: Run full regression suite
         run: python -m unittest discover -q
+      - name: Run semantic precision matrix evidence
+        run: python benchmarks/semantic_precision_matrix.py --out .test-artifacts/semantic-precision-matrix.json
       - name: Collect non-gating foundation baseline evidence
         continue-on-error: true
         run: python benchmarks/foundation_baseline.py --repo . --out .test-artifacts/foundation-baseline.json
