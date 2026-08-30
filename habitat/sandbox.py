@@ -17,31 +17,80 @@ def bubblewrap_probe() -> dict[str, Any]:
             "executable": None,
             "filesystem_confinement": False,
             "network_confinement": False,
+            "pid_namespace": False,
+            "user_namespace": False,
+            "capabilities_dropped": False,
+            "secret_environment_scrubbed": False,
             "reason": "bubblewrap executable not found",
         }
     try:
         ver = subprocess.run([exe, "--version"], capture_output=True, text=True, timeout=3, shell=False)
         version = (ver.stdout or ver.stderr or "").strip()[:200]
     except Exception as exc:
-        version = None
-        return {"available": False, "executable": exe, "filesystem_confinement": False, "network_confinement": False, "reason": f"bubblewrap probe failed: {exc}"}
-    # Capability probe must not claim a security boundary unless a minimal namespace launch succeeds.
+        return {
+            "available": False,
+            "executable": exe,
+            "version": None,
+            "filesystem_confinement": False,
+            "network_confinement": False,
+            "pid_namespace": False,
+            "user_namespace": False,
+            "capabilities_dropped": False,
+            "secret_environment_scrubbed": False,
+            "reason": f"bubblewrap probe failed: {exc}",
+        }
+
+    # Mechanically exercise the same namespace/mount/cap-drop/clear-env primitives used by Habitat.
+    probe_env = dict(os.environ)
+    probe_env["HABITAT_BWRAP_PROBE_SECRET"] = "wave6-probe-secret"
     try:
         proc = subprocess.run(
-            [exe, "--die-with-parent", "--new-session", "--unshare-user", "--unshare-pid", "--unshare-ipc", "--unshare-uts", "--unshare-net", "--cap-drop", "ALL",
-             "--ro-bind", "/usr", "/usr", "--proc", "/proc", "--dev", "/dev", "--tmpfs", "/tmp", "--", "/usr/bin/true"],
-            capture_output=True, text=True, timeout=5, shell=False,
+            [
+                exe,
+                "--die-with-parent", "--new-session",
+                "--unshare-user", "--unshare-pid", "--unshare-ipc", "--unshare-uts", "--unshare-net",
+                "--cap-drop", "ALL",
+                "--ro-bind", "/usr", "/usr",
+                "--proc", "/proc", "--dev", "/dev", "--tmpfs", "/tmp",
+                "--clearenv", "--setenv", "HABITAT_BWRAP_PROBE_MARKER", "1",
+                "--", "/usr/bin/env",
+            ],
+            capture_output=True,
+            text=True,
+            timeout=5,
+            shell=False,
+            env=probe_env,
         )
-        ok = proc.returncode == 0
-        reason = "minimal namespace/mount probe passed" if ok else (proc.stderr or proc.stdout or "bubblewrap probe returned non-zero").strip()[:500]
+        launch_ok = proc.returncode == 0
+        env_lines = set((proc.stdout or "").splitlines())
+        secret_scrubbed = (
+            launch_ok
+            and "HABITAT_BWRAP_PROBE_MARKER=1" in env_lines
+            and not any(line.startswith("HABITAT_BWRAP_PROBE_SECRET=") for line in env_lines)
+        )
+        ok = launch_ok and secret_scrubbed
+        if ok:
+            reason = "namespace/mount/cap-drop/clear-env probe passed"
+        elif launch_ok:
+            reason = "bubblewrap clear-env probe did not preserve the expected boundary"
+        else:
+            reason = (proc.stderr or proc.stdout or "bubblewrap probe returned non-zero").strip()[:500]
     except Exception as exc:
-        ok = False; reason = str(exc)
+        ok = False
+        secret_scrubbed = False
+        reason = str(exc)
     return {
-        "available": bool(ok), "executable": exe, "version": version,
-        "filesystem_confinement": bool(ok), "network_confinement": bool(ok),
-        "pid_namespace": bool(ok), "user_namespace": bool(ok),
+        "available": bool(ok),
+        "executable": exe,
+        "version": version,
+        "filesystem_confinement": bool(ok),
+        "network_confinement": bool(ok),
+        "pid_namespace": bool(ok),
+        "user_namespace": bool(ok),
+        "capabilities_dropped": bool(ok),
+        "secret_environment_scrubbed": bool(secret_scrubbed),
         "reason": reason,
-        "claim_boundary": "Probe proves this host can launch Habitat's minimal bwrap profile; it is not a proof against kernel/runtime vulnerabilities.",
+        "claim_boundary": "Probe proves this host can launch Habitat's namespace/mount/cap-drop/clear-env bwrap profile; it is not a proof against kernel/runtime or Bubblewrap vulnerabilities and no Habitat custom seccomp filter is installed.",
     }
 
 
