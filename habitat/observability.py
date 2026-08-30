@@ -5,8 +5,11 @@ import json
 import sqlite3
 import time
 from pathlib import Path
+from typing import TYPE_CHECKING
 
-from .workspace import HabitatWorkspace
+if TYPE_CHECKING:
+    from .workspace import HabitatWorkspace
+
 from .project_world import build_project_world
 from .runtime_twin import build_runtime_topology
 from .runtime_correlation import correlate_runtime_fact
