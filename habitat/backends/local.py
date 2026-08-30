@@ -346,7 +346,16 @@ class LocalExecutionProvider(ExecutionProvider):
         return [{**c, "execution_provider_id": self.info.provider_id, "execution_backend": self.info.kind} for c in discover_capabilities(self.root)]
 
     def run(self, capability: dict, timeout_s: int = 60, argv_override: list[str] | None = None):
-        receipt = run_action(self.root, capability["id"], list(argv_override or capability["argv"]), timeout_s, capability.get("kind"), self.containment_profile)
+        attestation = self.containment_attestation()
+        receipt = run_action(
+            self.root,
+            capability["id"],
+            list(argv_override or capability["argv"]),
+            timeout_s,
+            capability.get("kind"),
+            self.containment_profile,
+            containment_attestation=attestation,
+        )
         receipt.execution_provider_id = self.info.provider_id
         receipt.execution_backend = self.info.kind
         return receipt
@@ -408,7 +417,14 @@ class BubblewrapExecutionProvider(ExecutionProvider):
         return [{**c, "execution_provider_id": self.info.provider_id, "execution_backend": self.info.kind, "sandboxed": True} for c in discover_capabilities(self.root)]
 
     def run(self, capability: dict, timeout_s: int = 60, argv_override: list[str] | None = None):
-        receipt = run_bwrap_action(self.root, capability, timeout_s, argv_override)
+        attestation = self.containment_attestation()
+        receipt = run_bwrap_action(
+            self.root,
+            capability,
+            timeout_s,
+            argv_override,
+            containment_attestation=attestation,
+        )
         receipt.execution_provider_id = self.info.provider_id
         receipt.execution_backend = self.info.kind
         return receipt
