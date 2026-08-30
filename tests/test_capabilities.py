@@ -198,7 +198,7 @@ class CapabilityTests(unittest.TestCase):
             self.assertTrue(execution["sandboxed"])
             self.assertEqual(attestation.as_dict(), execution["containment_attestation"])
             self.assertEqual(attestation.fingerprint, execution["attestation_fingerprint"])
-            self.assertEqual([provider_id], execution["verified_by"])
+            self.assertEqual((provider_id,), execution["verified_by"])
 
     def test_capabilities_cli_emits_the_truthful_workspace_report(self):
         with tempfile.TemporaryDirectory() as td:
