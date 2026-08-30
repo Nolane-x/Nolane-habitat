@@ -19,6 +19,7 @@ from pathlib import Path
 from typing import Mapping
 
 from .model import ExecutionReceipt
+from .security.containment import ContainmentAttestation, ProbeReceipt, unverified_attestation
 from .source_bridge import snapshot_metadata
 from .testing.normalize import normalize_test_output
 from .util import HARD_IGNORE_DIRS, stable_id
@@ -233,6 +234,77 @@ print(json.dumps(out, sort_keys=True))
     }
 
 
+def _direct_network_attestation(namespace_probe: dict) -> ContainmentAttestation:
+    provider_id = "execution:direct"
+    provider_version = "run-action-network-contained-v1"
+    limits = resource_limit_probe()
+    secrets = secret_boundary_probe()
+    network_ok = bool(namespace_probe.get("network_namespace_available"))
+    user_ok = bool(namespace_probe.get("user_namespace_available", network_ok))
+    namespace_attempted = bool(namespace_probe.get("unshare")) or network_ok or user_ok
+    limit_ok = bool(limits.get("available"))
+    limit_attempted = bool(limits.get("attempted", bool(limits.get("mechanism")))) or limit_ok
+    secret_ok = bool(secrets.get("available"))
+    namespace_reason = str(namespace_probe.get("reason") or "network/user namespace probe unavailable")
+    limit_reason = str(limits.get("reason") or "resource-limit probe unavailable")
+    secret_reason = str(secrets.get("reason") or "secret-boundary probe unavailable")
+    receipts = (
+        ProbeReceipt(f"{provider_id}:probe:network", provider_id, "network_isolation", "linux-unshare-user-network", namespace_attempted, network_ok, namespace_reason),
+        ProbeReceipt(f"{provider_id}:probe:user", provider_id, "user_isolation", "linux-unshare-user-network", namespace_attempted, user_ok, namespace_reason),
+        ProbeReceipt(f"{provider_id}:probe:resource", provider_id, "resource_limits", str(limits.get("mechanism") or "posix-rlimit"), limit_attempted, limit_ok, limit_reason),
+        ProbeReceipt(f"{provider_id}:probe:secret", provider_id, "secret_boundary", str(secrets.get("mechanism") or "restricted-environment-allowlist"), True, secret_ok, secret_reason),
+    )
+    return ContainmentAttestation(
+        provider_id=provider_id,
+        provider_version=provider_version,
+        process_isolation=False,
+        filesystem_isolation=False,
+        network_isolation=network_ok,
+        user_isolation=user_ok,
+        capability_drop=False,
+        resource_limits=limit_ok,
+        secret_boundary=secret_ok,
+        probe_receipts=receipts,
+        claim_boundary="direct network-contained execution proves only successful user/network namespace, strict POSIX resource-limit, and restricted-environment controls; filesystem and process isolation are not provided",
+    )
+
+
+def bind_containment_attestation(
+    receipt: ExecutionReceipt,
+    attestation: ContainmentAttestation,
+    *,
+    security_profile: str | None = None,
+) -> ExecutionReceipt:
+    """Bind one typed containment authority to an execution receipt and its legacy projection."""
+    fp = dict(receipt.environment_fingerprint or {})
+    full_sandbox = all((
+        attestation.process_isolation,
+        attestation.filesystem_isolation,
+        attestation.network_isolation,
+        attestation.user_isolation,
+        attestation.capability_drop,
+    ))
+    fp.update({
+        "containment_attestation": attestation.as_dict(),
+        "containment_attestation_fingerprint": attestation.fingerprint,
+        "sandboxed": bool(full_sandbox),
+        "network_restricted": attestation.network_isolation,
+        "filesystem_restricted": attestation.filesystem_isolation,
+        "process_isolated": attestation.process_isolation,
+        "user_isolated": attestation.user_isolation,
+        "capabilities_dropped": attestation.capability_drop,
+        "resource_limited": attestation.resource_limits,
+        "secret_environment_scrubbed": attestation.secret_boundary,
+        "claim_boundary": attestation.claim_boundary,
+    })
+    if security_profile is not None:
+        fp["security_profile"] = security_profile
+    receipt.environment_fingerprint = fp
+    if receipt.structured is not None:
+        receipt.structured["environment_fingerprint"] = dict(fp)
+    return receipt
+
+
 _SECRET_PATTERNS = [
     (re.compile(r"(?i)\b(authorization\s*:\s*bearer)\s+[^\s]+"), r"\1 [REDACTED]"),
     (re.compile(r"(?i)\b(api[_-]?key|access[_-]?token|auth[_-]?token|password|passwd|secret)\b(\s*[:=]\s*)[^\s,;]+"), r"\1\2[REDACTED]"),
@@ -362,7 +434,17 @@ def discover_capabilities(root: Path) -> list[dict]:
     return caps
 
 
-def run_action(root: Path, capability: str, argv: list[str], timeout_s: int = 60, capability_kind: str | None = None, containment_profile: str = "trusted-local") -> ExecutionReceipt:
+def run_action(
+    root: Path,
+    capability: str,
+    argv: list[str],
+    timeout_s: int = 60,
+    capability_kind: str | None = None,
+    containment_profile: str = "trusted-local",
+    *,
+    apply_resource_limits: bool = False,
+    containment_attestation: ContainmentAttestation | None = None,
+) -> ExecutionReceipt:
     before = snapshot_metadata(root)
     started = time.monotonic()
     timed_out = False
@@ -371,28 +453,40 @@ def run_action(root: Path, capability: str, argv: list[str], timeout_s: int = 60
         raise ValueError("containment_profile must be trusted-local or network-contained")
     probe = containment_probe() if containment_profile == "network-contained" else None
     effective_argv = list(argv)
-    network_restricted = False
     if containment_profile == "network-contained":
         if not probe or not probe.get("network_namespace_available"):
             raise RuntimeError("network-contained execution unavailable: " + str((probe or {}).get("reason")))
         effective_argv = [str(probe["unshare"]), "-Urn", "--fork", "--", *argv]
-        network_restricted = True
+
+    attestation = containment_attestation
+    if attestation is None:
+        if containment_profile == "network-contained":
+            attestation = _direct_network_attestation(probe or {})
+        else:
+            attestation = unverified_attestation(
+                "execution:direct",
+                "run-action-v1",
+                "direct trusted-local run_action call has no provider-bound containment evidence",
+            )
+
+    limits_requested = containment_profile == "network-contained" or bool(apply_resource_limits)
+    if attestation.resource_limits and not limits_requested:
+        raise RuntimeError("resource-limit attestation is true but this execution did not request strict resource limits")
+    if limits_requested and (os.name == "nt" or resource is None):
+        raise RuntimeError("strict resource-limited execution is unavailable on this host")
+
     environment_fingerprint = {
         "os": platform.system(), "os_release": platform.release(), "architecture": platform.machine(),
         "python_version": platform.python_version(), "python_executable": sys.executable,
         "argv0": argv[0] if argv else None, "cwd": str(root),
         "environment_keys": sorted(k for k in os.environ if k in {"CI", "LANG", "LC_ALL", "TZ", "VIRTUAL_ENV", "CONDA_PREFIX"}),
         "security_profile": containment_profile,
-        "sandboxed": False, "network_restricted": network_restricted, "filesystem_restricted": False,
-        "resource_limited": containment_profile == "network-contained",
-        "secret_environment_scrubbed": containment_profile == "network-contained",
-        "claim_boundary": "network-contained isolates network/user namespace and applies process limits; it does not confine filesystem reads/writes",
     }
     popen_kwargs = dict(cwd=root, stdout=None, stderr=None, shell=False)
     if containment_profile == "network-contained":
         popen_kwargs["env"] = _restricted_env()
-        if os.name != "nt":
-            popen_kwargs["preexec_fn"] = _strict_resource_limit_preexec
+    if limits_requested:
+        popen_kwargs["preexec_fn"] = _strict_resource_limit_preexec
     if os.name != "nt":
         popen_kwargs["start_new_session"] = True
     else:
@@ -439,9 +533,7 @@ def run_action(root: Path, capability: str, argv: list[str], timeout_s: int = 60
     changed = sorted(set(before) | set(after), key=str)
     changed = [p for p in changed if before.get(p) != after.get(p)]
     structured = normalize_test_output(capability, stdout, stderr, exit_code, timed_out) if capability_kind == "test" else None
-    if structured is not None:
-        structured["environment_fingerprint"] = environment_fingerprint
-    return ExecutionReceipt(
+    receipt = ExecutionReceipt(
         id=stable_id("run", capability, str(time.time_ns())), capability=capability, argv=argv, cwd=str(root),
         exit_code=exit_code, timed_out=timed_out, duration_ms=duration, stdout=stdout, stderr=stderr,
         stdout_truncated=stdout_total > MAX_CAPTURE, stderr_truncated=stderr_total > MAX_CAPTURE, changed_paths=changed, structured=structured,
@@ -449,3 +541,4 @@ def run_action(root: Path, capability: str, argv: list[str], timeout_s: int = 60
         redaction={"stdout_matches": int(stdout_redactions), "stderr_matches": int(stderr_redactions),
                    "policy": "conservative common-secret patterns; not a complete DLP system"},
     )
+    return bind_containment_attestation(receipt, attestation, security_profile=containment_profile)
