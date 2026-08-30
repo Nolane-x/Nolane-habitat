@@ -6,7 +6,8 @@ import subprocess
 from pathlib import Path
 from typing import Any
 
-from .execution import discover_capabilities, run_action
+from .execution import bind_containment_attestation, discover_capabilities, run_action
+from .security.containment import ContainmentAttestation, unverified_attestation
 
 
 def bubblewrap_probe() -> dict[str, Any]:
@@ -133,26 +134,43 @@ def build_bwrap_command(root: Path, argv: list[str], *, network: bool = False) -
     return [*cmd, "--", *rewritten]
 
 
-def run_bwrap_action(root: Path, capability: dict, timeout_s: int = 60, argv_override: list[str] | None = None):
+def run_bwrap_action(
+    root: Path,
+    capability: dict,
+    timeout_s: int = 60,
+    argv_override: list[str] | None = None,
+    *,
+    containment_attestation: ContainmentAttestation | None = None,
+):
     argv = list(argv_override or capability["argv"])
     wrapped = build_bwrap_command(root, argv, network=False)
-    receipt = run_action(root, capability["id"], wrapped, timeout_s, capability.get("kind"), "trusted-local")
-    # Keep logical argv separate from transport wrapper and explicitly bind the observed security posture.
+    attestation = containment_attestation or unverified_attestation(
+        "execution:bubblewrap-direct",
+        "bubblewrap-direct-v1",
+        "direct Bubblewrap execution has no provider-bound containment evidence; provider attestation is required for verified claims",
+    )
+    receipt = run_action(
+        root,
+        capability["id"],
+        wrapped,
+        timeout_s,
+        capability.get("kind"),
+        "trusted-local",
+        apply_resource_limits=attestation.resource_limits,
+        containment_attestation=attestation,
+    )
+    # Keep logical argv separate from the transport wrapper. All legacy security booleans are
+    # projected by the typed attestation; this layer only adds Bubblewrap transport metadata.
     receipt.argv = argv
+    bind_containment_attestation(receipt, attestation, security_profile="filesystem-contained")
     fp = dict(receipt.environment_fingerprint or {})
     fp.update({
-        "security_profile": "filesystem-contained",
-        "sandboxed": True,
-        "network_restricted": True,
-        "filesystem_restricted": True,
-        "resource_limited": True,
-        "secret_environment_scrubbed": True,
         "sandbox_primitive": "bubblewrap",
-        "capabilities_dropped": True,
         "custom_seccomp_filter": False,
-        "claim_boundary": "bubblewrap mount/user/pid/ipc/uts/network namespaces, dropped capabilities, a minimal read-only host view and writable project root; no Habitat custom seccomp filter is installed and kernel/bubblewrap vulnerabilities remain outside the proof boundary",
     })
     receipt.environment_fingerprint = fp
+    if receipt.structured is not None:
+        receipt.structured["environment_fingerprint"] = dict(fp)
     return receipt
 
 
