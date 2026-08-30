@@ -30,6 +30,18 @@ def _receipt(root: Path, capability: str = "fixture.run") -> ExecutionReceipt:
     )
 
 
+def _bound_receipt(
+    root: Path,
+    attestation: ContainmentAttestation,
+    security_profile: str,
+) -> ExecutionReceipt:
+    return execution.bind_containment_attestation(
+        _receipt(root),
+        attestation,
+        security_profile=security_profile,
+    )
+
+
 def _network_attestation(provider_id: str, provider_version: str) -> ContainmentAttestation:
     receipts = (
         ProbeReceipt("probe:network", provider_id, "network_isolation", "linux-unshare-user-network", True, True, "namespace passed"),
@@ -144,8 +156,8 @@ class ExecutionContainmentReceiptTests(unittest.TestCase):
         ), mock.patch("habitat.backends.local.run_action") as run:
             root = Path(td)
             provider = LocalExecutionProvider(root, containment_profile="network-contained")
-            run.return_value = _receipt(root)
             expected = provider.containment_attestation()
+            run.return_value = _bound_receipt(root, expected, "network-contained")
             provider.run({"id": "fixture.run", "argv": ["fixture"], "kind": "script"})
 
         self.assertEqual(1, run.call_count)
@@ -243,8 +255,8 @@ class ExecutionContainmentReceiptTests(unittest.TestCase):
         ), mock.patch("habitat.backends.local.run_bwrap_action") as run:
             root = Path(td)
             provider = BubblewrapExecutionProvider(root)
-            run.return_value = _receipt(root)
             expected = provider.containment_attestation()
+            run.return_value = _bound_receipt(root, expected, "filesystem-contained")
             provider.run({"id": "fixture.run", "argv": ["fixture"], "kind": "script"})
 
         self.assertEqual(run.call_args.kwargs["containment_attestation"], expected)
