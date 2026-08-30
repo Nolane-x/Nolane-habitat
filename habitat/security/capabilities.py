@@ -1,7 +1,9 @@
 from __future__ import annotations
 
-from dataclasses import asdict, dataclass
+from dataclasses import asdict, dataclass, field
 from typing import Any, Mapping
+
+from .containment import ContainmentAttestation
 
 
 @dataclass(frozen=True)
@@ -12,6 +14,8 @@ class ExecutionCapability:
     filesystem_restricted: bool
     process_isolated: bool
     verified_by: tuple[str, ...]
+    containment_attestation: dict[str, Any] = field(default_factory=dict)
+    attestation_fingerprint: str = ""
 
 
 @dataclass(frozen=True)
@@ -31,22 +35,30 @@ def build_capability_report(
     source_authority: Mapping[str, Any],
     execution_provider: Mapping[str, Any],
     generated_at_revision: str,
+    execution_attestation: ContainmentAttestation | None = None,
 ) -> CapabilityReport:
-    capabilities = frozenset(execution_provider.get("capabilities") or ())
-    verified_sandbox = {
-        "full-sandbox",
-        "filesystem-confinement",
-        "network-confinement",
-        "pid-namespace",
-    } <= capabilities
     provider_id = str(execution_provider.get("provider_id") or "")
+    if execution_attestation is not None and execution_attestation.provider_id != provider_id:
+        raise ValueError("execution containment attestation provider does not match execution provider")
+
+    attestation = execution_attestation
+    verified_sandbox = bool(
+        attestation is not None
+        and attestation.filesystem_isolation
+        and attestation.network_isolation
+        and attestation.process_isolation
+        and attestation.user_isolation
+        and attestation.capability_drop
+    )
     execution = ExecutionCapability(
         profile="verified-sandbox" if verified_sandbox else "trusted-local-process",
         sandboxed=verified_sandbox,
-        network_restricted=verified_sandbox,
-        filesystem_restricted=verified_sandbox,
-        process_isolated=verified_sandbox,
+        network_restricted=bool(attestation and attestation.network_isolation),
+        filesystem_restricted=bool(attestation and attestation.filesystem_isolation),
+        process_isolated=bool(attestation and attestation.process_isolation),
         verified_by=(provider_id,) if verified_sandbox and provider_id else (),
+        containment_attestation=attestation.as_dict() if attestation is not None else {},
+        attestation_fingerprint=attestation.fingerprint if attestation is not None else "",
     )
     return CapabilityReport(
         source_authority={

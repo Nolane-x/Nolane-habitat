@@ -6,7 +6,8 @@ import subprocess
 from pathlib import Path
 from typing import Any
 
-from .execution import discover_capabilities, run_action
+from .execution import bind_containment_attestation, discover_capabilities, run_action
+from .security.containment import ContainmentAttestation, unverified_attestation
 
 
 def bubblewrap_probe() -> dict[str, Any]:
@@ -17,31 +18,80 @@ def bubblewrap_probe() -> dict[str, Any]:
             "executable": None,
             "filesystem_confinement": False,
             "network_confinement": False,
+            "pid_namespace": False,
+            "user_namespace": False,
+            "capabilities_dropped": False,
+            "secret_environment_scrubbed": False,
             "reason": "bubblewrap executable not found",
         }
     try:
         ver = subprocess.run([exe, "--version"], capture_output=True, text=True, timeout=3, shell=False)
         version = (ver.stdout or ver.stderr or "").strip()[:200]
     except Exception as exc:
-        version = None
-        return {"available": False, "executable": exe, "filesystem_confinement": False, "network_confinement": False, "reason": f"bubblewrap probe failed: {exc}"}
-    # Capability probe must not claim a security boundary unless a minimal namespace launch succeeds.
+        return {
+            "available": False,
+            "executable": exe,
+            "version": None,
+            "filesystem_confinement": False,
+            "network_confinement": False,
+            "pid_namespace": False,
+            "user_namespace": False,
+            "capabilities_dropped": False,
+            "secret_environment_scrubbed": False,
+            "reason": f"bubblewrap probe failed: {exc}",
+        }
+
+    # Mechanically exercise the same namespace/mount/cap-drop/clear-env primitives used by Habitat.
+    probe_env = dict(os.environ)
+    probe_env["HABITAT_BWRAP_PROBE_SECRET"] = "wave6-probe-secret"
     try:
         proc = subprocess.run(
-            [exe, "--die-with-parent", "--new-session", "--unshare-user", "--unshare-pid", "--unshare-ipc", "--unshare-uts", "--unshare-net", "--cap-drop", "ALL",
-             "--ro-bind", "/usr", "/usr", "--proc", "/proc", "--dev", "/dev", "--tmpfs", "/tmp", "--", "/usr/bin/true"],
-            capture_output=True, text=True, timeout=5, shell=False,
+            [
+                exe,
+                "--die-with-parent", "--new-session",
+                "--unshare-user", "--unshare-pid", "--unshare-ipc", "--unshare-uts", "--unshare-net",
+                "--cap-drop", "ALL",
+                "--ro-bind", "/usr", "/usr",
+                "--proc", "/proc", "--dev", "/dev", "--tmpfs", "/tmp",
+                "--clearenv", "--setenv", "HABITAT_BWRAP_PROBE_MARKER", "1",
+                "--", "/usr/bin/env",
+            ],
+            capture_output=True,
+            text=True,
+            timeout=5,
+            shell=False,
+            env=probe_env,
         )
-        ok = proc.returncode == 0
-        reason = "minimal namespace/mount probe passed" if ok else (proc.stderr or proc.stdout or "bubblewrap probe returned non-zero").strip()[:500]
+        launch_ok = proc.returncode == 0
+        env_lines = set((proc.stdout or "").splitlines())
+        secret_scrubbed = (
+            launch_ok
+            and "HABITAT_BWRAP_PROBE_MARKER=1" in env_lines
+            and not any(line.startswith("HABITAT_BWRAP_PROBE_SECRET=") for line in env_lines)
+        )
+        ok = launch_ok and secret_scrubbed
+        if ok:
+            reason = "namespace/mount/cap-drop/clear-env probe passed"
+        elif launch_ok:
+            reason = "bubblewrap clear-env probe did not preserve the expected boundary"
+        else:
+            reason = (proc.stderr or proc.stdout or "bubblewrap probe returned non-zero").strip()[:500]
     except Exception as exc:
-        ok = False; reason = str(exc)
+        ok = False
+        secret_scrubbed = False
+        reason = str(exc)
     return {
-        "available": bool(ok), "executable": exe, "version": version,
-        "filesystem_confinement": bool(ok), "network_confinement": bool(ok),
-        "pid_namespace": bool(ok), "user_namespace": bool(ok),
+        "available": bool(ok),
+        "executable": exe,
+        "version": version,
+        "filesystem_confinement": bool(ok),
+        "network_confinement": bool(ok),
+        "pid_namespace": bool(ok),
+        "user_namespace": bool(ok),
+        "capabilities_dropped": bool(ok),
+        "secret_environment_scrubbed": bool(secret_scrubbed),
         "reason": reason,
-        "claim_boundary": "Probe proves this host can launch Habitat's minimal bwrap profile; it is not a proof against kernel/runtime vulnerabilities.",
+        "claim_boundary": "Probe proves this host can launch Habitat's namespace/mount/cap-drop/clear-env bwrap profile; it is not a proof against kernel/runtime or Bubblewrap vulnerabilities and no Habitat custom seccomp filter is installed.",
     }
 
 
@@ -84,26 +134,43 @@ def build_bwrap_command(root: Path, argv: list[str], *, network: bool = False) -
     return [*cmd, "--", *rewritten]
 
 
-def run_bwrap_action(root: Path, capability: dict, timeout_s: int = 60, argv_override: list[str] | None = None):
+def run_bwrap_action(
+    root: Path,
+    capability: dict,
+    timeout_s: int = 60,
+    argv_override: list[str] | None = None,
+    *,
+    containment_attestation: ContainmentAttestation | None = None,
+):
     argv = list(argv_override or capability["argv"])
     wrapped = build_bwrap_command(root, argv, network=False)
-    receipt = run_action(root, capability["id"], wrapped, timeout_s, capability.get("kind"), "trusted-local")
-    # Keep logical argv separate from transport wrapper and explicitly bind the observed security posture.
+    attestation = containment_attestation or unverified_attestation(
+        "execution:bubblewrap-direct",
+        "bubblewrap-direct-v1",
+        "direct Bubblewrap execution has no provider-bound containment evidence; provider attestation is required for verified claims",
+    )
+    receipt = run_action(
+        root,
+        capability["id"],
+        wrapped,
+        timeout_s,
+        capability.get("kind"),
+        "trusted-local",
+        apply_resource_limits=attestation.resource_limits,
+        containment_attestation=attestation,
+    )
+    # Keep logical argv separate from the transport wrapper. All legacy security booleans are
+    # projected by the typed attestation; this layer only adds Bubblewrap transport metadata.
     receipt.argv = argv
+    bind_containment_attestation(receipt, attestation, security_profile="filesystem-contained")
     fp = dict(receipt.environment_fingerprint or {})
     fp.update({
-        "security_profile": "filesystem-contained",
-        "sandboxed": True,
-        "network_restricted": True,
-        "filesystem_restricted": True,
-        "resource_limited": True,
-        "secret_environment_scrubbed": True,
         "sandbox_primitive": "bubblewrap",
-        "capabilities_dropped": True,
         "custom_seccomp_filter": False,
-        "claim_boundary": "bubblewrap mount/user/pid/ipc/uts/network namespaces, dropped capabilities, a minimal read-only host view and writable project root; no Habitat custom seccomp filter is installed and kernel/bubblewrap vulnerabilities remain outside the proof boundary",
     })
     receipt.environment_fingerprint = fp
+    if receipt.structured is not None:
+        receipt.structured["environment_fingerprint"] = dict(fp)
     return receipt
 
 
