@@ -6,6 +6,7 @@ from pathlib import Path
 from typing import Any
 
 from ..model import ExecutionReceipt
+from ..security.containment import ContainmentAttestation, unverified_attestation
 
 
 @dataclass(frozen=True)
@@ -176,6 +177,13 @@ class ExecutionProvider(ABC):
     @abstractmethod
     def run(self, capability: dict, timeout_s: int = 60, argv_override: list[str] | None = None) -> ExecutionReceipt:
         raise NotImplementedError
+
+    def containment_attestation(self) -> ContainmentAttestation:
+        return unverified_attestation(
+            self.info.provider_id,
+            self.info.kind,
+            "provider has not supplied containment evidence",
+        )
 
     def close(self) -> None:
         return None
