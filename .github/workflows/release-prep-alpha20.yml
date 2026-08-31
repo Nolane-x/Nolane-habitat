@@ -1,0 +1,138 @@
+name: Alpha 20 release prep
+
+on:
+  push:
+    branches:
+      - codex/release-0.1.0-alpha.20
+
+permissions:
+  contents: write
+
+jobs:
+  prepare:
+    if: github.actor == 'Nolane-x'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          ref: codex/release-0.1.0-alpha.20
+          fetch-depth: 0
+      - name: Prepare exact alpha.20 release tree
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          OLD = "0.1.0-alpha.19"
+          NEW = "0.1.0-alpha.20"
+          OLD_PEP440 = "0.1.0a19"
+          NEW_PEP440 = "0.1.0a20"
+
+          def replace_exact(path: str, old: str, new: str, *, expected: int = 1) -> None:
+              target = Path(path)
+              text = target.read_text(encoding="utf-8")
+              found = text.count(old)
+              if found != expected:
+                  raise SystemExit(f"{path}: expected {expected} occurrences of {old!r}, found {found}")
+              target.write_text(text.replace(old, new), encoding="utf-8")
+
+          version = Path("VERSION").read_text(encoding="utf-8").strip()
+          if version != OLD:
+              raise SystemExit(f"VERSION precondition failed: {version!r}")
+          Path("VERSION").write_text(NEW + "\n", encoding="utf-8")
+
+          replace_exact("pyproject.toml", 'version = "0.1.0a19"', 'version = "0.1.0a20"')
+          replace_exact("habitat/__init__.py", '__version__ = "0.1.0-alpha.19"', '__version__ = "0.1.0-alpha.20"')
+          replace_exact(
+              "plugins/nolane-habitat/.codex-plugin/plugin.json",
+              '"version": "0.1.0-alpha.19"',
+              '"version": "0.1.0-alpha.20"',
+          )
+          replace_exact(
+              "README.md",
+              "Nolane Habitat 0.1.0-alpha.19 is ready for local project cognition, governed agent workflows, and Codex integration.",
+              "Nolane Habitat 0.1.0-alpha.20 is ready for local project cognition, governed agent workflows, and Codex integration.",
+          )
+          replace_exact(
+              "docs/IMPLEMENTATION-STATUS.md",
+              "# Implementation Status — 0.1.0-alpha.19",
+              "# Implementation Status — 0.1.0-alpha.20",
+          )
+          replace_exact(
+              "docs/LIMITATIONS.md",
+              "# Habitat 0.1.0-alpha.19 Limitations and Claim Boundary",
+              "# Habitat 0.1.0-alpha.20 Limitations and Claim Boundary",
+          )
+
+          runbook = Path("docs/runbooks/RELEASE-ADMISSION.md")
+          text = runbook.read_text(encoding="utf-8")
+          replacements = {
+              "python tools\\build_release_manifest.py --version 0.1.0-alpha.19 --commit $commit --target alpha-candidate `":
+                  "python tools\\build_release_manifest.py --version 0.1.0-alpha.20 --commit $commit --target alpha-candidate `",
+              "nolane_habitat-0.1.0a19-py3-none-any.whl": "nolane_habitat-0.1.0a20-py3-none-any.whl",
+              "nolane_habitat-0.1.0a19.tar.gz": "nolane_habitat-0.1.0a20.tar.gz",
+          }
+          for old, new in replacements.items():
+              found = text.count(old)
+              if found != 1:
+                  raise SystemExit(f"release runbook precondition failed for {old!r}: {found}")
+              text = text.replace(old, new)
+          runbook.write_text(text, encoding="utf-8")
+
+          design = Path("docs/design/FOUNDATION-CONVERGENCE.md")
+          text = design.read_text(encoding="utf-8")
+          old_status = "**Status:** design proposal for post-0.1.0-alpha.19 convergence work  "
+          new_status = (
+              "**Status:** implemented; active exact-commit certification is defined by "
+              "`docs/FOUNDATION-CONVERGENCE-CLOSURE.json` for the 0.1.0-alpha.20 release line  "
+          )
+          if text.count(old_status) != 1:
+              raise SystemExit("Foundation Convergence status precondition failed")
+          design.write_text(text.replace(old_status, new_status), encoding="utf-8")
+
+          changelog = Path("CHANGELOG.md")
+          text = changelog.read_text(encoding="utf-8")
+          anchor = "# Changelog\n\n"
+          if not text.startswith(anchor):
+              raise SystemExit("CHANGELOG header precondition failed")
+          if "## 0.1.0-alpha.20" in text:
+              raise SystemExit("alpha.20 changelog already exists")
+          entry = """## 0.1.0-alpha.20 — 2026-08-31
+
+### Foundation Convergence closure
+- Completed the Foundation Convergence implementation series across Semantic Fabric, Truth/Evidence authority, core decomposition, Benchmark Lab, Learning Plane, Execution Fabric and Observatory projection boundaries while preserving alpha.19 protocol/MCP compatibility and source-authority invariants.
+- Added active exact-commit certification for the 12 Foundation Convergence exit criteria instead of treating the architecture document or a stored completion flag as self-certifying evidence.
+- Added explicit authority/provenance classes and fail-closed claim adapters so derived semantics, memory, model inference and runtime observations cannot silently promote themselves to canonical source authority.
+- Added controlled benchmark ablations, held-out policy evaluation, governed soft-policy promotion/rollback and constitutional target protection for the Learning Plane.
+- Added provider containment attestations and conservative capability reporting without upgrading local-process or host-dependent isolation into a universal sandbox claim.
+- Separated Observatory projection concerns from the headless control/cognition/runtime core and retained observer-only state neutrality.
+
+### Measurement, resource and release hardening
+- Added evidence-backed Executive resource accounting with replay-resistant provider receipts while preserving the boundary that provider-reported tool/token/compute usage is not independently verified billing truth.
+- Added deterministic Foundation baseline/scale evidence, workload binding and independent-baseline SLO conversion guards.
+- Added cross-platform process peak-RSS collection with explicit method/scope provenance, fresh child-process scale cycles, normalized measurement-environment fingerprints, mixed-environment rejection and fail-closed reconstructed-evidence invariants.
+- Hardened release identity so the release-admission manifest command is machine-bound to the repository `VERSION`, closing a stale-runbook path that the previous identity gate did not detect.
+- Synchronized runtime/package/plugin/current-document release identity and marked the Foundation Convergence design as implemented while retaining the alpha.19 baseline as historical provenance.
+
+### Claim boundary
+- CI scale evidence remains descriptive and non-gating without a separately curated production baseline; matching measurement-environment fingerprints scope comparability but do not prove identical physical hardware/load.
+- This release does not claim AGI, universal correctness, universal language precision, production distributed consensus, universal hostile-code microVM isolation, independently verified provider billing truth, or Habitat-vs-filesystem performance superiority without controlled external experiments.
+
+"""
+          changelog.write_text(anchor + entry + text[len(anchor):], encoding="utf-8")
+
+          # This workflow is a one-shot transport for exact in-repository replacements.
+          # Remove it from the release candidate tree before committing.
+          Path(".github/workflows/release-prep-alpha20.yml").unlink()
+          PY
+
+          python tools/check_release_identity.py
+          python -m unittest -q tests.test_release_identity tests.test_release_identity_consistency
+          git diff --check
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git diff --cached --check
+          git commit -m "release: prepare 0.1.0-alpha.20"
+          git push origin HEAD:codex/release-0.1.0-alpha.20
