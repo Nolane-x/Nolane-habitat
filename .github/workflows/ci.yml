@@ -97,7 +97,7 @@ jobs:
           if [ "$RUNNER_OS" = "Windows" ]; then
             semgrep_python=".semgrep-venv/Scripts/python.exe"
             semgrep_executable=".semgrep-venv/Scripts/semgrep.exe"
-            semgrep_env_path=".semgrep-venv\\Scripts\\semgrep.exe"
+            semgrep_env_path=".semgrep-venv\Scripts\semgrep.exe"
           else
             semgrep_python=".semgrep-venv/bin/python"
             semgrep_executable="$PWD/.semgrep-venv/bin/semgrep"
