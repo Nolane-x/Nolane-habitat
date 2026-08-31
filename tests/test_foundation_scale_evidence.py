@@ -36,6 +36,24 @@ class FoundationScaleEvidenceTests(unittest.TestCase):
         )
 
     @staticmethod
+    def _environment(
+        *,
+        system: str = "Linux",
+        release: str = "test-kernel",
+        machine: str = "x86_64",
+        python_version: str = "3.14.0",
+    ) -> dict[str, object]:
+        return {
+            "schema": "foundation-measurement-environment.v1",
+            "platform_system": system,
+            "platform_release": release,
+            "platform_machine": machine,
+            "python_implementation": "CPython",
+            "python_version": python_version,
+            "logical_cpu_count": 4,
+        }
+
+    @staticmethod
     def _collector_factory(
         cold: int,
         warm: int,
@@ -43,6 +61,7 @@ class FoundationScaleEvidenceTests(unittest.TestCase):
         seen: list[tuple[int, str]],
         *,
         peak_memory_bytes: int | None = None,
+        measurement_environment: dict[str, object] | None = None,
     ):
         def collect(repo: Path, task: str):
             files = sorted(path for path in Path(repo).rglob("*") if path.is_file())
@@ -66,6 +85,8 @@ class FoundationScaleEvidenceTests(unittest.TestCase):
                     "method": "test_reported_peak_rss",
                     "peak_rss_bytes": peak_memory_bytes,
                 }
+            if measurement_environment is not None:
+                report["measurement_environment"] = dict(measurement_environment)
             return report
 
         return collect
@@ -119,17 +140,30 @@ class FoundationScaleEvidenceTests(unittest.TestCase):
     def test_slo_join_requires_independent_matching_baseline_and_preserves_missing_memory(self):
         api = self._api()
         profile = self._profile(api)
+        environment = self._environment()
         current_seen: list[tuple[int, str]] = []
         baseline_seen: list[tuple[int, str]] = []
         current = api.collect_scale_evidence(
             profile,
             source_commit="c" * 40,
-            collector=self._collector_factory(11, 4, 5, current_seen),
+            collector=self._collector_factory(
+                11,
+                4,
+                5,
+                current_seen,
+                measurement_environment=environment,
+            ),
         )
         baseline = api.collect_scale_evidence(
             profile,
             source_commit="b" * 40,
-            collector=self._collector_factory(10, 3, 5, baseline_seen),
+            collector=self._collector_factory(
+                10,
+                3,
+                5,
+                baseline_seen,
+                measurement_environment=environment,
+            ),
         )
 
         samples = api.to_slo_samples(current, baseline)
@@ -148,14 +182,79 @@ class FoundationScaleEvidenceTests(unittest.TestCase):
         mismatch = api.collect_scale_evidence(
             self._profile(api, seed=18),
             source_commit="d" * 40,
-            collector=self._collector_factory(10, 3, 5, []),
+            collector=self._collector_factory(
+                10,
+                3,
+                5,
+                [],
+                measurement_environment=environment,
+            ),
         )
         with self.assertRaisesRegex(ValueError, "workload"):
             api.to_slo_samples(current, mismatch)
 
+    def test_slo_join_rejects_unknown_or_different_measurement_environment(self):
+        api = self._api()
+        profile = self._profile(api, cycles=1)
+        linux = self._environment(system="Linux", python_version="3.14.0")
+        windows = self._environment(
+            system="Windows",
+            release="test-windows",
+            machine="AMD64",
+            python_version="3.14.0",
+        )
+        current = api.collect_scale_evidence(
+            profile,
+            source_commit="3" * 40,
+            collector=self._collector_factory(
+                11,
+                4,
+                5,
+                [],
+                measurement_environment=linux,
+            ),
+        )
+        same_environment = api.collect_scale_evidence(
+            profile,
+            source_commit="4" * 40,
+            collector=self._collector_factory(
+                10,
+                3,
+                5,
+                [],
+                measurement_environment=linux,
+            ),
+        )
+        different_environment = api.collect_scale_evidence(
+            profile,
+            source_commit="5" * 40,
+            collector=self._collector_factory(
+                10,
+                3,
+                5,
+                [],
+                measurement_environment=windows,
+            ),
+        )
+        unknown_environment = api.collect_scale_evidence(
+            profile,
+            source_commit="6" * 40,
+            collector=self._collector_factory(10, 3, 5, []),
+        )
+
+        encoded = current.as_dict()
+        self.assertEqual(encoded["measurement_environment"], linux)
+        self.assertRegex(encoded["measurement_environment_fingerprint"], r"^[0-9a-f]{64}$")
+        self.assertEqual(len(api.to_slo_samples(current, same_environment)), 1)
+        with self.assertRaisesRegex(ValueError, "environment"):
+            api.to_slo_samples(current, different_environment)
+        with self.assertRaisesRegex(ValueError, "environment"):
+            api.to_slo_samples(current, unknown_environment)
+
     def test_reported_peak_process_memory_flows_into_scale_and_slo_evidence(self):
         api = self._api()
         profile = self._profile(api, cycles=1)
+        environment = self._environment()
         current = api.collect_scale_evidence(
             profile,
             source_commit="e" * 40,
@@ -165,6 +264,7 @@ class FoundationScaleEvidenceTests(unittest.TestCase):
                 5,
                 [],
                 peak_memory_bytes=64_000_000,
+                measurement_environment=environment,
             ),
         )
         baseline = api.collect_scale_evidence(
@@ -176,6 +276,7 @@ class FoundationScaleEvidenceTests(unittest.TestCase):
                 5,
                 [],
                 peak_memory_bytes=60_000_000,
+                measurement_environment=environment,
             ),
         )
 
