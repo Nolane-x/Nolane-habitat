@@ -24,7 +24,6 @@ Completion/hash verification reads the complete executive event chain. Callers m
 ## Completion gates can be conservative
 Open contradictions, stale agent notifications, missing critical invariant verifiers, milestone failures, dependency defects or trajectory-chain corruption block closure. This fail-closed behavior may require explicit cleanup/resolution even when a human believes the task is already finished.
 
-
 ## AI Operator cursor is a semantic visualization, not OS mouse capture
 Alpha.15 derives cursor position from the target element rectangle observed in the real Playwright page. The Observatory animates a synthetic pointer toward that coordinate. This is intentionally deterministic and inspectable, but it is not a recording of an operating-system cursor or hidden model motor intent.
 
@@ -42,7 +41,6 @@ The realtime UI is for human spectators. It exposes no mutation HTTP verbs and n
 
 ## Shared browser lifecycle is process-scoped but leased
 Browser engine reuse remains process-shared for efficiency, while each BrowserRuntime holds a lease. Closing the final lease drains Playwright immediately. An abrupt host kill can still bypass normal cleanup, so host-level shutdown remains best-effort and idempotent.
-
 
 ## UI event capture is bounded
 Console and network events are bounded between observations. When a page emits more events than the buffer can retain, Habitat reports drop counts rather than pretending the returned tail is complete. This protects long-running sessions from unbounded observer memory while keeping the loss explicit.
@@ -66,7 +64,10 @@ Policy/containment boundaries are inherited. A successful local capability probe
 Some historical combined test matrices can exceed an external runner wall clock even when independent shards finish. Alpha.17 evidence should distinguish completed PASS/FAIL shards from runner timeouts rather than relabeling timeouts as successes.
 
 ## Scale-memory evidence is process-level, not allocation attribution
-The deterministic scale harness can carry OS-observed peak resident-set size reported by the canonical Foundation baseline collector. The default scale path runs each cycle in a fresh child process so one cycle's lifetime peak cannot leak into another, and missing/unsupported probes remain `None`. The value is still the peak RSS of the whole benchmark process lifetime, not a proof of the bytes allocated by cold ingest, reconcile, orientation, or Habitat alone. It varies with Python, loaded providers, libraries, host policy and runner image. A separately curated production baseline is still required before this evidence can participate in a production SLO or performance-comparison claim.
+The deterministic scale harness can carry OS-observed peak resident-set size reported by the canonical Foundation baseline collector. The default scale path runs each cycle in a fresh child process so one cycle's lifetime peak cannot leak into another, and missing/unsupported probes remain `None`. The value is still the peak RSS of the whole benchmark process lifetime, not a proof of the bytes allocated by cold ingest, reconcile, orientation, or Habitat alone. It varies with Python, loaded providers, libraries, host policy and runner image.
+
+## Measurement-environment matching narrows claims but does not prove host equivalence
+The Foundation baseline emits a normalized comparison record containing OS/release, machine architecture, Python implementation/version and logical CPU count. Scale evidence binds a SHA-256 fingerprint of that record and rejects mixed-environment cycles; operational SLO conversion fails closed when current/baseline evidence lacks a comparable environment or the fingerprints differ. This prevents obvious cross-OS, cross-Python or cross-machine-class comparisons from silently becoming one claim. It does not capture every variable that can affect performance: CPU model/frequency, memory topology, virtualization, power state, background load, filesystem/cache state and installed semantic-provider behavior may still differ. A matching fingerprint is therefore necessary evidence scope, not proof of physical-host equivalence. A separately curated production baseline under controlled conditions is still required before this evidence can participate in a production SLO or performance-comparison claim.
 
 ## Model-quality boundary
 Habitat supplies world-model, memory, planning, verification and coordination affordances. It does not establish that an arbitrary model becomes AGI or that coding success is superior to ordinary repository tooling without controlled same-model/scaffold/evaluator experiments.
