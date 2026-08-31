@@ -1,4 +1,4 @@
-# Habitat 0.1.0-alpha.19 Limitations and Claim Boundary
+# Habitat 0.1.0-alpha.20 Limitations and Claim Boundary
 
 ## Executive Trajectory is control architecture, not hidden reasoning
 Alpha.14 records observable work products: goals, milestones, phases, receipts, failures, strategy changes and completion gates. It does not request, store or expose a model's raw private chain-of-thought. A trajectory is therefore an auditable execution/control record, not a transcript of internal cognition.

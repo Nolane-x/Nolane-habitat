@@ -78,7 +78,7 @@ Start a Codex task with `$nolane-habitat` to use the project workspace, or `$nol
 
 1. Create or open a Habitat workspace for the project.
 2. Start a task and gather bounded semantic context.
-3. Inspect symbols and references before editing.
+3. Inspect returned objects and references before editing.
 4. Apply an authorized source change through the governed workflow.
 5. Verify affected paths and checkpoint the result for the next agent.
 
@@ -110,4 +110,4 @@ This loop makes context, changes, evidence, and handoffs durable across longer-r
 .\.venv\Scripts\python tools\run_test_matrix.py --workers 1 --timeout 180
 ```
 
-Nolane Habitat 0.1.0-alpha.19 is ready for local project cognition, governed agent workflows, and Codex integration.
+Nolane Habitat 0.1.0-alpha.20 is ready for local project cognition, governed agent workflows, and Codex integration.

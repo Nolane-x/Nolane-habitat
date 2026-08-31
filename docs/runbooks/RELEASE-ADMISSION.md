@@ -74,7 +74,7 @@ Build the manifest from the actual evidence and artifact files; the builder comp
 
 ```powershell
 $commit = git rev-parse HEAD
-python tools\build_release_manifest.py --version 0.1.0-alpha.19 --commit $commit --target alpha-candidate `
+python tools\build_release_manifest.py --version 0.1.0-alpha.20 --commit $commit --target alpha-candidate `
   --report truth-core=.test-artifacts\truth-core.json `
   --report matrix=.test-artifacts\matrix.json `
   --report faults=.test-artifacts\faults.json `
@@ -85,8 +85,8 @@ python tools\build_release_manifest.py --version 0.1.0-alpha.19 --commit $commit
   --report reproducible-build=.test-artifacts\reproducible-build.json `
   --report protocol-conformance=.test-artifacts\protocol-conformance.json `
   --report contract=.test-artifacts\contract.json `
-  --artifact wheel=.test-artifacts\dist-first\nolane_habitat-0.1.0a19-py3-none-any.whl `
-  --artifact sdist=.test-artifacts\dist-first\nolane_habitat-0.1.0a19.tar.gz `
+  --artifact wheel=.test-artifacts\dist-first\nolane_habitat-0.1.0a20-py3-none-any.whl `
+  --artifact sdist=.test-artifacts\dist-first\nolane_habitat-0.1.0a20.tar.gz `
   --review maintainer-authorization=reports\maintainer-authorization.json `
   --out dist\release-manifest.json
 ```
