@@ -137,7 +137,7 @@ def collect_provider_usage(events: list[dict]) -> dict:
 
 
 def _resource_executive_budget_state(self, tr: dict) -> dict:
-    base = _CORE_EXECUTIVE_BUDGET_STATE(self, tr)
+    base = _CORE_EXECUTIVE_BUDGET_STATE(tr)
     budget = dict(tr.get("budget") or {})
     metrics = dict(tr.get("metrics") or {})
     events = [self._executive_event_row(row) for row in self.store.executive_events(tr["id"])]
