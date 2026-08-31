@@ -169,16 +169,48 @@ class ScaleEvidence:
             raise ValueError("workload_fingerprint does not match profile")
         if len(self.observations) != self.profile.cycles:
             raise ValueError("observations must match profile cycles")
+
+        for expected_cycle, observation in enumerate(self.observations, start=1):
+            expected_scenario_id = f"{self.profile.profile_id}:{expected_cycle:04d}"
+            if (
+                observation.cycle != expected_cycle
+                or observation.scenario_id != expected_scenario_id
+            ):
+                raise ValueError(
+                    "observation scenario identity must match profile cycle sequence"
+                )
+
+            method = observation.memory_measurement_method
+            scope = observation.memory_measurement_scope
+            if (method is None) != (scope is None):
+                raise ValueError(
+                    "memory measurement method and scope must be declared together"
+                )
+            if method is not None:
+                _require_non_empty(method, "memory measurement method")
+                _require_non_empty(scope, "memory measurement scope")
+            if observation.peak_memory_bytes is not None:
+                if (
+                    type(observation.peak_memory_bytes) is not int
+                    or observation.peak_memory_bytes < 1
+                ):
+                    raise ValueError("peak memory measurement must be a positive integer")
+                if method is None or scope is None:
+                    raise ValueError(
+                        "peak memory measurement requires explicit method and scope"
+                    )
+
         if self.measurement_environment is not None:
             expected = self.measurement_environment.fingerprint
             for observation in self.observations:
-                if (
-                    observation.completed
-                    and observation.measurement_environment_fingerprint is not None
-                    and observation.measurement_environment_fingerprint != expected
-                ):
+                observed = observation.measurement_environment_fingerprint
+                if observed is not None and observed != expected:
                     raise ValueError(
-                        "completed observation measurement environment does not match evidence"
+                        "observation measurement environment does not match evidence"
+                    )
+                if observation.completed and observed is None:
+                    raise ValueError(
+                        "completed observation measurement environment must bind evidence"
                     )
 
     @property
