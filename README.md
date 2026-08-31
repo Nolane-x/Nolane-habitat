@@ -8,6 +8,8 @@
 
 <h1 align="center">Nolane Habitat</h1>
 
+<p align="center"><strong>Nolane Habitat 0.1.0-alpha.20</strong></p>
+
 <p align="center">
   <strong>Durable project intelligence for coding agents.</strong>
 </p>
