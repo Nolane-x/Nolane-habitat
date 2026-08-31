@@ -3,6 +3,7 @@ from __future__ import annotations
 import argparse
 import json
 import os
+import platform
 import sys
 import tempfile
 import time
@@ -14,11 +15,34 @@ from habitat.workspace import HabitatWorkspace
 
 SCHEMA = "foundation-baseline.v1"
 SUITE = "foundation-baseline"
+MEASUREMENT_ENVIRONMENT_SCHEMA = "foundation-measurement-environment.v1"
 DEFAULT_TASK = "map Habitat release identity and semantic foundation"
 
 
 def _elapsed_ms(start_ns: int) -> int:
     return max(0, (time.perf_counter_ns() - start_ns) // 1_000_000)
+
+
+def _measurement_environment() -> dict[str, object]:
+    """Return a stable comparison class for this measurement process.
+
+    The record intentionally avoids hostname, runner id, and other ephemeral machine
+    identities so independent reruns on an equivalent declared environment can still be
+    compared. It is a claim-scope descriptor, not proof that two hosts are identical.
+    """
+
+    logical_cpu_count = os.cpu_count()
+    if logical_cpu_count is not None and logical_cpu_count < 1:
+        logical_cpu_count = None
+    return {
+        "schema": MEASUREMENT_ENVIRONMENT_SCHEMA,
+        "platform_system": platform.system(),
+        "platform_release": platform.release(),
+        "platform_machine": platform.machine(),
+        "python_implementation": platform.python_implementation(),
+        "python_version": platform.python_version(),
+        "logical_cpu_count": logical_cpu_count,
+    }
 
 
 def _unavailable_process_memory(method: str) -> dict[str, object]:
@@ -123,6 +147,7 @@ def collect_baseline(repo: Path, task: str = DEFAULT_TASK) -> dict:
     if not isinstance(task, str) or not task.strip():
         raise ValueError("task must be a non-empty string")
     task = task.strip()
+    measurement_environment = _measurement_environment()
 
     with tempfile.TemporaryDirectory(prefix="habitat-foundation-baseline-") as td:
         habitat_dir = Path(td) / "workspace"
@@ -154,6 +179,7 @@ def collect_baseline(repo: Path, task: str = DEFAULT_TASK) -> dict:
             return {
                 "schema": SCHEMA,
                 "suite": SUITE,
+                "measurement_environment": measurement_environment,
                 "source": source,
                 "cold_ingest": {
                     "wall_ms": cold_ms,
@@ -187,7 +213,9 @@ def collect_baseline(repo: Path, task: str = DEFAULT_TASK) -> dict:
                     "Descriptive single-run foundation evidence only. Timing, OS-observed process "
                     "peak RSS, and counts vary by host, repository state, installed semantic providers, "
                     "and cache state; process peak RSS covers the current process lifetime and is not "
-                    "an allocation attribution for one operation. This report is not a performance "
+                    "an allocation attribution for one operation. The measurement-environment record "
+                    "scopes comparison by declared OS/release/machine/Python/logical-CPU attributes but "
+                    "does not prove two physical hosts are equivalent. This report is not a performance "
                     "threshold or a claim of superiority over another agent workflow."
                 ),
             }
