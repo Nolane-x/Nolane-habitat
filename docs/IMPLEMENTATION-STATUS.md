@@ -1,6 +1,11 @@
-# Implementation Status — 0.1.0-alpha.19
+# Implementation Status — 0.1.0-alpha.20
 
 ## Implemented and executable
+
+### 0.1.0-alpha.20 Foundation Convergence closure
+- the post-alpha.19 Foundation Convergence implementation series is complete under the repository-defined 12-criterion active certification manifest; the original architecture proposal remains historical design provenance rather than self-certifying completion evidence;
+- release identity now includes the release-admission manifest command, so a stale release-runbook version fails the same machine gate as stale package/runtime/plugin/current-document identity;
+- exact-commit CI evidence remains the authority for closure; descriptive benchmark/scale observations are not promoted into production-performance claims without an independent matching baseline.
 
 ### Agent substrate and source authority
 - folder / ZIP / loose-file ingestion with ordinary canonical project bytes as source authority;

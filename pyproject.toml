@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "nolane-habitat"
-version = "0.1.0a19"
+version = "0.1.0a20"
 description = "Agent-native project cognition workspace research prototype"
 requires-python = ">=3.10"
 authors = [{name = "Nolane"}]

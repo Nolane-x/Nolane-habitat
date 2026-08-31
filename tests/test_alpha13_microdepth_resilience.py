@@ -25,9 +25,10 @@ class Alpha13MicroDepthTests(unittest.TestCase):
 
     def test_release_identity_current(self):
         base=Path(__file__).resolve().parents[1]
-        self.assertEqual((base/'VERSION').read_text().strip(),'0.1.0-alpha.19')
-        self.assertEqual(habitat.__version__,'0.1.0-alpha.19')
-        self.assertIn('version = "0.1.0a19"',(base/'pyproject.toml').read_text())
+        version=(base/'VERSION').read_text().strip()
+        package_version=version.replace('-alpha.','a')
+        self.assertEqual(habitat.__version__,version)
+        self.assertIn(f'version = "{package_version}"',(base/'pyproject.toml').read_text())
 
     def test_memory_exact_echo_same_revision_is_suppressed(self):
         td,project,ws=self.make_ws()

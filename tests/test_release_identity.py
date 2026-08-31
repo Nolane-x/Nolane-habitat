@@ -10,7 +10,7 @@ from tools.check_release_identity import check_identity, main
 class ReleaseIdentityTests(unittest.TestCase):
     def _write_identity_fixture(self, root: Path, version: str = "0.1.0-alpha.19") -> None:
         (root / "habitat").mkdir()
-        (root / "docs").mkdir()
+        (root / "docs" / "runbooks").mkdir(parents=True)
         (root / "plugins" / "nolane-habitat" / ".codex-plugin").mkdir(parents=True)
         (root / "VERSION").write_text(version + "\n", encoding="utf-8")
         (root / "pyproject.toml").write_text(
@@ -33,6 +33,10 @@ class ReleaseIdentityTests(unittest.TestCase):
         )
         (root / "docs" / "CODEX-INTEGRATION.md").write_text(
             f"--ref v{version}\n", encoding="utf-8"
+        )
+        (root / "docs" / "runbooks" / "RELEASE-ADMISSION.md").write_text(
+            f"python tools/build_release_manifest.py --version {version} --commit deadbeef\n",
+            encoding="utf-8",
         )
         (root / "plugins" / "nolane-habitat" / ".codex-plugin" / "plugin.json").write_text(
             json.dumps({"name": "nolane-habitat", "version": version}),
@@ -76,6 +80,22 @@ class ReleaseIdentityTests(unittest.TestCase):
         self.assertIn(
             "plugins/nolane-habitat/.codex-plugin/plugin.json version does not match VERSION",
             report["errors"],
+        )
+
+    def test_stale_release_admission_version_is_reported(self):
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            self._write_identity_fixture(root)
+            (root / "docs" / "runbooks" / "RELEASE-ADMISSION.md").write_text(
+                "python tools/build_release_manifest.py --version 0.1.0-alpha.18 --commit deadbeef\n",
+                encoding="utf-8",
+            )
+
+            report = check_identity(root)
+
+        self.assertFalse(report["ok"])
+        self.assertTrue(
+            any("docs/runbooks/RELEASE-ADMISSION.md" in error for error in report["errors"])
         )
 
     def test_candidate_documentation_need_not_claim_an_unpublished_tag(self):
