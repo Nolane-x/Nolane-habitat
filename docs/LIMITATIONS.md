@@ -65,5 +65,8 @@ Policy/containment boundaries are inherited. A successful local capability probe
 ## Performance and test process
 Some historical combined test matrices can exceed an external runner wall clock even when independent shards finish. Alpha.17 evidence should distinguish completed PASS/FAIL shards from runner timeouts rather than relabeling timeouts as successes.
 
+## Scale-memory evidence is process-level, not allocation attribution
+The deterministic scale harness can carry OS-observed peak resident-set size reported by the canonical Foundation baseline collector. The default scale path runs each cycle in a fresh child process so one cycle's lifetime peak cannot leak into another, and missing/unsupported probes remain `None`. The value is still the peak RSS of the whole benchmark process lifetime, not a proof of the bytes allocated by cold ingest, reconcile, orientation, or Habitat alone. It varies with Python, loaded providers, libraries, host policy and runner image. A separately curated production baseline is still required before this evidence can participate in a production SLO or performance-comparison claim.
+
 ## Model-quality boundary
 Habitat supplies world-model, memory, planning, verification and coordination affordances. It does not establish that an arbitrary model becomes AGI or that coding success is superior to ordinary repository tooling without controlled same-model/scaffold/evaluator experiments.
