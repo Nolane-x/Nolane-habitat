@@ -1,0 +1,123 @@
+name: Attach exact Foundation Convergence certification
+
+on:
+  push:
+    branches:
+      - release/publish-0.1.0-alpha.20
+
+permissions:
+  actions: read
+  contents: write
+
+jobs:
+  attach:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      TARGET_COMMIT: 076ebe648ba75a5e2744a4a3c105bbae7943b12b
+      SOURCE_RUN_ID: "33387341748"
+      TAG: v0.1.0-alpha.20
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - name: Checkout exact release target
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          ref: ${{ env.TARGET_COMMIT }}
+          fetch-depth: 0
+
+      - name: Verify release and post-merge authority
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD)" = "$TARGET_COMMIT"
+          gh api "repos/$GITHUB_REPOSITORY/actions/runs/$SOURCE_RUN_ID" > /tmp/source-run.json
+          gh api "repos/$GITHUB_REPOSITORY/releases/tags/$TAG" > /tmp/release.json
+          python - <<'PY'
+          import json, os
+          run=json.load(open('/tmp/source-run.json', encoding='utf-8'))
+          rel=json.load(open('/tmp/release.json', encoding='utf-8'))
+          target=os.environ['TARGET_COMMIT']
+          checks={
+              'run_head': run.get('head_sha') == target,
+              'run_branch': run.get('head_branch') == 'main',
+              'run_event': run.get('event') == 'push',
+              'run_status': run.get('status') == 'completed',
+              'run_conclusion': run.get('conclusion') == 'success',
+              'release_target': rel.get('target_commitish') == target,
+              'release_prerelease': rel.get('prerelease') is True,
+          }
+          if not all(checks.values()):
+              raise SystemExit(f'authority rejected: {checks}')
+          existing={x.get('name') for x in rel.get('assets', [])}
+          if 'foundation-convergence-closure.json' in existing:
+              raise SystemExit('closure asset already exists; refusing duplicate publication')
+          print('authority verified', checks)
+          PY
+
+      - name: Download exact post-merge verification artifact
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p .closure-evidence
+          gh run download "$SOURCE_RUN_ID" --repo "$GITHUB_REPOSITORY" --name habitat-verification-ubuntu-latest-py3.14 --dir .closure-evidence
+          test -f .closure-evidence/foundation-convergence-closure.json
+
+      - name: Verify active 12-of-12 certification
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import hashlib, json, os
+          from pathlib import Path
+          path=Path('.closure-evidence/foundation-convergence-closure.json')
+          value=json.loads(path.read_text(encoding='utf-8'))
+          target=os.environ['TARGET_COMMIT']
+          unsigned={k:v for k,v in value.items() if k != 'report_sha256'}
+          digest=hashlib.sha256(json.dumps(unsigned, sort_keys=True, separators=(',', ':')).encode()).hexdigest()
+          checks={
+              'suite': value.get('suite') == 'foundation-convergence-certification',
+              'source_commit': value.get('source_commit') == target,
+              'checkout_commit': value.get('checkout_commit') == target,
+              'status': value.get('status') == 'passed',
+              'criteria_total': value.get('criteria_total') == 12,
+              'criteria_verified': value.get('criteria_verified') == 12,
+              'failed_ids': value.get('failed_criterion_ids') == [],
+              'criterion_ids': [x.get('id') for x in value.get('criteria', [])] == list(range(1, 13)),
+              'criterion_statuses': all(x.get('status') == 'passed' for x in value.get('criteria', [])),
+              'self_hash': value.get('report_sha256') == digest,
+          }
+          if not all(checks.values()):
+              raise SystemExit(f'Foundation Convergence certification rejected: {checks}')
+          print('certification verified', value['report_sha256'])
+          PY
+
+      - name: Upload certification to exact prerelease
+        shell: bash
+        run: |
+          set -euo pipefail
+          gh release upload "$TAG" .closure-evidence/foundation-convergence-closure.json --repo "$GITHUB_REPOSITORY"
+
+      - name: Verify published certification digest and target
+        shell: bash
+        run: |
+          set -euo pipefail
+          gh api "repos/$GITHUB_REPOSITORY/releases/tags/$TAG" > /tmp/published.json
+          python - <<'PY'
+          import hashlib, json, os
+          from pathlib import Path
+          rel=json.load(open('/tmp/published.json', encoding='utf-8'))
+          target=os.environ['TARGET_COMMIT']
+          local=hashlib.sha256(Path('.closure-evidence/foundation-convergence-closure.json').read_bytes()).hexdigest()
+          matches=[x for x in rel.get('assets', []) if x.get('name') == 'foundation-convergence-closure.json']
+          if len(matches) != 1:
+              raise SystemExit(f'expected one closure asset, found {len(matches)}')
+          remote=(matches[0].get('digest') or '').removeprefix('sha256:')
+          checks={
+              'target': rel.get('target_commitish') == target,
+              'prerelease': rel.get('prerelease') is True,
+              'digest': remote == local,
+          }
+          if not all(checks.values()):
+              raise SystemExit(f'published closure verification failed: {checks}')
+          print('published closure verified', local)
+          PY
