@@ -18,6 +18,9 @@ CURRENT_DOCUMENTS = {
 }
 LOCAL_MARKDOWN_LINK = re.compile(r"\[[^\]]+\]\((?!https?://|mailto:|#)([^)]+)\)")
 RELEASE_REF = re.compile(r"--ref\s+v(\d+\.\d+\.\d+-alpha\.\d+)")
+RELEASE_MANIFEST_VERSION = re.compile(
+    r"build_release_manifest\.py\s+--version\s+(\d+\.\d+\.\d+-alpha\.\d+)"
+)
 
 
 def package_version(version: str) -> str:
@@ -100,6 +103,17 @@ def check_identity(root: Path, *, source_commit: str | None = None) -> dict:
                 errors.append(
                     "docs/CODEX-INTEGRATION.md references "
                     f"v{referenced_version}, not v{version}"
+                )
+
+    release_admission = root / "docs" / "runbooks" / "RELEASE-ADMISSION.md"
+    if release_admission.is_file():
+        for referenced_version in RELEASE_MANIFEST_VERSION.findall(
+            release_admission.read_text(encoding="utf-8")
+        ):
+            if referenced_version != version:
+                errors.append(
+                    "docs/runbooks/RELEASE-ADMISSION.md references "
+                    f"{referenced_version}, not {version}"
                 )
 
     report = {
