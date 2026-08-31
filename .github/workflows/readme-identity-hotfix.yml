@@ -1,0 +1,42 @@
+name: README identity hotfix
+
+on:
+  push:
+    branches:
+      - docs/readme-multilingual-product-surface
+
+permissions:
+  contents: write
+
+jobs:
+  patch-readme:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          ref: docs/readme-multilingual-product-surface
+          fetch-depth: 0
+      - name: Bind README to canonical release identity
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          p = Path('README.md')
+          text = p.read_text(encoding='utf-8')
+          required = 'Nolane Habitat 0.1.0-alpha.20'
+          if required not in text:
+              marker = '<h1 align="center">Nolane Habitat</h1>\n'
+              if marker not in text:
+                  raise SystemExit('README hero marker not found')
+              text = text.replace(marker, marker + '\n<p align="center"><strong>' + required + '</strong></p>\n', 1)
+              p.write_text(text, encoding='utf-8')
+          wf = Path('.github/workflows/readme-identity-hotfix.yml')
+          if wf.exists():
+              wf.unlink()
+          PY
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add README.md .github/workflows/readme-identity-hotfix.yml
+          git diff --cached --check
+          git commit -m "docs: bind README to current release identity"
+          git push origin HEAD:docs/readme-multilingual-product-surface
