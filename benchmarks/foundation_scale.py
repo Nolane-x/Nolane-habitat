@@ -17,6 +17,7 @@ from habitat.operations.slo import SloSample
 
 SCHEMA = "foundation-scale-evidence.v1"
 GENERATOR = "foundation-scale-fixture.v1"
+MEASUREMENT_ENVIRONMENT_SCHEMA = "foundation-measurement-environment.v1"
 DEFAULT_TASK = "map deterministic scale fixture"
 
 BaselineCollector = Callable[[Path, str], dict]
@@ -47,6 +48,47 @@ def _fixture_bytes(seed: int, index: int, size: int) -> bytes:
     token = hashlib.sha256(f"{GENERATOR}:{seed}:{index}".encode("utf-8")).hexdigest()
     text = (token * ((size // len(token)) + 1))[:size]
     return text.encode("ascii")
+
+
+@dataclass(frozen=True)
+class MeasurementEnvironment:
+    platform_system: str
+    platform_release: str
+    platform_machine: str
+    python_implementation: str
+    python_version: str
+    logical_cpu_count: int | None
+
+    def __post_init__(self) -> None:
+        for field_name in (
+            "platform_system",
+            "platform_release",
+            "platform_machine",
+            "python_implementation",
+            "python_version",
+        ):
+            object.__setattr__(
+                self,
+                field_name,
+                _require_non_empty(getattr(self, field_name), field_name),
+            )
+        if self.logical_cpu_count is not None:
+            _require_positive_int(self.logical_cpu_count, "logical_cpu_count")
+
+    def as_dict(self) -> dict[str, object]:
+        return {
+            "schema": MEASUREMENT_ENVIRONMENT_SCHEMA,
+            "platform_system": self.platform_system,
+            "platform_release": self.platform_release,
+            "platform_machine": self.platform_machine,
+            "python_implementation": self.python_implementation,
+            "python_version": self.python_version,
+            "logical_cpu_count": self.logical_cpu_count,
+        }
+
+    @property
+    def fingerprint(self) -> str:
+        return hashlib.sha256(_canonical_json(self.as_dict()).encode("utf-8")).hexdigest()
 
 
 @dataclass(frozen=True)
@@ -106,6 +148,7 @@ class ScaleObservation:
     orientation_ms: float | None
     memory_measurement_method: str | None = None
     memory_measurement_scope: str | None = None
+    measurement_environment_fingerprint: str | None = None
     error: str | None = None
 
     def as_dict(self) -> dict[str, object]:
@@ -118,6 +161,7 @@ class ScaleEvidence:
     profile: ScaleProfile
     workload_fingerprint: str
     observations: tuple[ScaleObservation, ...]
+    measurement_environment: MeasurementEnvironment | None = None
 
     def __post_init__(self) -> None:
         _require_non_empty(self.source_commit, "source_commit")
@@ -125,16 +169,40 @@ class ScaleEvidence:
             raise ValueError("workload_fingerprint does not match profile")
         if len(self.observations) != self.profile.cycles:
             raise ValueError("observations must match profile cycles")
+        if self.measurement_environment is not None:
+            expected = self.measurement_environment.fingerprint
+            for observation in self.observations:
+                if (
+                    observation.completed
+                    and observation.measurement_environment_fingerprint is not None
+                    and observation.measurement_environment_fingerprint != expected
+                ):
+                    raise ValueError(
+                        "completed observation measurement environment does not match evidence"
+                    )
+
+    @property
+    def measurement_environment_fingerprint(self) -> str | None:
+        if self.measurement_environment is None:
+            return None
+        return self.measurement_environment.fingerprint
 
     def _payload_dict(self) -> dict[str, object]:
         memory_available = any(
             item.peak_memory_bytes is not None for item in self.observations
+        )
+        environment = (
+            self.measurement_environment.as_dict()
+            if self.measurement_environment is not None
+            else None
         )
         return {
             "schema": SCHEMA,
             "source_commit": self.source_commit,
             "profile": self.profile.as_dict(),
             "workload_fingerprint": self.workload_fingerprint,
+            "measurement_environment": environment,
+            "measurement_environment_fingerprint": self.measurement_environment_fingerprint,
             "observations": [item.as_dict() for item in self.observations],
             "memory_measurement": (
                 "collector_reported_peak_rss" if memory_available else "unavailable"
@@ -143,9 +211,12 @@ class ScaleEvidence:
                 "Descriptive deterministic-workload measurements only. Peak memory is accepted only "
                 "from an explicit collector-reported peak-RSS record in bytes; the default collector "
                 "runs each cycle in a fresh child process so process-lifetime peaks do not leak across "
-                "cycles. Missing or unsupported memory remains null. This evidence is not an SLO pass "
-                "or a performance superiority claim until joined with an independent matching baseline "
-                "and evaluated by an explicit SLO profile."
+                "cycles. A captured measurement-environment fingerprint binds declared OS/release, "
+                "machine architecture, Python implementation/version, and logical CPU count. It is a "
+                "comparison scope, not proof of identical physical hosts. Missing or unsupported memory "
+                "remains null. This evidence is not an SLO pass or a performance superiority claim until "
+                "joined with an independent workload- and environment-matching baseline and evaluated "
+                "by an explicit SLO profile."
             ),
         }
 
@@ -224,6 +295,58 @@ def _wall_ms(report: dict, section: str) -> float:
     return float(wall_ms)
 
 
+def _measurement_environment(report: dict) -> MeasurementEnvironment | None:
+    value = report.get("measurement_environment")
+    if value is None:
+        return None
+    if not isinstance(value, dict):
+        raise ValueError("collector report measurement_environment must be an object")
+
+    allowed = {
+        "schema",
+        "platform_system",
+        "platform_release",
+        "platform_machine",
+        "python_implementation",
+        "python_version",
+        "logical_cpu_count",
+    }
+    unexpected = sorted(set(value) - allowed)
+    if unexpected:
+        raise ValueError(
+            "collector report measurement_environment has unsupported fields: "
+            + ", ".join(unexpected)
+        )
+    if value.get("schema") != MEASUREMENT_ENVIRONMENT_SCHEMA:
+        raise ValueError(
+            "collector report measurement_environment.schema must be "
+            f"{MEASUREMENT_ENVIRONMENT_SCHEMA}"
+        )
+
+    logical_cpu_count = value.get("logical_cpu_count")
+    if logical_cpu_count is not None:
+        _require_positive_int(logical_cpu_count, "measurement_environment.logical_cpu_count")
+    return MeasurementEnvironment(
+        platform_system=_require_non_empty(
+            value.get("platform_system"), "measurement_environment.platform_system"
+        ),
+        platform_release=_require_non_empty(
+            value.get("platform_release"), "measurement_environment.platform_release"
+        ),
+        platform_machine=_require_non_empty(
+            value.get("platform_machine"), "measurement_environment.platform_machine"
+        ),
+        python_implementation=_require_non_empty(
+            value.get("python_implementation"),
+            "measurement_environment.python_implementation",
+        ),
+        python_version=_require_non_empty(
+            value.get("python_version"), "measurement_environment.python_version"
+        ),
+        logical_cpu_count=logical_cpu_count,
+    )
+
+
 def _process_memory(report: dict) -> tuple[int | None, str | None, str | None]:
     value = report.get("process_memory")
     if value is None:
@@ -256,12 +379,15 @@ def collect_scale_evidence(
     The default path executes ``benchmarks.foundation_baseline`` in a fresh child process
     for every cycle. That preserves one canonical lifecycle benchmark while making the
     child-reported process-lifetime peak RSS cycle-local. Injected collectors remain
-    supported for deterministic tests and may omit memory, which stays explicitly null.
+    supported for deterministic tests and may omit memory or environment, which stay
+    explicitly unavailable and therefore cannot later authorize an SLO comparison.
     """
 
     _require_non_empty(source_commit, "source_commit")
     active_collector = collector or _default_collector
     observations: list[ScaleObservation] = []
+    environments: dict[str, MeasurementEnvironment] = {}
+    environment_missing = False
 
     with tempfile.TemporaryDirectory(prefix="habitat-foundation-scale-") as td:
         repo = Path(td) / "fixture-repo"
@@ -270,11 +396,22 @@ def collect_scale_evidence(
 
         for cycle in range(1, profile.cycles + 1):
             scenario_id = f"{profile.profile_id}:{cycle:04d}"
+            environment_fingerprint: str | None = None
             try:
                 report = active_collector(repo, profile.task)
                 cold_ms = _wall_ms(report, "cold_ingest")
                 warm_ms = _wall_ms(report, "warm_reconcile")
                 orientation_ms = _wall_ms(report, "orientation")
+                environment = _measurement_environment(report)
+                if environment is None:
+                    environment_missing = True
+                else:
+                    environment_fingerprint = environment.fingerprint
+                    environments[environment_fingerprint] = environment
+                    if len(environments) > 1:
+                        raise ValueError(
+                            "collector measurement environment changed across scale cycles"
+                        )
                 peak_memory_bytes, memory_method, memory_scope = _process_memory(report)
                 observations.append(
                     ScaleObservation(
@@ -288,6 +425,7 @@ def collect_scale_evidence(
                         orientation_ms=orientation_ms,
                         memory_measurement_method=memory_method,
                         memory_measurement_scope=memory_scope,
+                        measurement_environment_fingerprint=environment_fingerprint,
                     )
                 )
             except Exception as exc:  # evidence preserves failure instead of dropping a cycle
@@ -301,15 +439,21 @@ def collect_scale_evidence(
                         cold_ingest_ms=None,
                         warm_reconcile_ms=None,
                         orientation_ms=None,
+                        measurement_environment_fingerprint=environment_fingerprint,
                         error=f"{type(exc).__name__}: {exc}",
                     )
                 )
+
+    measurement_environment = None
+    if not environment_missing and len(environments) == 1:
+        measurement_environment = next(iter(environments.values()))
 
     return ScaleEvidence(
         source_commit=source_commit,
         profile=profile,
         workload_fingerprint=profile.workload_fingerprint,
         observations=tuple(observations),
+        measurement_environment=measurement_environment,
     )
 
 
@@ -317,7 +461,7 @@ def to_slo_samples(
     current: ScaleEvidence,
     baseline: ScaleEvidence | None,
 ) -> tuple[SloSample, ...]:
-    """Join two independently collected matching evidence artifacts for SLO evaluation."""
+    """Join independent evidence only when workload and measurement scope match."""
 
     if baseline is None:
         raise ValueError("baseline evidence is required")
@@ -325,6 +469,20 @@ def to_slo_samples(
         raise ValueError("current and baseline evidence must be independent")
     if current.workload_fingerprint != baseline.workload_fingerprint:
         raise ValueError("current and baseline workload fingerprints must match")
+    if (
+        current.measurement_environment is None
+        or baseline.measurement_environment is None
+    ):
+        raise ValueError(
+            "current and baseline measurement environment is required for SLO comparison"
+        )
+    if (
+        current.measurement_environment_fingerprint
+        != baseline.measurement_environment_fingerprint
+    ):
+        raise ValueError(
+            "current and baseline measurement environment fingerprints must match"
+        )
 
     current_by_id = {item.scenario_id: item for item in current.observations}
     baseline_by_id = {item.scenario_id: item for item in baseline.observations}
@@ -334,6 +492,19 @@ def to_slo_samples(
     samples: list[SloSample] = []
     for scenario_id, observation in current_by_id.items():
         reference = baseline_by_id[scenario_id]
+        if (
+            observation.peak_memory_bytes is not None
+            and reference.peak_memory_bytes is not None
+            and (
+                observation.memory_measurement_method
+                != reference.memory_measurement_method
+                or observation.memory_measurement_scope
+                != reference.memory_measurement_scope
+            )
+        ):
+            raise ValueError(
+                f"memory measurement contract must match for scenario {scenario_id}"
+            )
         samples.append(
             SloSample(
                 scenario_id=scenario_id,
