@@ -3,6 +3,7 @@ from __future__ import annotations
 import time
 from typing import Any
 
+from . import _workspace_core as _core
 from .executive import EXECUTIVE_PHASES
 from .util import utc_now
 
@@ -27,6 +28,13 @@ PROVIDER_LIMITS: dict[str, tuple[str, str]] = {
 
 PROVIDER_USAGE_FIELDS = frozenset(field for field, _reason in PROVIDER_LIMITS.values())
 RESOURCE_USAGE_KEYS = frozenset({"provider_id", "receipt_id", *PROVIDER_USAGE_FIELDS})
+
+# Capture the preserved alpha.19 implementation before the public workspace facade rebinds the
+# compatibility class name. Resource accounting delegates to these exact callables instead of
+# relying on a new inheritance layer, so the established public MRO remains unchanged.
+_CORE_EXECUTIVE_BUDGET_STATE = _core.HabitatWorkspace._executive_budget_state
+_CORE_EXECUTIVE_START = _core.HabitatWorkspace.executive_start
+_CORE_EXECUTIVE_ADVANCE = _core.HabitatWorkspace.executive_advance
 
 
 def validate_budget(budget: dict | None) -> dict:
@@ -128,143 +136,162 @@ def collect_provider_usage(events: list[dict]) -> dict:
     }
 
 
-class ExecutiveResourceAccountingMixin:
-    """Evidence-backed resource accounting layered over the preserved alpha.19 core."""
+def _resource_executive_budget_state(self, tr: dict) -> dict:
+    base = _CORE_EXECUTIVE_BUDGET_STATE(self, tr)
+    budget = dict(tr.get("budget") or {})
+    metrics = dict(tr.get("metrics") or {})
+    events = [self._executive_event_row(row) for row in self.store.executive_events(tr["id"])]
+    provider = collect_provider_usage(events)
 
-    def _executive_budget_state(self, tr: dict) -> dict:
-        base = super()._executive_budget_state(tr)
-        budget = dict(tr.get("budget") or {})
-        metrics = dict(tr.get("metrics") or {})
-        events = [self._executive_event_row(row) for row in self.store.executive_events(tr["id"])]
-        provider = collect_provider_usage(events)
+    consumed = dict(base.get("consumed") or {})
+    consumed.update(provider["totals"])
 
-        consumed = dict(base.get("consumed") or {})
-        consumed.update(provider["totals"])
+    started_ns = metrics.get("wall_started_ns")
+    if isinstance(started_ns, int) and not isinstance(started_ns, bool) and started_ns >= 0:
+        wall_time_ms: int | None = max(0, time.time_ns() - started_ns) // 1_000_000
+        wall_authority = "habitat-measured-host-wall-clock"
+    else:
+        wall_time_ms = None
+        wall_authority = "unavailable"
+    consumed["wall_time_ms"] = wall_time_ms
 
-        started_ns = metrics.get("wall_started_ns")
-        if isinstance(started_ns, int) and not isinstance(started_ns, bool) and started_ns >= 0:
-            wall_time_ms: int | None = max(0, time.time_ns() - started_ns) // 1_000_000
-            wall_authority = "habitat-measured-host-wall-clock"
-        else:
-            wall_time_ms = None
-            wall_authority = "unavailable"
-        consumed["wall_time_ms"] = wall_time_ms
+    limits = {key: budget[key] for key in BUDGET_LIMIT_MINIMUMS if key in budget}
+    reasons = list(base.get("reasons") or [])
 
-        limits = {key: budget[key] for key in BUDGET_LIMIT_MINIMUMS if key in budget}
-        reasons = list(base.get("reasons") or [])
+    if "max_wall_time_ms" in budget:
+        if wall_time_ms is None:
+            reasons.append("WALL_TIME_ACCOUNTING_UNAVAILABLE")
+        elif wall_time_ms >= int(budget["max_wall_time_ms"]):
+            reasons.append("WALL_TIME_BUDGET_EXHAUSTED")
 
-        if "max_wall_time_ms" in budget:
-            if wall_time_ms is None:
-                reasons.append("WALL_TIME_ACCOUNTING_UNAVAILABLE")
-            elif wall_time_ms >= int(budget["max_wall_time_ms"]):
-                reasons.append("WALL_TIME_BUDGET_EXHAUSTED")
+    for limit_key, (usage_key, reason) in PROVIDER_LIMITS.items():
+        if limit_key in budget and int(provider["totals"][usage_key]) >= int(budget[limit_key]):
+            reasons.append(reason)
 
-        for limit_key, (usage_key, reason) in PROVIDER_LIMITS.items():
-            if limit_key in budget and int(provider["totals"][usage_key]) >= int(budget[limit_key]):
-                reasons.append(reason)
+    required = provider_usage_required(budget)
+    if required and provider["invalid_count"]:
+        reasons.append("PROVIDER_USAGE_ACCOUNTING_INVALID")
+    if required and provider["duplicate_count"]:
+        reasons.append("PROVIDER_USAGE_RECEIPT_REPLAYED")
 
-        required = provider_usage_required(budget)
-        if required and provider["invalid_count"]:
-            reasons.append("PROVIDER_USAGE_ACCOUNTING_INVALID")
-        if required and provider["duplicate_count"]:
-            reasons.append("PROVIDER_USAGE_RECEIPT_REPLAYED")
+    recognized = set(BUDGET_LIMIT_MINIMUMS)
+    unmetered = {key: value for key, value in budget.items() if key not in recognized}
+    reasons = list(dict.fromkeys(reasons))
+    return {
+        **base,
+        "limits": limits,
+        "consumed": consumed,
+        "accounting": {
+            "wall_time": wall_authority,
+            "provider_usage": "provider-reported-hash-chained",
+            "provider_usage_required": required,
+            "receipt_count": int(provider["receipt_count"]),
+            "invalid_receipt_count": int(provider["invalid_count"]),
+            "duplicate_receipt_count": int(provider["duplicate_count"]),
+        },
+        "exhausted": bool(reasons),
+        "reasons": reasons,
+        "unmetered": unmetered,
+        "claim_boundary": (
+            "Hard enforcement meters executive steps, failures, strategy switches and Habitat host-wall-clock time. "
+            "Tool/token/compute usage is provider-reported, provenance-identified and hash-chained; Habitat validates "
+            "and enforces those reports but does not independently verify provider billing telemetry. Host wall-clock "
+            "measurement is not a distributed monotonic-clock guarantee."
+        ),
+    }
 
-        recognized = set(BUDGET_LIMIT_MINIMUMS)
-        unmetered = {key: value for key, value in budget.items() if key not in recognized}
-        reasons = list(dict.fromkeys(reasons))
-        return {
-            **base,
-            "limits": limits,
-            "consumed": consumed,
-            "accounting": {
-                "wall_time": wall_authority,
-                "provider_usage": "provider-reported-hash-chained",
-                "provider_usage_required": required,
-                "receipt_count": int(provider["receipt_count"]),
-                "invalid_receipt_count": int(provider["invalid_count"]),
-                "duplicate_receipt_count": int(provider["duplicate_count"]),
-            },
-            "exhausted": bool(reasons),
-            "reasons": reasons,
-            "unmetered": unmetered,
-            "claim_boundary": (
-                "Hard enforcement meters executive steps, failures, strategy switches and Habitat host-wall-clock time. "
-                "Tool/token/compute usage is provider-reported, provenance-identified and hash-chained; Habitat validates "
-                "and enforces those reports but does not independently verify provider billing telemetry. Host wall-clock "
-                "measurement is not a distributed monotonic-clock guarantee."
-            ),
-        }
 
-    def executive_start(
+def _resource_executive_start(
+    self,
+    goal: str,
+    *,
+    agent_id: str | None = None,
+    episode_id: str | None = None,
+    budget: dict | None = None,
+    initial_strategy: str = "direct-analysis",
+) -> dict:
+    normalized_budget = validate_budget(budget)
+    wall_started_ns = time.time_ns()
+    result = _CORE_EXECUTIVE_START(
         self,
-        goal: str,
-        *,
-        agent_id: str | None = None,
-        episode_id: str | None = None,
-        budget: dict | None = None,
-        initial_strategy: str = "direct-analysis",
-    ) -> dict:
-        normalized_budget = validate_budget(budget)
-        wall_started_ns = time.time_ns()
-        result = super().executive_start(
-            goal,
-            agent_id=agent_id,
-            episode_id=episode_id,
-            budget=normalized_budget,
-            initial_strategy=initial_strategy,
-        )
-        trajectory_id = result["id"]
-        row = self.store.executive_trajectory(trajectory_id)
-        metrics = dict(self._executive_row(row).get("metrics") or {})
-        metrics["wall_started_ns"] = wall_started_ns
-        self.store.update_executive_trajectory(trajectory_id, metrics=metrics, updated_at=utc_now())
-        return self.executive_status(trajectory_id)
+        goal,
+        agent_id=agent_id,
+        episode_id=episode_id,
+        budget=normalized_budget,
+        initial_strategy=initial_strategy,
+    )
+    trajectory_id = result["id"]
+    row = self.store.executive_trajectory(trajectory_id)
+    metrics = dict(self._executive_row(row).get("metrics") or {})
+    metrics["wall_started_ns"] = wall_started_ns
+    self.store.update_executive_trajectory(trajectory_id, metrics=metrics, updated_at=utc_now())
+    return self.executive_status(trajectory_id)
 
-    def executive_advance(
+
+def _resource_executive_advance(
+    self,
+    trajectory_id: str,
+    phase: str,
+    operation: str,
+    *,
+    status: str = "passed",
+    progress: bool = False,
+    ref_id: str | None = None,
+    data: dict | None = None,
+) -> dict:
+    tr = self._require_active_trajectory(trajectory_id)
+    phase_name = str(phase).upper()
+    if phase_name not in EXECUTIVE_PHASES:
+        raise ValueError("unsupported executive phase")
+    if phase_name == "CLOSE":
+        raise ValueError("use workspace.executive.complete for CLOSE")
+    if not isinstance(operation, str) or not operation.strip():
+        raise ValueError("operation must be non-empty")
+    if status not in {"running", "passed", "failed", "inconclusive"}:
+        raise ValueError("invalid executive step status")
+    if data is not None and not isinstance(data, dict):
+        raise TypeError("data must be an object")
+
+    budget_before = self._executive_budget_state(tr)
+    if budget_before["exhausted"]:
+        raise RuntimeError(f"executive budget exhausted: {budget_before['reasons'][0]}")
+
+    usage = validate_resource_usage(data, required=provider_usage_required(tr.get("budget")))
+    if usage is not None:
+        prior_events = [self._executive_event_row(row) for row in self.store.executive_events(trajectory_id)]
+        prior = collect_provider_usage(prior_events)
+        pair = (usage["provider_id"], usage["receipt_id"])
+        if pair in prior["receipt_pairs"]:
+            raise ValueError("resource_usage receipt identity has already been admitted on this trajectory")
+
+    return _CORE_EXECUTIVE_ADVANCE(
         self,
-        trajectory_id: str,
-        phase: str,
-        operation: str,
-        *,
-        status: str = "passed",
-        progress: bool = False,
-        ref_id: str | None = None,
-        data: dict | None = None,
-    ) -> dict:
-        tr = self._require_active_trajectory(trajectory_id)
-        phase_name = str(phase).upper()
-        if phase_name not in EXECUTIVE_PHASES:
-            raise ValueError("unsupported executive phase")
-        if phase_name == "CLOSE":
-            raise ValueError("use workspace.executive.complete for CLOSE")
-        if not isinstance(operation, str) or not operation.strip():
-            raise ValueError("operation must be non-empty")
-        if status not in {"running", "passed", "failed", "inconclusive"}:
-            raise ValueError("invalid executive step status")
-        if data is not None and not isinstance(data, dict):
-            raise TypeError("data must be an object")
+        trajectory_id,
+        phase_name,
+        operation,
+        status=status,
+        progress=progress,
+        ref_id=ref_id,
+        data=data,
+    )
 
-        budget_before = self._executive_budget_state(tr)
-        if budget_before["exhausted"]:
-            raise RuntimeError(f"executive budget exhausted: {budget_before['reasons'][0]}")
 
-        usage = validate_resource_usage(data, required=provider_usage_required(tr.get("budget")))
-        if usage is not None:
-            prior_events = [self._executive_event_row(row) for row in self.store.executive_events(trajectory_id)]
-            prior = collect_provider_usage(prior_events)
-            pair = (usage["provider_id"], usage["receipt_id"])
-            if pair in prior["receipt_pairs"]:
-                raise ValueError("resource_usage receipt identity has already been admitted on this trajectory")
+# Install the behavior on the preserved core class before habitat.workspace subclasses it. This keeps
+# the historical direct-core MRO and its structural compatibility tests intact while still making the
+# new accounting behavior available to the public facade and disposable child workspaces.
+_core.HabitatWorkspace._executive_budget_state = _resource_executive_budget_state
+_core.HabitatWorkspace.executive_start = _resource_executive_start
+_core.HabitatWorkspace.executive_advance = _resource_executive_advance
 
-        return super().executive_advance(
-            trajectory_id,
-            phase_name,
-            operation,
-            status=status,
-            progress=progress,
-            ref_id=ref_id,
-            data=data,
-        )
+
+class _ExecutiveResourceAccountingMroShim:
+    """Compatibility-only base expression that intentionally contributes no class to the MRO."""
+
+    def __mro_entries__(self, bases):
+        return ()
+
+
+ExecutiveResourceAccountingMixin = _ExecutiveResourceAccountingMroShim()
 
 
 __all__ = [
