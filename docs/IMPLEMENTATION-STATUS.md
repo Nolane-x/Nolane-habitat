@@ -15,8 +15,6 @@
 - Project Memory distinct from context residency, including semantic/episodic/procedural/failure/decision/experiment records;
 - alpha.13 loop/context-thrash/epistemic-pressure and world-health diagnostics over observable Habitat operations.
 
-
-
 ### Alpha.17 stability completion
 - UI semantic handles are allocated from an internal per-page WeakMap, overwrite project-supplied handle attributes, preserve readable unique-id handles where possible, encode unsafe ID characters, and suffix duplicate IDs/test IDs rather than becoming ambiguous;
 - console/network observation buffers are bounded between observations and report dropped event counts instead of allowing a noisy page to grow memory without limit;
@@ -64,7 +62,7 @@
 - process-shared Playwright runtime uses explicit leases so the final workspace close drains the browser driver deterministically;
 - adaptive LOD/clustering, focus hysteresis, temporal heat and agent trails remain inherited from alpha.13;
 - operational SLO admission uses immutable profiles/samples, preserves unavailable measurements as `None`, fails closed on missing or insufficient evidence, and emits deterministic commit-bound reports only when externally measured samples are explicitly supplied;
-- deterministic scale evidence reuses the Foundation baseline lifecycle over canonical generated fixtures, binds multi-cycle raw observations to a source commit and workload fingerprint, and requires an independent matching baseline before conversion to SLO samples; unavailable memory remains `None`.
+- deterministic scale evidence reuses the canonical Foundation baseline lifecycle over generated fixtures, binds multi-cycle raw observations to a source commit and workload fingerprint, runs the default collector in a fresh child process per cycle, and admits only explicit collector-reported peak RSS in bytes with measurement method/scope provenance; each default baseline also reports a normalized measurement environment (OS/release, machine architecture, Python implementation/version and logical CPU count), scale evidence binds its fingerprint, mixed environments across cycles fail closed, and SLO conversion requires an independent workload- and environment-matching baseline.
 
 ### Machine contracts
 - workspace manifest schema 10 advertises `world_model.executive_trajectory=true`;
@@ -83,7 +81,7 @@
 - Project Memory retrieval and cognitive planning are bounded heuristics and never source truth;
 - full hostile-code isolation remains provider/host dependent; unsupported containment must not be described as a production sandbox;
 - non-Python/TypeScript semantic precision and live production-world cognition remain uneven;
-- deterministic scale evidence currently provides wall-time observations only; portable peak process-memory measurement and a separately curated production baseline remain absent, so CI scale artifacts are descriptive/non-gating and do not establish production SLO compliance or performance superiority.
+- deterministic scale evidence records OS-reported peak RSS for the fresh benchmark process where the host probe is supported, but that value is a process-lifetime peak rather than per-operation allocation attribution; its environment fingerprint prevents obvious cross-environment SLO joins but is only a declared comparison class, not proof that two physical hosts have identical hardware/load characteristics. A separately curated production baseline remains absent, so CI scale artifacts remain descriptive/non-gating and do not establish production SLO compliance or performance superiority.
 
 ## Not implemented / not claimed
 - raw model chain-of-thought capture/display;

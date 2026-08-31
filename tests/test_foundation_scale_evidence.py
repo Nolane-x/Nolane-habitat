@@ -36,7 +36,35 @@ class FoundationScaleEvidenceTests(unittest.TestCase):
         )
 
     @staticmethod
-    def _collector_factory(cold: int, warm: int, orient: int, seen: list[tuple[int, str]]):
+    def _environment(
+        *,
+        system: str = "Linux",
+        release: str = "test-kernel",
+        machine: str = "x86_64",
+        python_version: str = "3.14.0",
+    ) -> dict[str, object]:
+        return {
+            "schema": "foundation-measurement-environment.v1",
+            "platform_system": system,
+            "platform_release": release,
+            "platform_machine": machine,
+            "python_implementation": "CPython",
+            "python_version": python_version,
+            "logical_cpu_count": 4,
+        }
+
+    @staticmethod
+    def _collector_factory(
+        cold: int,
+        warm: int,
+        orient: int,
+        seen: list[tuple[int, str]],
+        *,
+        peak_memory_bytes: int | None = None,
+        memory_method: str = "test_reported_peak_rss",
+        memory_scope: str = "current_process_lifetime",
+        measurement_environment: dict[str, object] | None = None,
+    ):
         def collect(repo: Path, task: str):
             files = sorted(path for path in Path(repo).rglob("*") if path.is_file())
             digest = hashlib.sha256()
@@ -46,11 +74,22 @@ class FoundationScaleEvidenceTests(unittest.TestCase):
                 digest.update(path.read_bytes())
                 digest.update(b"\0")
             seen.append((len(files), digest.hexdigest()))
-            return {
+            report = {
                 "cold_ingest": {"wall_ms": cold},
                 "warm_reconcile": {"wall_ms": warm},
                 "orientation": {"wall_ms": orient},
             }
+            if peak_memory_bytes is not None:
+                report["process_memory"] = {
+                    "metric": "peak_rss",
+                    "unit": "bytes",
+                    "scope": memory_scope,
+                    "method": memory_method,
+                    "peak_rss_bytes": peak_memory_bytes,
+                }
+            if measurement_environment is not None:
+                report["measurement_environment"] = dict(measurement_environment)
+            return report
 
         return collect
 
@@ -103,17 +142,30 @@ class FoundationScaleEvidenceTests(unittest.TestCase):
     def test_slo_join_requires_independent_matching_baseline_and_preserves_missing_memory(self):
         api = self._api()
         profile = self._profile(api)
+        environment = self._environment()
         current_seen: list[tuple[int, str]] = []
         baseline_seen: list[tuple[int, str]] = []
         current = api.collect_scale_evidence(
             profile,
             source_commit="c" * 40,
-            collector=self._collector_factory(11, 4, 5, current_seen),
+            collector=self._collector_factory(
+                11,
+                4,
+                5,
+                current_seen,
+                measurement_environment=environment,
+            ),
         )
         baseline = api.collect_scale_evidence(
             profile,
             source_commit="b" * 40,
-            collector=self._collector_factory(10, 3, 5, baseline_seen),
+            collector=self._collector_factory(
+                10,
+                3,
+                5,
+                baseline_seen,
+                measurement_environment=environment,
+            ),
         )
 
         samples = api.to_slo_samples(current, baseline)
@@ -132,10 +184,196 @@ class FoundationScaleEvidenceTests(unittest.TestCase):
         mismatch = api.collect_scale_evidence(
             self._profile(api, seed=18),
             source_commit="d" * 40,
-            collector=self._collector_factory(10, 3, 5, []),
+            collector=self._collector_factory(
+                10,
+                3,
+                5,
+                [],
+                measurement_environment=environment,
+            ),
         )
         with self.assertRaisesRegex(ValueError, "workload"):
             api.to_slo_samples(current, mismatch)
+
+    def test_slo_join_rejects_unknown_or_different_measurement_environment(self):
+        api = self._api()
+        profile = self._profile(api, cycles=1)
+        linux = self._environment(system="Linux", python_version="3.14.0")
+        windows = self._environment(
+            system="Windows",
+            release="test-windows",
+            machine="AMD64",
+            python_version="3.14.0",
+        )
+        current = api.collect_scale_evidence(
+            profile,
+            source_commit="3" * 40,
+            collector=self._collector_factory(
+                11,
+                4,
+                5,
+                [],
+                measurement_environment=linux,
+            ),
+        )
+        same_environment = api.collect_scale_evidence(
+            profile,
+            source_commit="4" * 40,
+            collector=self._collector_factory(
+                10,
+                3,
+                5,
+                [],
+                measurement_environment=linux,
+            ),
+        )
+        different_environment = api.collect_scale_evidence(
+            profile,
+            source_commit="5" * 40,
+            collector=self._collector_factory(
+                10,
+                3,
+                5,
+                [],
+                measurement_environment=windows,
+            ),
+        )
+        unknown_environment = api.collect_scale_evidence(
+            profile,
+            source_commit="6" * 40,
+            collector=self._collector_factory(10, 3, 5, []),
+        )
+
+        encoded = current.as_dict()
+        self.assertEqual(encoded["measurement_environment"], linux)
+        self.assertRegex(encoded["measurement_environment_fingerprint"], r"^[0-9a-f]{64}$")
+        self.assertEqual(len(api.to_slo_samples(current, same_environment)), 1)
+        with self.assertRaisesRegex(ValueError, "environment"):
+            api.to_slo_samples(current, different_environment)
+        with self.assertRaisesRegex(ValueError, "environment"):
+            api.to_slo_samples(current, unknown_environment)
+
+    def test_scale_evidence_fails_closed_when_environment_changes_between_cycles(self):
+        api = self._api()
+        profile = self._profile(api, cycles=2)
+        environments = [
+            self._environment(system="Linux", release="kernel-a"),
+            self._environment(system="Linux", release="kernel-b"),
+        ]
+        calls = 0
+
+        def changing_environment_collector(repo: Path, task: str) -> dict:
+            nonlocal calls
+            environment = environments[calls]
+            calls += 1
+            return {
+                "cold_ingest": {"wall_ms": 10},
+                "warm_reconcile": {"wall_ms": 3},
+                "orientation": {"wall_ms": 5},
+                "measurement_environment": dict(environment),
+            }
+
+        evidence = api.collect_scale_evidence(
+            profile,
+            source_commit="7" * 40,
+            collector=changing_environment_collector,
+        )
+
+        self.assertTrue(evidence.observations[0].completed)
+        self.assertFalse(evidence.observations[1].completed)
+        self.assertIn(
+            "measurement environment changed across scale cycles",
+            evidence.observations[1].error or "",
+        )
+        self.assertIsNone(evidence.measurement_environment)
+        self.assertIsNone(evidence.measurement_environment_fingerprint)
+
+    def test_reported_peak_process_memory_flows_into_scale_and_slo_evidence(self):
+        api = self._api()
+        profile = self._profile(api, cycles=1)
+        environment = self._environment()
+        current = api.collect_scale_evidence(
+            profile,
+            source_commit="e" * 40,
+            collector=self._collector_factory(
+                12,
+                4,
+                5,
+                [],
+                peak_memory_bytes=64_000_000,
+                measurement_environment=environment,
+            ),
+        )
+        baseline = api.collect_scale_evidence(
+            profile,
+            source_commit="f" * 40,
+            collector=self._collector_factory(
+                10,
+                3,
+                5,
+                [],
+                peak_memory_bytes=60_000_000,
+                measurement_environment=environment,
+            ),
+        )
+
+        self.assertEqual(current.observations[0].peak_memory_bytes, 64_000_000)
+        self.assertEqual(current.as_dict()["memory_measurement"], "collector_reported_peak_rss")
+        samples = api.to_slo_samples(current, baseline)
+        self.assertEqual(samples[0].peak_memory_bytes, 64_000_000)
+        self.assertEqual(samples[0].baseline_peak_memory_bytes, 60_000_000)
+
+    def test_slo_join_rejects_different_memory_measurement_contracts(self):
+        api = self._api()
+        profile = self._profile(api, cycles=1)
+        environment = self._environment()
+        current = api.collect_scale_evidence(
+            profile,
+            source_commit="8" * 40,
+            collector=self._collector_factory(
+                12,
+                4,
+                5,
+                [],
+                peak_memory_bytes=64_000_000,
+                memory_method="probe-a",
+                memory_scope="current_process_lifetime",
+                measurement_environment=environment,
+            ),
+        )
+        different_method = api.collect_scale_evidence(
+            profile,
+            source_commit="9" * 40,
+            collector=self._collector_factory(
+                10,
+                3,
+                5,
+                [],
+                peak_memory_bytes=60_000_000,
+                memory_method="probe-b",
+                memory_scope="current_process_lifetime",
+                measurement_environment=environment,
+            ),
+        )
+        different_scope = api.collect_scale_evidence(
+            profile,
+            source_commit="0" * 40,
+            collector=self._collector_factory(
+                10,
+                3,
+                5,
+                [],
+                peak_memory_bytes=60_000_000,
+                memory_method="probe-a",
+                memory_scope="operation_window",
+                measurement_environment=environment,
+            ),
+        )
+
+        with self.assertRaisesRegex(ValueError, "memory measurement contract"):
+            api.to_slo_samples(current, different_method)
+        with self.assertRaisesRegex(ValueError, "memory measurement contract"):
+            api.to_slo_samples(current, different_scope)
 
     def test_profile_rejects_non_deterministic_or_degenerate_dimensions(self):
         api = self._api()
