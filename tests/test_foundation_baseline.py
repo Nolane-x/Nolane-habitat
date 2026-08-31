@@ -8,7 +8,7 @@ from benchmarks.foundation_baseline import collect_baseline
 
 
 class FoundationBaselineTests(unittest.TestCase):
-    def test_collects_cold_warm_context_and_storage_metrics(self):
+    def test_collects_cold_warm_context_storage_and_process_memory_metrics(self):
         with tempfile.TemporaryDirectory() as td:
             root = Path(td) / "project"
             root.mkdir()
@@ -25,6 +25,17 @@ class FoundationBaselineTests(unittest.TestCase):
             self.assertEqual(report["orientation"]["task"], "understand add")
             self.assertGreaterEqual(report["source"]["files"], 1)
             self.assertGreaterEqual(report["source"]["symbols"], 1)
+
+            memory = report["process_memory"]
+            self.assertEqual(memory["metric"], "peak_rss")
+            self.assertEqual(memory["unit"], "bytes")
+            self.assertEqual(memory["scope"], "current_process_lifetime")
+            self.assertIn(
+                memory["method"],
+                {"linux_getrusage", "windows_get_process_memory_info"},
+            )
+            self.assertIs(type(memory["peak_rss_bytes"]), int)
+            self.assertGreater(memory["peak_rss_bytes"], 0)
             self.assertIn("descriptive", report["claim_boundary"].lower())
 
 
