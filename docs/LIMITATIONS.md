@@ -3,8 +3,8 @@
 ## Executive Trajectory is control architecture, not hidden reasoning
 Alpha.14 records observable work products: goals, milestones, phases, receipts, failures, strategy changes and completion gates. It does not request, store or expose a model's raw private chain-of-thought. A trajectory is therefore an auditable execution/control record, not a transcript of internal cognition.
 
-## Executive budgets are only partially metered
-Alpha.14 hard-enforces executive step count, failed-step count and strategy-switch count. Other budget fields may be declared and preserved, but token/tool/time/compute consumption is not yet measured by the Executive Trajectory itself; callers must not infer those meters from presence in the budget object.
+## Executive resource accounting has explicit authority boundaries
+Executive Trajectory hard-enforces step count, failed-step count, strategy-switch count, and Habitat-measured host wall time. Declared tool-call, input-token, output-token and compute-time limits are enforced only from validated provider-reported usage receipts that carry non-empty provider/receipt identities and become part of the executive event hash chain. Those provider values are not independently verified by Habitat and must not be treated as authoritative billing telemetry. Host wall-clock accounting is also not a distributed monotonic-clock guarantee. Unknown extension budget keys remain explicit under `unmetered` rather than being silently treated as measured zero consumption.
 
 ## Phase control is explicit and conservative
 Control-step phase skipping is rejected. Auxiliary milestone records can still be written without pretending to advance the control phase. Successful CLOSE requires a current successful control VERIFY followed by REFLECT/CONTINUE; failure/abandon uses a separate explicit stop path and does not claim successful completion.
