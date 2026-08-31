@@ -44,7 +44,11 @@
 - durable trajectory records for long-horizon work with explicit goal, agent/episode binding, strategy generation, budgets and metrics;
 - hash-chained append-only executive events across OBSERVE/UPDATE/DIAGNOSE/RETRIEVE/COMPOSE/DISPATCH/VERIFY/REFLECT/RECOVER/CONTINUE/CLOSE;
 - enforced control-phase sequence with explicit recovery after failed/inconclusive control steps and reflection before successful closure;
-- hard metering for `max_steps`, `max_failed_steps`, and `max_strategy_switches`, plus explicit failed/abandoned stop termination;
+- hard metering for `max_steps`, `max_failed_steps`, `max_strategy_switches`, and Habitat-measured `max_wall_time_ms`;
+- fail-closed provider-reported accounting for `max_tool_calls`, `max_input_tokens`, `max_output_tokens`, and `max_compute_ms`: every admitted control step under those limits carries a validated provider/receipt identity in the hash-chained event record, while the reported usage values are not independently verified by Habitat;
+- provider receipt replay is rejected before event/metric mutation, and provider-metered totals are re-derived from the complete executive event history rather than trusted from mutable counters;
+- unknown extension budget keys remain explicit under `unmetered` instead of being interpreted as measured zero consumption;
+- explicit failed/abandoned stop termination remains available after budget exhaustion;
 - hierarchical milestones with dependency DAG, explicit postconditions, priority, verifier linkage and rollback notes;
 - structural strategy families: direct analysis, reframe, causal intervention, rival hypothesis, external oracle, dependency replan and scope reduction; repeated failure cannot be admitted as a cosmetic switch to the same family;
 - failed/inconclusive steps are preserved as provenance-bound failure memory;
@@ -66,10 +70,12 @@
 - workspace manifest schema 10 advertises `world_model.executive_trajectory=true`;
 - schema 9 remains backward-validation-compatible;
 - dedicated schemas exist for executive trajectory, milestone and plan plus alpha.14 world-health / Observatory additions;
+- executive trajectory schema documents measured/provider-reported budget-state accounting while preserving historical compatibility through optional additions and `additionalProperties`;
 - storage schema is 22 with durable executive tables.
 
 ## Partial / bounded
 - strategy selection/switching is deterministic heuristic diagnosis over explicit Habitat state, not learned meta-reasoning;
+- provider-reported tool/token/compute usage is governed and hash-chained but is not independently verified billing truth; Habitat-measured wall time is host wall-clock evidence, not a distributed monotonic-clock guarantee;
 - a verifier artifact proves only the represented receipt/evidence contract; universal program correctness still requires domain-appropriate independent oracles;
 - milestone postconditions are explicit strings plus verifier linkage, not a general theorem prover;
 - Semantic Fabric discovers/report providers, but Tree-sitter/LSP/SCIP are not universally active with equal precision;
