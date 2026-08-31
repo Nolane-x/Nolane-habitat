@@ -70,13 +70,15 @@ class ExecutiveResourceAccountingTests(unittest.TestCase):
                 data={"resource_usage": self.usage()},
             )
             state = ws.executive_status(tr["id"])["budget_state"]
-            self.assertEqual(state["consumed"]["tool_calls"], 1)
-            self.assertEqual(state["consumed"]["input_tokens"], 10)
-            self.assertEqual(state["consumed"]["output_tokens"], 5)
-            self.assertEqual(state["consumed"]["compute_ms"], 20)
-            self.assertEqual(state["accounting"]["provider_usage"], "provider-reported-hash-chained")
-            self.assertEqual(state["accounting"]["receipt_count"], 1)
-            self.assertTrue(state["accounting"]["provider_usage_required"])
+            consumed = state["consumed"]
+            accounting = state.get("accounting") or {}
+            self.assertEqual(consumed.get("tool_calls"), 1)
+            self.assertEqual(consumed.get("input_tokens"), 10)
+            self.assertEqual(consumed.get("output_tokens"), 5)
+            self.assertEqual(consumed.get("compute_ms"), 20)
+            self.assertEqual(accounting.get("provider_usage"), "provider-reported-hash-chained")
+            self.assertEqual(accounting.get("receipt_count"), 1)
+            self.assertTrue(accounting.get("provider_usage_required"))
             self.assertTrue(state["exhausted"])
             self.assertEqual(
                 set(state["reasons"]),
@@ -145,7 +147,7 @@ class ExecutiveResourceAccountingTests(unittest.TestCase):
                 )
             after = ws.executive_status(tr["id"])
             self.assertEqual(after["event_count"], before["event_count"])
-            self.assertEqual(after["budget_state"]["consumed"]["tool_calls"], 1)
+            self.assertEqual(after["budget_state"]["consumed"].get("tool_calls"), 1)
         finally:
             ws.close()
             td.cleanup()
@@ -158,7 +160,7 @@ class ExecutiveResourceAccountingTests(unittest.TestCase):
             with mock.patch("habitat._workspace_core.time.time_ns", return_value=1_002_000_000):
                 state = ws.executive_status(tr["id"])["budget_state"]
                 self.assertEqual(state["consumed"].get("wall_time_ms"), 2)
-                self.assertEqual(state["accounting"]["wall_time"], "habitat-measured-host-wall-clock")
+                self.assertEqual((state.get("accounting") or {}).get("wall_time"), "habitat-measured-host-wall-clock")
                 self.assertIn("WALL_TIME_BUDGET_EXHAUSTED", state["reasons"])
                 with self.assertRaises(RuntimeError):
                     ws.executive_advance(tr["id"], "UPDATE", "too late", status="passed")
