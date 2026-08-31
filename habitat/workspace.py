@@ -13,6 +13,7 @@ from .semantic.lsp_transport import LspServerSpec
 from .semantic.runtime import build_default_semantic_registry
 from .semantic.scip_runtime import ScipIndexerSpec, ScipRuntimeManager
 from .services import IndexService, LearningService, QueryService, RuntimeService, TransactionService
+from .executive_resources import ExecutiveResourceAccountingMixin
 from .truth import (
     claim_from_diagnostic_record,
     claim_from_evidence_row,
@@ -54,7 +55,7 @@ _core.compile_file = _admission_compile_file
 _core.compile_cache_fingerprint = _admission_cache_fingerprint
 
 
-class HabitatWorkspace(_core.HabitatWorkspace):
+class HabitatWorkspace(ExecutiveResourceAccountingMixin, _core.HabitatWorkspace):
     """Public workspace facade with workspace-owned semantic admission authority."""
 
     def __init__(self, habitat_dir: Path):
