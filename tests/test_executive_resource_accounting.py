@@ -244,6 +244,37 @@ class ExecutiveResourceAccountingTests(unittest.TestCase):
             ws.close()
             td.cleanup()
 
+    def test_resource_accounting_machine_truth_is_documented_without_overclaim(self):
+        root = Path(__file__).parents[1]
+        schema = json.loads((root / "schemas" / "executive-trajectory.schema.json").read_text(encoding="utf-8"))
+        budget_state = schema["properties"]["budget_state"]
+        properties = budget_state.get("properties") or {}
+        self.assertTrue({"consumed", "accounting", "unmetered"}.issubset(properties))
+
+        consumed = ((properties.get("consumed") or {}).get("properties") or {})
+        self.assertTrue(
+            {"wall_time_ms", "tool_calls", "input_tokens", "output_tokens", "compute_ms"}.issubset(consumed)
+        )
+        accounting = ((properties.get("accounting") or {}).get("properties") or {})
+        self.assertTrue(
+            {
+                "wall_time",
+                "provider_usage",
+                "provider_usage_required",
+                "receipt_count",
+                "invalid_receipt_count",
+                "duplicate_receipt_count",
+            }.issubset(accounting)
+        )
+
+        implementation = (root / "docs" / "IMPLEMENTATION-STATUS.md").read_text(encoding="utf-8")
+        limitations = (root / "docs" / "LIMITATIONS.md").read_text(encoding="utf-8")
+        combined = (implementation + "\n" + limitations).lower()
+        self.assertIn("provider-reported", combined)
+        self.assertIn("not independently verified", combined)
+        self.assertIn("habitat-measured", combined)
+        self.assertNotIn("## executive budgets are only partially metered", limitations.lower())
+
 
 if __name__ == "__main__":
     unittest.main()
