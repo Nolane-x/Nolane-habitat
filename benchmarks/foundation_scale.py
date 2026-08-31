@@ -6,6 +6,8 @@ import hashlib
 import json
 import os
 from pathlib import Path
+import subprocess
+import sys
 import tempfile
 from tempfile import NamedTemporaryFile
 from typing import Callable
@@ -102,6 +104,8 @@ class ScaleObservation:
     cold_ingest_ms: float | None
     warm_reconcile_ms: float | None
     orientation_ms: float | None
+    memory_measurement_method: str | None = None
+    memory_measurement_scope: str | None = None
     error: str | None = None
 
     def as_dict(self) -> dict[str, object]:
@@ -123,17 +127,25 @@ class ScaleEvidence:
             raise ValueError("observations must match profile cycles")
 
     def _payload_dict(self) -> dict[str, object]:
+        memory_available = any(
+            item.peak_memory_bytes is not None for item in self.observations
+        )
         return {
             "schema": SCHEMA,
             "source_commit": self.source_commit,
             "profile": self.profile.as_dict(),
             "workload_fingerprint": self.workload_fingerprint,
             "observations": [item.as_dict() for item in self.observations],
-            "memory_measurement": "unavailable",
+            "memory_measurement": (
+                "collector_reported_peak_rss" if memory_available else "unavailable"
+            ),
             "claim_boundary": (
-                "Descriptive deterministic-workload measurements only. Missing memory remains null; "
-                "this evidence is not an SLO pass or a performance superiority claim until joined "
-                "with an independent matching baseline and evaluated by an explicit SLO profile."
+                "Descriptive deterministic-workload measurements only. Peak memory is accepted only "
+                "from an explicit collector-reported peak-RSS record in bytes; the default collector "
+                "runs each cycle in a fresh child process so process-lifetime peaks do not leak across "
+                "cycles. Missing or unsupported memory remains null. This evidence is not an SLO pass "
+                "or a performance superiority claim until joined with an independent matching baseline "
+                "and evaluated by an explicit SLO profile."
             ),
         }
 
@@ -163,12 +175,41 @@ def _write_fixture(root: Path, profile: ScaleProfile) -> None:
 
 
 def _default_collector(repo: Path, task: str) -> dict:
-    try:
-        from benchmarks.foundation_baseline import collect_baseline
-    except ModuleNotFoundError:  # direct execution from benchmarks/
-        from foundation_baseline import collect_baseline
+    """Run the canonical baseline collector in a fresh process for one scale cycle."""
 
-    return collect_baseline(repo, task)
+    project_root = Path(__file__).resolve().parents[1]
+    with tempfile.TemporaryDirectory(prefix="habitat-scale-baseline-child-") as td:
+        out = Path(td) / "baseline.json"
+        completed = subprocess.run(
+            [
+                sys.executable,
+                "-m",
+                "benchmarks.foundation_baseline",
+                "--repo",
+                str(repo),
+                "--task",
+                task,
+                "--out",
+                str(out),
+            ],
+            cwd=project_root,
+            capture_output=True,
+            text=True,
+            check=False,
+        )
+        if completed.returncode != 0:
+            detail = (completed.stderr or completed.stdout or "no child output").strip()
+            if len(detail) > 2000:
+                detail = detail[-2000:]
+            raise RuntimeError(
+                f"foundation baseline child exited {completed.returncode}: {detail}"
+            )
+        if not out.is_file():
+            raise RuntimeError("foundation baseline child did not create evidence output")
+        value = json.loads(out.read_text(encoding="utf-8"))
+        if not isinstance(value, dict):
+            raise ValueError("foundation baseline child output must be a JSON object")
+        return value
 
 
 def _wall_ms(report: dict, section: str) -> float:
@@ -183,6 +224,27 @@ def _wall_ms(report: dict, section: str) -> float:
     return float(wall_ms)
 
 
+def _process_memory(report: dict) -> tuple[int | None, str | None, str | None]:
+    value = report.get("process_memory")
+    if value is None:
+        return None, None, None
+    if not isinstance(value, dict):
+        raise ValueError("collector report process_memory must be an object")
+    if value.get("metric") != "peak_rss":
+        raise ValueError("collector report process_memory.metric must be peak_rss")
+    if value.get("unit") != "bytes":
+        raise ValueError("collector report process_memory.unit must be bytes")
+
+    scope = _require_non_empty(value.get("scope"), "process_memory.scope")
+    method = _require_non_empty(value.get("method"), "process_memory.method")
+    peak = value.get("peak_rss_bytes")
+    if peak is None:
+        return None, method, scope
+    if type(peak) is not int or peak < 1:
+        raise ValueError("collector report process_memory.peak_rss_bytes must be positive or null")
+    return peak, method, scope
+
+
 def collect_scale_evidence(
     profile: ScaleProfile,
     *,
@@ -191,10 +253,10 @@ def collect_scale_evidence(
 ) -> ScaleEvidence:
     """Measure a deterministic fixture over repeated fresh Habitat baseline lifecycles.
 
-    The default collector is the existing ``foundation_baseline.collect_baseline`` path,
-    preserving one operational measurement implementation rather than creating a second
-    Habitat lifecycle benchmark. Memory remains unavailable until a portable trustworthy
-    process-level collector is introduced.
+    The default path executes ``benchmarks.foundation_baseline`` in a fresh child process
+    for every cycle. That preserves one canonical lifecycle benchmark while making the
+    child-reported process-lifetime peak RSS cycle-local. Injected collectors remain
+    supported for deterministic tests and may omit memory, which stays explicitly null.
     """
 
     _require_non_empty(source_commit, "source_commit")
@@ -213,16 +275,19 @@ def collect_scale_evidence(
                 cold_ms = _wall_ms(report, "cold_ingest")
                 warm_ms = _wall_ms(report, "warm_reconcile")
                 orientation_ms = _wall_ms(report, "orientation")
+                peak_memory_bytes, memory_method, memory_scope = _process_memory(report)
                 observations.append(
                     ScaleObservation(
                         scenario_id=scenario_id,
                         cycle=cycle,
                         completed=True,
                         latency_ms=cold_ms + warm_ms + orientation_ms,
-                        peak_memory_bytes=None,
+                        peak_memory_bytes=peak_memory_bytes,
                         cold_ingest_ms=cold_ms,
                         warm_reconcile_ms=warm_ms,
                         orientation_ms=orientation_ms,
+                        memory_measurement_method=memory_method,
+                        memory_measurement_scope=memory_scope,
                     )
                 )
             except Exception as exc:  # evidence preserves failure instead of dropping a cycle
