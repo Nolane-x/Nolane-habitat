@@ -3,6 +3,7 @@ from __future__ import annotations
 import argparse
 import json
 import os
+import sys
 import tempfile
 import time
 from pathlib import Path
@@ -20,12 +21,101 @@ def _elapsed_ms(start_ns: int) -> int:
     return max(0, (time.perf_counter_ns() - start_ns) // 1_000_000)
 
 
+def _unavailable_process_memory(method: str) -> dict[str, object]:
+    return {
+        "metric": "peak_rss",
+        "unit": "bytes",
+        "scope": "current_process_lifetime",
+        "method": method,
+        "peak_rss_bytes": None,
+    }
+
+
+def _process_peak_memory() -> dict[str, object]:
+    """Return host-observed peak resident memory for this process when trustworthy.
+
+    Linux and macOS expose ``ru_maxrss`` with different units. Windows exposes
+    ``PeakWorkingSetSize`` through ``GetProcessMemoryInfo``. Unsupported or failed
+    probes remain explicitly unavailable rather than manufacturing a zero value.
+    """
+
+    if os.name == "nt":
+        try:
+            import ctypes
+            from ctypes import wintypes
+
+            class ProcessMemoryCounters(ctypes.Structure):
+                _fields_ = [
+                    ("cb", wintypes.DWORD),
+                    ("PageFaultCount", wintypes.DWORD),
+                    ("PeakWorkingSetSize", ctypes.c_size_t),
+                    ("WorkingSetSize", ctypes.c_size_t),
+                    ("QuotaPeakPagedPoolUsage", ctypes.c_size_t),
+                    ("QuotaPagedPoolUsage", ctypes.c_size_t),
+                    ("QuotaPeakNonPagedPoolUsage", ctypes.c_size_t),
+                    ("QuotaNonPagedPoolUsage", ctypes.c_size_t),
+                    ("PagefileUsage", ctypes.c_size_t),
+                    ("PeakPagefileUsage", ctypes.c_size_t),
+                ]
+
+            counters = ProcessMemoryCounters()
+            counters.cb = ctypes.sizeof(ProcessMemoryCounters)
+            kernel32 = ctypes.WinDLL("kernel32", use_last_error=True)
+            psapi = ctypes.WinDLL("psapi", use_last_error=True)
+            kernel32.GetCurrentProcess.restype = wintypes.HANDLE
+            psapi.GetProcessMemoryInfo.argtypes = [
+                wintypes.HANDLE,
+                ctypes.POINTER(ProcessMemoryCounters),
+                wintypes.DWORD,
+            ]
+            psapi.GetProcessMemoryInfo.restype = wintypes.BOOL
+            ok = psapi.GetProcessMemoryInfo(
+                kernel32.GetCurrentProcess(),
+                ctypes.byref(counters),
+                counters.cb,
+            )
+            peak = int(counters.PeakWorkingSetSize) if ok else 0
+            if peak > 0:
+                return {
+                    "metric": "peak_rss",
+                    "unit": "bytes",
+                    "scope": "current_process_lifetime",
+                    "method": "windows_get_process_memory_info",
+                    "peak_rss_bytes": peak,
+                }
+        except (AttributeError, OSError, TypeError, ValueError):
+            pass
+        return _unavailable_process_memory("windows_get_process_memory_info_unavailable")
+
+    if sys.platform in {"linux", "darwin"}:
+        try:
+            import resource
+
+            raw_peak = int(resource.getrusage(resource.RUSAGE_SELF).ru_maxrss)
+            if raw_peak > 0:
+                peak = raw_peak if sys.platform == "darwin" else raw_peak * 1024
+                return {
+                    "metric": "peak_rss",
+                    "unit": "bytes",
+                    "scope": "current_process_lifetime",
+                    "method": (
+                        "macos_getrusage" if sys.platform == "darwin" else "linux_getrusage"
+                    ),
+                    "peak_rss_bytes": peak,
+                }
+        except (ImportError, OSError, TypeError, ValueError):
+            pass
+        return _unavailable_process_memory(f"{sys.platform}_getrusage_unavailable")
+
+    return _unavailable_process_memory(f"unsupported_platform:{sys.platform}")
+
+
 def collect_baseline(repo: Path, task: str = DEFAULT_TASK) -> dict:
     """Collect one descriptive, non-gating Foundation Convergence baseline run.
 
     The collector intentionally uses Habitat's public workspace lifecycle for the measured
-    operations. Timing values are observations from one host/run; they are not pass/fail
-    thresholds and must not be interpreted as a superiority claim.
+    operations. Timing and process-memory values are observations from one host/run; they
+    are not pass/fail thresholds and must not be interpreted as a superiority claim.
     """
     repo = Path(repo).resolve()
     if not repo.is_dir():
@@ -59,6 +149,7 @@ def collect_baseline(repo: Path, task: str = DEFAULT_TASK) -> dict:
             fabric = ws.semantic_fabric()
             sqlite_path = habitat_dir / "habitat.sqlite3"
             sqlite_bytes = sqlite_path.stat().st_size if sqlite_path.is_file() else 0
+            process_memory = _process_peak_memory()
 
             return {
                 "schema": SCHEMA,
@@ -91,10 +182,13 @@ def collect_baseline(repo: Path, task: str = DEFAULT_TASK) -> dict:
                 "storage": {
                     "sqlite_bytes": int(sqlite_bytes),
                 },
+                "process_memory": process_memory,
                 "claim_boundary": (
-                    "Descriptive single-run foundation evidence only. Timing and counts vary by host, "
-                    "repository state, installed semantic providers, and cache state; this report is not "
-                    "a performance threshold or a claim of superiority over another agent workflow."
+                    "Descriptive single-run foundation evidence only. Timing, OS-observed process "
+                    "peak RSS, and counts vary by host, repository state, installed semantic providers, "
+                    "and cache state; process peak RSS covers the current process lifetime and is not "
+                    "an allocation attribution for one operation. This report is not a performance "
+                    "threshold or a claim of superiority over another agent workflow."
                 ),
             }
         finally:
