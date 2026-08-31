@@ -1,6 +1,8 @@
 from __future__ import annotations
 
 import os
+import platform
+import re
 import sys
 import unittest
 from pathlib import Path
@@ -19,7 +21,7 @@ class FoundationScaleMemoryPortabilityTests(unittest.TestCase):
             task="map deterministic scale fixture",
         )
 
-    def test_default_collector_reports_host_peak_rss_in_fresh_child(self):
+    def test_default_collector_reports_host_peak_rss_and_environment_in_fresh_child(self):
         expected_method = None
         if os.name == "nt":
             expected_method = "windows_get_process_memory_info"
@@ -35,6 +37,7 @@ class FoundationScaleMemoryPortabilityTests(unittest.TestCase):
             source_commit="1" * 40,
         )
         observation = evidence.observations[0]
+        encoded = evidence.as_dict()
 
         self.assertTrue(observation.completed, observation.error)
         self.assertIsNone(observation.error)
@@ -43,8 +46,31 @@ class FoundationScaleMemoryPortabilityTests(unittest.TestCase):
         self.assertEqual(observation.memory_measurement_method, expected_method)
         self.assertEqual(observation.memory_measurement_scope, "current_process_lifetime")
         self.assertEqual(
-            evidence.as_dict()["memory_measurement"],
+            encoded["memory_measurement"],
             "collector_reported_peak_rss",
+        )
+
+        environment = encoded["measurement_environment"]
+        self.assertEqual(
+            environment["schema"],
+            "foundation-measurement-environment.v1",
+        )
+        self.assertEqual(environment["platform_system"], platform.system())
+        self.assertEqual(environment["platform_release"], platform.release())
+        self.assertEqual(environment["platform_machine"], platform.machine())
+        self.assertEqual(environment["python_implementation"], platform.python_implementation())
+        self.assertEqual(environment["python_version"], platform.python_version())
+        self.assertTrue(
+            environment["logical_cpu_count"] is None
+            or (
+                type(environment["logical_cpu_count"]) is int
+                and environment["logical_cpu_count"] > 0
+            )
+        )
+        self.assertRegex(encoded["measurement_environment_fingerprint"], r"^[0-9a-f]{64}$")
+        self.assertEqual(
+            observation.measurement_environment_fingerprint,
+            encoded["measurement_environment_fingerprint"],
         )
 
     def test_malformed_memory_report_fails_closed_without_inventing_peak(self):
