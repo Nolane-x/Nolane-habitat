@@ -36,7 +36,14 @@ class FoundationScaleEvidenceTests(unittest.TestCase):
         )
 
     @staticmethod
-    def _collector_factory(cold: int, warm: int, orient: int, seen: list[tuple[int, str]]):
+    def _collector_factory(
+        cold: int,
+        warm: int,
+        orient: int,
+        seen: list[tuple[int, str]],
+        *,
+        peak_memory_bytes: int | None = None,
+    ):
         def collect(repo: Path, task: str):
             files = sorted(path for path in Path(repo).rglob("*") if path.is_file())
             digest = hashlib.sha256()
@@ -46,11 +53,20 @@ class FoundationScaleEvidenceTests(unittest.TestCase):
                 digest.update(path.read_bytes())
                 digest.update(b"\0")
             seen.append((len(files), digest.hexdigest()))
-            return {
+            report = {
                 "cold_ingest": {"wall_ms": cold},
                 "warm_reconcile": {"wall_ms": warm},
                 "orientation": {"wall_ms": orient},
             }
+            if peak_memory_bytes is not None:
+                report["process_memory"] = {
+                    "metric": "peak_rss",
+                    "unit": "bytes",
+                    "scope": "current_process_lifetime",
+                    "method": "test_reported_peak_rss",
+                    "peak_rss_bytes": peak_memory_bytes,
+                }
+            return report
 
         return collect
 
@@ -136,6 +152,38 @@ class FoundationScaleEvidenceTests(unittest.TestCase):
         )
         with self.assertRaisesRegex(ValueError, "workload"):
             api.to_slo_samples(current, mismatch)
+
+    def test_reported_peak_process_memory_flows_into_scale_and_slo_evidence(self):
+        api = self._api()
+        profile = self._profile(api, cycles=1)
+        current = api.collect_scale_evidence(
+            profile,
+            source_commit="e" * 40,
+            collector=self._collector_factory(
+                12,
+                4,
+                5,
+                [],
+                peak_memory_bytes=64_000_000,
+            ),
+        )
+        baseline = api.collect_scale_evidence(
+            profile,
+            source_commit="f" * 40,
+            collector=self._collector_factory(
+                10,
+                3,
+                5,
+                [],
+                peak_memory_bytes=60_000_000,
+            ),
+        )
+
+        self.assertEqual(current.observations[0].peak_memory_bytes, 64_000_000)
+        self.assertEqual(current.as_dict()["memory_measurement"], "collector_reported_peak_rss")
+        samples = api.to_slo_samples(current, baseline)
+        self.assertEqual(samples[0].peak_memory_bytes, 64_000_000)
+        self.assertEqual(samples[0].baseline_peak_memory_bytes, 60_000_000)
 
     def test_profile_rejects_non_deterministic_or_degenerate_dimensions(self):
         api = self._api()
